@@ -107,20 +107,25 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             {
                 var evidence = GetEvidence(evidenceReader).ToList();
 
+                output.WriteLine("Calibrating");
+                var calibration = Benchmark(evidence, threadCount, true);
+                var calibrationTime = calibration.Sum(r => r.Timer.ElapsedMilliseconds);
+                GC.Collect();
+
                 // Make an initial run to warm up the system
                 output.WriteLine("Warming up");
-                var warmup = Benchmark(evidence, threadCount);
+                var warmup = Benchmark(evidence, threadCount, false);
                 var warmupTime = warmup.Sum(r => r.Timer.ElapsedMilliseconds);
                 GC.Collect();
                 Task.Delay(500).Wait();
 
                 output.WriteLine("Running");
-                var execution = Benchmark(evidence, threadCount);
+                var execution = Benchmark(evidence, threadCount, false);
                 var executionTime = execution.Sum(r => r.Timer.ElapsedMilliseconds);
                 output.WriteLine($"Finished - Execution time was {executionTime} ms, " +
                     $"adjustment from warm-up {executionTime - warmupTime} ms");
 
-                Report(execution, threadCount, output);
+                Report(calibration, execution, threadCount, output);
                 return execution;
             }
 
@@ -130,12 +135,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             /// <param name="results"></param>
             /// <param name="threadCount"></param>
             /// <param name="output"></param>
-            private void Report(List<BenchmarkResult> results,
+            private void Report(
+                List<BenchmarkResult> calibration,
+                List<BenchmarkResult> results,
                 int threadCount,
                 TextWriter output)
             {
                 // Calculate approx. real-time ms per detection. 
-                var msPerDetection = GetMsPerDetection(results) / threadCount;
+                var msPerDetection = (GetMsPerDetection(results) - GetMsPerDetection(calibration)) / threadCount;
                 var detectionsPerSecond = 1000 / msPerDetection;
                 output.WriteLine($"Overall: {results.Sum(i => i.Count)} detections, Average millisecs per " +
                     $"detection: {msPerDetection}, Detections per second: {detectionsPerSecond}");
@@ -150,14 +157,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             /// <returns></returns>
             private List<BenchmarkResult> Benchmark(
                 List<Dictionary<string, object>> allEvidence, 
-                int threadCount)
+                int threadCount,
+                bool calibrate)
             {
                 CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
                 List<BenchmarkResult> results = new List<BenchmarkResult>();
 
-                // Start multiple threads to process a set of evidence.
-                var processing = Parallel.ForEach(allEvidence,
+                Parallel.For(0, threadCount,
                     new ParallelOptions()
                     {
                         // Note - MaxDegreeOfParallelism does not actually guarantee anything
@@ -170,34 +177,46 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                     // Create a benchmark result instance per parallel unit
                     // (not necessarily per thread!).
                     () => new BenchmarkResult(),
-                    (evidence, loopState, result) =>
+                    (index, loopState, result) =>
                     {
                         result.Timer.Start();
-                        // A using block MUST be used for the FlowData instance. This ensures that
-                        // native resources created by the device detection engine are freed in
-                        // good time.
-                        using (var data = _pipeline.CreateFlowData())
+                        foreach (var evidence in allEvidence)
                         {
-                            // Add the evidence to the flow data.
-                            data.AddEvidence(evidence).Process();
-
-                            // Get the device from the engine.
-                            var device = data.Get<IDeviceData>();
-
-                            result.Count++;
-                            // Access a property to ensure compiler optimizer doesn't optimize
-                            // out the very method that the benchmark is testing.
-                            if(device.IsMobile.HasValue && device.IsMobile.Value)
+                            if (calibrate)
                             {
-                                result.MobileCount++;
+                                result.Count++;
                             }
                             else
                             {
-                                result.NotMobileCount++;
+                                // A using block MUST be used for the FlowData instance. This ensures that
+                                // native resources created by the device detection engine are freed in
+                                // good time.
+                                using (var data = _pipeline.CreateFlowData())
+                                {
+                                    // Add the evidence to the flow data.
+                                    data.AddEvidence(evidence);
+
+                                    data.Process();
+
+                                    // Get the device from the engine.
+                                    var device = data.Get<IDeviceData>();
+
+                                    result.Count++;
+                                    // Access a property to ensure compiler optimizer doesn't optimize
+                                    // out the very method that the benchmark is testing.
+                                    if (device.IsMobile.HasValue && device.IsMobile.Value)
+                                    {
+                                        result.MobileCount++;
+                                    }
+                                    else
+                                    {
+                                        result.NotMobileCount++;
+                                    }
+                                }
                             }
                         }
-
                         result.Timer.Stop();
+
                         return result;
                     },
                     // Add the results from this run to the overall results.
