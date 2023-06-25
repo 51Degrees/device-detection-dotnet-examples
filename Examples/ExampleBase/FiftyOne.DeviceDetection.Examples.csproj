@@ -80,7 +80,7 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.32" />
+		<PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.33" />
 		<PackageReference Include="YamlDotNet" Version="11.2.1" />
 	</ItemGroup>
 </Project>
