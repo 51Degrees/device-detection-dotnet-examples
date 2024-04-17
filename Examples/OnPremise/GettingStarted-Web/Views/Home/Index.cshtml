@@ -89,6 +89,7 @@
         <tr>
             <th>Key</th>
             <th>Value</th>
+            <th>JS</th>
         </tr>
         <tr class="lightyellow"><td><b>Hardware Vendor:</b></td><td> @Model.HardwareVendor</td></tr>
         <tr class="lightyellow"><td><b>Hardware Name:</b></td><td> @Model.HardwareName</td></tr>
@@ -104,13 +105,44 @@
         <tr class="lightyellow"><td><b>Device Id:</b></td><td> @Model.DeviceId</td></tr>
         <tr class="lightyellow"><td><b>browsersourceproject:</b></td><td> @Model.browsersourceproject</td></tr>
         <tr class="lightyellow"><td><b>browsersourceprojectversion</b></td><td> @Model.browsersourceprojectversion</td></tr>
-        <tr class="lightyellow"><td><b>topicsapienabled:</b></td><td> @Model.topicsapienabled</td></tr>
-        <tr class="lightyellow"><td><b>fencedframesapienabled:</b></td><td> @Model.fencedframesapienabled</td></tr>
-        <tr class="lightyellow"><td><b>attributionreportingapienabled:</b></td><td> @Model.attributionreportingapienabled</td></tr>
-        <tr class="lightyellow"><td><b>protectedaudienceapienabled:</b></td><td> @Model.protectedaudienceapienabled</td></tr>
-        <tr class="lightyellow"><td><b>sharedstorageapienabled:</b></td><td> @Model.sharedstorageapienabled</td></tr>
+        <tr class="lightyellow"><td><b>topicsapienabled:</b></td><td> @Model.topicsapienabled</td><td id="topicsapienabledid"></td></tr>
+        <tr class="lightyellow"><td><b>fencedframesapienabled:</b></td><td> @Model.fencedframesapienabled</td><td id="fencedframesapienabledid"></td></tr>
+        <tr class="lightyellow"><td><b>attributionreportingapienabled:</b></td><td> @Model.attributionreportingapienabled</td><td id="attributionreportingapienabledid"></td></tr>
+        <tr class="lightyellow"><td><b>protectedaudienceapienabled:</b></td><td> @Model.protectedaudienceapienabled</td><td id="protectedaudienceapienabledid"></td></tr>
+        <tr class="lightyellow"><td><b>sharedstorageapienabled:</b></td><td> @Model.sharedstorageapienabled</td><td id="sharedstorageapienabledid"></td></tr>
         <tr class="lightyellow"><td><b>browsersupportsprivacysandbox:</b></td><td> @Model.browsersupportsprivacysandbox</td></tr>
     </table>
+
+    <script>
+
+        function topicsapienabled() {
+            return "browsingTopics" in document;
+        }
+
+        function fencedframesapienabled() {
+            return "HTMLFencedFrameElement" in window;
+        }
+
+        function attributionreportingapienabled() {
+            return document.featurePolicy.allowsFeature("attribution-reporting");
+        }
+
+        function protectedaudienceapienabled() {
+            return "runAdAuction" in navigator;
+        }
+
+        function sharedstorageapienabled() {
+            return "sharedStorage" in window;
+        }
+
+        document.getElementById("topicsapienabledid").innerText = topicsapienabled();
+        document.getElementById("fencedframesapienabledid").innerText = fencedframesapienabled();
+        document.getElementById("attributionreportingapienabledid").innerText = attributionreportingapienabled();
+        document.getElementById("protectedaudienceapienabledid").innerText = protectedaudienceapienabled();
+        document.getElementById("sharedstorageapienabledid").innerText = sharedstorageapienabled();
+
+    </script>
+
     <br />
 
     <div id="evidence">
