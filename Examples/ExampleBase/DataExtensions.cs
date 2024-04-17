@@ -73,5 +73,12 @@ namespace FiftyOne.DeviceDetection.Examples
         {
             return apv.HasValue ? apv.Value.ToString() : $"Unknown ({apv.NoValueMessage})";
         }
+        public static string GetHumanReadable(this object apv)
+        {
+            if (apv is IAspectPropertyValue<int>) return (apv as IAspectPropertyValue<int>).GetHumanReadable();
+            if (apv is IAspectPropertyValue<string>) return (apv as IAspectPropertyValue<string>).GetHumanReadable();
+            if (apv is IAspectPropertyValue<IReadOnlyList<string>>) return (apv as IAspectPropertyValue<IReadOnlyList<string>>).GetHumanReadable();
+            return apv.ToString();
+        }
     }
 }

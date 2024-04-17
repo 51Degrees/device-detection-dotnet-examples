@@ -43,6 +43,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
         public string ScreenWidth { get; private set; }
         public string ScreenHeight { get; private set; }
         public string DeviceId { get; private set; }
+        public string browsersourceproject { get; private set; }
+        public string browsersourceprojectversion { get; private set; }
+        public string topicsapienabled { get; private set; }
+        public string fencedframesapienabled { get; private set; }
+        public string attributionreportingapienabled { get; private set; }
+        public string protectedaudienceapienabled { get; private set; }
+        public string sharedstorageapienabled { get; private set; }
+        public string browsersupportsprivacysandbox { get; private set; }
 
         public IFlowData FlowData { get; private set; }
 
@@ -91,6 +99,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
             ScreenWidth = deviceData.TryGetValue(d => d.ScreenPixelsWidth.GetHumanReadable());
             ScreenHeight = deviceData.TryGetValue(d => d.ScreenPixelsHeight.GetHumanReadable());
             DeviceId = deviceData.TryGetValue(d => d.DeviceId.GetHumanReadable());
+            browsersourceproject = deviceData.TryGetValue(d => d["browsersourceproject"].GetHumanReadable());
+            browsersourceprojectversion = deviceData.TryGetValue(d => d["browsersourceprojectversion"].GetHumanReadable());
+            topicsapienabled = deviceData.TryGetValue(d => d["topicsapienabled"].GetHumanReadable());
+            fencedframesapienabled = deviceData.TryGetValue(d => d["fencedframesapienabled"].GetHumanReadable());
+            attributionreportingapienabled = deviceData.TryGetValue(d => d["attributionreportingapienabled"].GetHumanReadable());
+            protectedaudienceapienabled = deviceData.TryGetValue(d => d["protectedaudienceapienabled"].GetHumanReadable());
+            sharedstorageapienabled = deviceData.TryGetValue(d => d["sharedstorageapienabled"].GetHumanReadable());
+            browsersupportsprivacysandbox = deviceData.TryGetValue(d => d["browsersupportsprivacysandbox"].GetHumanReadable());
         }
     }
 }

@@ -48,6 +48,24 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
     {
         public class Example : ExampleBase
         {
+            static readonly string[] NewProperties = new[]
+            {
+                "javascriptbrowseroverride",
+                "browsersourceproject",
+                "browsersourceprojectversion",
+                "topicsapienabled",
+                "fencedframesapienabled",
+                "attributionreportingapienabled",
+                "protectedaudienceapienabled",
+                "sharedstorageapienabled",
+                "browsersupportsprivacysandbox",
+                "topicsapienabledjavascript",
+                "fencedframesapienabledjavascript",
+                "attributionreportingapienabledjavascript",
+                "protectedaudienceapienabledjavascript",
+                "sharedstorageapienabledjavascript"
+            };
+
             public void Run(string dataFile, ILoggerFactory loggerFactory, TextWriter output)
             {
                 // In this example, we use the DeviceDetectionPipelineBuilder and configure it
@@ -63,7 +81,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                     // https://51degrees.com/documentation/_device_detection__features__performance_options.html
                     // https://51degrees.com/documentation/_features__automatic_datafile_updates.html
                     // https://51degrees.com/documentation/_features__usage_sharing.html
-                    .SetPerformanceProfile(PerformanceProfiles.LowMemory)
+                    .SetPerformanceProfile(PerformanceProfiles.MaxPerformance)
                     // inhibit sharing usage for this example, usually this should be set to "true"
                     .SetShareUsage(false)
                     // inhibit auto-update of the data file for this test
@@ -145,6 +163,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                     OutputValue("Browser Name", device.BrowserName, message);
                     OutputValue("Browser Version", device.BrowserVersion, message);
                     OutputValue("DeviceId", device.DeviceId, message);
+                    foreach(var key in NewProperties)
+                    {
+                        var value = device[key] as IAspectPropertyValue;
+                        if (value != null)
+                        {
+                            OutputValue(key, value, message);
+                        }
+                    }
                     message.AppendLine("Matched");
                     foreach(var entry in device.UserAgents.Value)
                     {
