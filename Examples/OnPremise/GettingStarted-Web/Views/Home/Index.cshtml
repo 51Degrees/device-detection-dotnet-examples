@@ -98,7 +98,7 @@
         <tr class="lightyellow"><td><b>Platform Name:</b></td><td> @Model.PlatformName</td></tr>
         <tr class="lightyellow"><td><b>Platform Version:</b></td><td> @Model.PlatformVersion</td></tr>
         <tr class="lightyellow"><td><b>Browser Vendor:</b></td><td> @Model.BrowserVendor</td></tr>
-        <tr class="lightyellow"><td><b>Browser Name:</b></td><td> @Model.BrowserName</td></tr>
+        <tr class="lightyellow"><td><b>Browser Name:</b></td><td> @Model.BrowserName</td><td id="browserid"></td></tr>
         <tr class="lightyellow"><td><b>Browser Version:</b></td><td> @Model.BrowserVersion</td></tr>
         <tr class="lightyellow"><td><b>Screen width (pixels):</b></td><td> @Model.ScreenWidth</td></tr>
         <tr class="lightyellow"><td><b>Screen height (pixels):</b></td><td> @Model.ScreenHeight</td></tr>
@@ -135,11 +135,16 @@
             return "sharedStorage" in window;
         }
 
+        async function brave() {
+            return navigator.brave && await navigator.brave.isBrave();
+        }
+
         document.getElementById("topicsapienabledid").innerText = topicsapienabled();
         document.getElementById("fencedframesapienabledid").innerText = fencedframesapienabled();
         document.getElementById("attributionreportingapienabledid").innerText = attributionreportingapienabled();
         document.getElementById("protectedaudienceapienabledid").innerText = protectedaudienceapienabled();
         document.getElementById("sharedstorageapienabledid").innerText = sharedstorageapienabled();
+        brave().then(d => document.getElementById("browserid").innerText = d);
 
     </script>
 
