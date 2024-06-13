@@ -251,80 +251,87 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
 
                 // Build the device detection pipeline  and pass in the desired settings to configure
                 // automatic updates.
-                using (var pipeline = PipelineBuilder
-                    // specify the filename for the data file. When using update on start-up
-                    // the file need not exist, but the directory it is in must exist.
-                    // Any file that is present is overwritten. Because the file will be
-                    // overwritten, the pipeline must be configured to copy the supplied
-                    // file to a temporary file (createTempDataCopy parameter == true).
-                    //
-                    // For automatic updates to work you will also need to provide a license key.
-                    // A license key can be obtained with a subscription from https://51degrees.com/pricing
-                    .UseOnPremise(dataFile, licenseKey, true)
-                    // Enable update on startup, the auto update system
-                    // will be used to check for an update before the
-                    // device detection engine is created. This will block
-                    // creation of the pipeline until the data file is downloaded.
-                    .SetDataUpdateOnStartUp(true)
-                    // Enable automatic updates once the pipeline has started.
-                    .SetAutoUpdate(true)
-                    // Watch the data file on disk and refresh the engine
-                    // as soon as that file is updated.
-                    .SetDataFileSystemWatcher(true)
-                    // For the purposes of this example we are setting the time
-                    // between checks to see if the file has changed to 1 second.
-                    // By default this is 30 mins.
-                    .SetUpdatePollingInterval(1)
-                    // Build the pipeline.
-                    .Build())
+                try
                 {
-                    // thread blocks till update checking is complete - or if there is an
-                    // exception we don't get this far
-                    Logger.LogInformation("Update on start-up complete - status - " +
-                        CompletionListener.Result.Status);
-
-                    if(CompletionListener.Result.Status == AutoUpdateStatus.AUTO_UPDATE_SUCCESS ||
-                        CompletionListener.Result.Status == AutoUpdateStatus.AUTO_UPDATE_NOT_NEEDED)
+                    using (var pipeline = PipelineBuilder
+                        // specify the filename for the data file. When using update on start-up
+                        // the file need not exist, but the directory it is in must exist.
+                        // Any file that is present is overwritten. Because the file will be
+                        // overwritten, the pipeline must be configured to copy the supplied
+                        // file to a temporary file (createTempDataCopy parameter == true).
+                        //
+                        // For automatic updates to work you will also need to provide a license key.
+                        // A license key can be obtained with a subscription from https://51degrees.com/pricing
+                        .UseOnPremise(dataFile, licenseKey, true)
+                        // Enable update on startup, the auto update system
+                        // will be used to check for an update before the
+                        // device detection engine is created. This will block
+                        // creation of the pipeline until the data file is downloaded.
+                        .SetDataUpdateOnStartUp(true)
+                        // Enable automatic updates once the pipeline has started.
+                        .SetAutoUpdate(true)
+                        // Watch the data file on disk and refresh the engine
+                        // as soon as that file is updated.
+                        .SetDataFileSystemWatcher(true)
+                        // For the purposes of this example we are setting the time
+                        // between checks to see if the file has changed to 1 second.
+                        // By default this is 30 mins.
+                        .SetUpdatePollingInterval(1)
+                        // Build the pipeline.
+                        .Build())
                     {
-                        Logger.LogInformation("Modifying downloaded file to trigger reload ... " +
-                            "please wait for that to complete");
-                        // wait for the dataUpdateService to notify us that it has updated
-                        CompletionListener.Reset();
-
-                        // it's the same file but changing the file metadata will trigger reload,
-                        // demonstrating that if you download a new file and replace the
-                        // existing one, then it will be loaded
-                        try
-                        {
-                            new FileInfo(dataFile).LastWriteTimeUtc = DateTime.UtcNow;
-                        }
-                        catch (IOException) 
-                        {
-                            throw new InvalidOperationException("Could not modify file time, " +
-                                "abandoning example");
-                        }
-
-                        try
-                        {
-                            CompletionListener.WaitForComplete(_updateTimeout);
-                            Logger.LogInformation($"Update on file modification complete, " +
-                                $"status: {CompletionListener.Result.Status}");
-                        }
-                        catch (TimeoutException)
-                        {
-                            Logger.LogError("Timeout waiting for engine to refresh data.");
-                        }
-                    }
-                    else
-                    {
-                        Logger.LogError("Auto update was not successful, abandoning example");
-                        throw new InvalidOperationException("Auto update failed: " +
+                        // thread blocks till update checking is complete - or if there is an
+                        // exception we don't get this far
+                        Logger.LogInformation("Update on start-up complete - status - " +
                             CompletionListener.Result.Status);
+
+                        if (CompletionListener.Result.Status == AutoUpdateStatus.AUTO_UPDATE_SUCCESS ||
+                            CompletionListener.Result.Status == AutoUpdateStatus.AUTO_UPDATE_NOT_NEEDED)
+                        {
+                            Logger.LogInformation("Modifying downloaded file to trigger reload ... " +
+                                                  "please wait for that to complete");
+                            // wait for the dataUpdateService to notify us that it has updated
+                            CompletionListener.Reset();
+
+                            // it's the same file but changing the file metadata will trigger reload,
+                            // demonstrating that if you download a new file and replace the
+                            // existing one, then it will be loaded
+                            try
+                            {
+                                new FileInfo(dataFile).LastWriteTimeUtc = DateTime.UtcNow;
+                            }
+                            catch (IOException)
+                            {
+                                throw new InvalidOperationException("Could not modify file time, " +
+                                                                    "abandoning example");
+                            }
+
+                            try
+                            {
+                                CompletionListener.WaitForComplete(_updateTimeout);
+                                Logger.LogInformation($"Update on file modification complete, " +
+                                                      $"status: {CompletionListener.Result.Status}");
+                            }
+                            catch (TimeoutException)
+                            {
+                                Logger.LogError("Timeout waiting for engine to refresh data.");
+                            }
+                        }
+                        else
+                        {
+                            Logger.LogError("Auto update was not successful, abandoning example");
+                            throw new InvalidOperationException("Auto update failed: " +
+                                                                CompletionListener.Result.Status);
+                        }
+
+                        Logger.LogInformation("Finished Example");
                     }
-
-                    Logger.LogInformation("Finished Example");
                 }
-
+                catch (Pipeline.Engines.Exceptions.DataUpdateException)
+                {
+                    Logger.LogWarning("Auto update failed with 429 status code, " +
+                                      "abandoning example");
+                }
             }
 
             private string CheckLicenseKey(string licenseKey, ILogger logger)
