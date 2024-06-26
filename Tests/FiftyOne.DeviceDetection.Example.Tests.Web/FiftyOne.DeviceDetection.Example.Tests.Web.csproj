@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.90" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.31" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.31" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
