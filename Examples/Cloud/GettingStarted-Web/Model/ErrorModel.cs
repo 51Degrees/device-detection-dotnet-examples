@@ -20,12 +20,21 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+using FiftyOne.Pipeline.Core.Data;
+
 namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb.Model
 {
-    public class EvidenceModel
+    public class ErrorModel
     {
-        public string Key { get; init; }
-        public string Value { get; init; }
-        public bool? Used { get; init; }
+        public string TopClassName { get; private init; }
+        public string TopMessage { get; private init; }
+        public string ExceptionDump { get; private init; }
+
+        public ErrorModel(IFlowError flowError)
+        {
+            TopClassName = flowError.ExceptionData?.GetType().Name;
+            TopMessage = flowError.ExceptionData?.Message;
+            ExceptionDump = flowError.ExceptionData?.ToString();
+        }
     }
 }

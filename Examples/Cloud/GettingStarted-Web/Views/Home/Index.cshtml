@@ -67,6 +67,29 @@
 </noscript>
 
 <div id="content">
+    @if (Model.Errors is not null)
+    {
+        <div id="errors">
+            <h3>Errors</h3>
+            <table>
+                <tr>
+                    <th>Top Type</th>
+                    <th>Top Message</th>
+                    <th>Exception Dump</th>
+                </tr>
+                @foreach (var entry in Model.Errors)
+                {
+                    <tr class="lightred">
+                        <td>@(entry.TopClassName)</td>
+                        <td>@(entry.TopMessage)</td>
+                        <td>@(entry.ExceptionDump)</td>
+                    </tr>
+                }
+            </table>
+        </div>
+        <br />
+    }
+
     <h3>Detection results</h3>
     <p>
         The following values are determined by sever-side device detection
@@ -94,7 +117,7 @@
 
     <div id="evidence">
         <h3>Evidence used</h3>
-        <p class="smaller">Evidence was <span class="lightgreen">used</span> / <span class="lightyellow">present</span> for detection</p>
+        <p class="smaller">Evidence was <span class="lightgreen">used</span> / <span class="lightyellow">present</span> / <span class="darkorange">unusable</span> for detection</p>
         <table>
             <tr>
                  <th>Key</th>
@@ -102,7 +125,7 @@
             </tr>
             @foreach (var entry in Model.Evidence)
             {
-                <tr class="@(entry.Used ? "lightgreen" : "lightyellow")">
+                <tr class="@(entry.Used is null ? "darkorange" : (entry.Used.Value ? "lightgreen" : "lightyellow"))">
                     <td><b>@(entry.Key)</b></td>
                     <td>@(entry.Value)</td>
                 </tr>
