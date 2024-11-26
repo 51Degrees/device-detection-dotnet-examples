@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.194" />
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.111" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.113" />
   </ItemGroup>
   
 </Project>
