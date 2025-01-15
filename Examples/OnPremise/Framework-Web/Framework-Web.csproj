@@ -119,7 +119,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FiftyOne.DeviceDetection.Hash.Engine.OnPremise" Version="4.4.212" />
+    <PackageReference Include="FiftyOne.DeviceDetection.Hash.Engine.OnPremise" Version="4.4.213" />
     <PackageReference Include="FiftyOne.Pipeline.JavaScriptBuilder" Version="4.4.122" />
     <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.122" />
     <PackageReference Include="Microsoft.Web.Infrastructure">
