@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.214" />
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.123" />
+    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.215" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.124" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.36" />
     <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
   </ItemGroup>
