@@ -37,11 +37,6 @@ namespace FiftyOne.DeviceDetection.Examples
         public const string LITE_HASH_DATA_FILE_NAME = "51Degrees-LiteV4.1.hash";
 
         /// <summary>
-        /// The default name of the file that is used by the AppleProfileEngine
-        /// </summary>
-        public const string APPLE_DATA_FILE_NAME = "macintosh.data.json";
-
-        /// <summary>
         /// Name of the file to use for the test evidence.
         /// </summary>
         public const string YAML_EVIDENCE_FILE_NAME = "20000 Evidence Records.yml";
