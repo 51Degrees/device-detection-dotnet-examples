@@ -20,12 +20,11 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-using FiftyOne.DeviceDetection.Apple;
+using System;
+using System.Linq;
 using FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements;
 using FiftyOne.Pipeline.CloudRequestEngine.FlowElements;
 using FiftyOne.Pipeline.Core.Configuration;
-using System;
-using System.Linq;
 
 namespace FiftyOne.DeviceDetection.Examples
 {
@@ -106,32 +105,6 @@ namespace FiftyOne.DeviceDetection.Examples
         public static void SetHashDataFile(this PipelineOptions options, string dataFile)
         {
             var hashConfig = options.GetElementConfig(nameof(DeviceDetectionHashEngine));
-            hashConfig.BuildParameters[DATA_FILE_SETTING_NAME] = dataFile;
-        }
-
-
-        /// <summary>
-        /// Get the Apple data file setting from the supplied <see cref="PipelineOptions"/> 
-        /// </summary>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        public static string GetAppleDataFile(this PipelineOptions options)
-        {
-            var hashConfig = options.GetElementConfig(nameof(AppleProfileEngine));
-            hashConfig.BuildParameters.TryGetValue(DATA_FILE_SETTING_NAME,
-                out var dataFileObj);
-            return dataFileObj?.ToString();
-        }
-
-        /// <summary>
-        /// Set the Apple data file setting from the supplied <see cref="PipelineOptions"/> 
-        /// </summary>
-        /// <param name="options"></param>
-        /// <param name="dataFile"></param>
-        /// <returns></returns>
-        public static void SetAppleDataFile(this PipelineOptions options, string dataFile)
-        {
-            var hashConfig = options.GetElementConfig(nameof(AppleProfileEngine));
             hashConfig.BuildParameters[DATA_FILE_SETTING_NAME] = dataFile;
         }
 
