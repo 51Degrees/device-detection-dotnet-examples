@@ -23,8 +23,6 @@ if ($BuildMethod -eq "dotnet"){
     ".\Examples\Cloud\Metadata-Console\Metadata-Console.csproj",
     ".\Examples\Cloud\NativeModel-Console\NativeModelLookup-Console.csproj",
     ".\Examples\Cloud\TAC-Console\TacLookup-Console.csproj",
-    ".\Examples\OnPremise\AppleServerSideConfig-Console\AppleServerSideConfig-Console.csproj",
-    ".\Examples\OnPremise\AppleServerSide-Console\AppleServerSide-Console.csproj",
     ".\Examples\OnPremise\GettingStarted-Console\GettingStarted-Console.csproj",
     ".\Examples\OnPremise\GettingStarted-Web\GettingStarted-Web.csproj",
     ".\Examples\OnPremise\MatchMetrics-Console\MatchMetrics-Console.csproj",
