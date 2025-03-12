@@ -10,8 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.239" />
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.132" />
+    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.240" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.133" />
     <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
     <PackageReference Include="System.Text.Json" Version="6.0.11" />
   </ItemGroup>
