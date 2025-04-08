@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.14" />
-    <PackageReference Include="NUglify" Version="1.21.14" />
+    <PackageReference Include="NUglify" Version="1.21.15" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
