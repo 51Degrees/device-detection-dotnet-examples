@@ -12,7 +12,7 @@
   <ItemGroup>
 	<PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.247" />
 	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.134" />
-	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.14" />
+	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.15" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
   
