@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
     <RootNamespace>Client_Hints_NetCore_31</RootNamespace>
     <AssemblyName>Client_Hints_NetCore_31</AssemblyName>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>

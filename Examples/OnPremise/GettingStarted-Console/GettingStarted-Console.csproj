@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-    <Platforms>AnyCPU;x86;x64</Platforms>
+    <Platforms>AnyCPU;x86;x64;ARM64</Platforms>
     <AssemblyName>FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole</AssemblyName>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
   </PropertyGroup>

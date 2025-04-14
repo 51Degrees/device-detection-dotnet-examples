@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <AssemblyName>FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb</AssemblyName>
     <RootNamespace>FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb</RootNamespace>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
