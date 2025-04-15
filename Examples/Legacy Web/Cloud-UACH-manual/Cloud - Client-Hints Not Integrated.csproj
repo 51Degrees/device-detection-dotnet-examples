@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
     <RootNamespace>Cloud_Cloud_Client_Hints_Not_Integrated</RootNamespace>
     <AssemblyName>Cloud_Cloud_Client_Hints_Not_Integrated</AssemblyName>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>

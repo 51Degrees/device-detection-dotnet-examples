@@ -5,7 +5,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>FiftyOne.DeviceDetection.Examples.OnPremise.Performance</RootNamespace>
     <AssemblyName>FiftyOne.DeviceDetection.Examples.OnPremise.Performance</AssemblyName>
-    <Platforms>AnyCPU;x64;x86</Platforms>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
