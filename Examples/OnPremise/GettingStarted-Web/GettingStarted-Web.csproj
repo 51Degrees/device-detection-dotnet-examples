@@ -21,7 +21,7 @@
 
   <ItemGroup>
 	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.134" />
-	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.15" />
+	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.16" />
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
