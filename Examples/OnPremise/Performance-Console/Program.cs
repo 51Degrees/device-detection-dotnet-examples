@@ -413,25 +413,15 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                 {
                     using (var jsonOutput = File.CreateText(options.JsonOutput))
                     {
-                        var jsonResults = new Dictionary<string, object>
-                        {
-                            ["WithGC"] = resultsWithGC.ToDictionary(
-                                k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
-                                v => new Dictionary<string, float>()
-                                {
-                                    {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
-                                    {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
-                                    {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
-                                }),
-                            ["WithoutGC"] = resultsWithoutGC.ToDictionary(
-                                k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
-                                v => new Dictionary<string, float>()
-                                {
-                                    {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
-                                    {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
-                                    {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
-                                })
-                        };
+                        // Use the best results (without GC) for JSON output to maintain compatibility
+                        var jsonResults = resultsWithoutGC.ToDictionary(
+                            k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
+                            v => new Dictionary<string, float>()
+                            {
+                                {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
+                                {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
+                                {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
+                            });
                         jsonOutput.Write(JsonSerializer.Serialize(jsonResults));
                     }
                 }
