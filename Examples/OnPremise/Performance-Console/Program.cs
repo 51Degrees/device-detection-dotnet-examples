@@ -105,7 +105,9 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             private List<BenchmarkResult> Run(
                 TextReader evidenceReader,
                 TextWriter output,
-                int threadCount)
+                int threadCount,
+                bool enableGC = true,
+                long noGcRegionSize = 64 * 1024 * 1024)
             {
                 var evidence = GetEvidence(evidenceReader).ToList();
 
@@ -117,8 +119,39 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                 Task.Delay(500).Wait();
 
                 output.WriteLine("Running");
+                
+                // Disable GC during performance measurement if GC is disabled
+                bool gcWasDisabled = false;
+                if (!enableGC)
+                {
+                    try
+                    {
+                        gcWasDisabled = GC.TryStartNoGCRegion(noGcRegionSize);
+                        if (gcWasDisabled)
+                        {
+                            output.WriteLine($"GC disabled for performance test (NoGC region: {noGcRegionSize / (1024 * 1024)}MB)");
+                        }
+                        else
+                        {
+                            output.WriteLine("Could not disable GC - running with GC enabled");
+                        }
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        output.WriteLine($"NoGC region size too large ({noGcRegionSize / (1024 * 1024)}MB) - running with GC enabled");
+                    }
+                }
+                
                 var execution = Benchmark(evidence, threadCount);
                 var executionTime = execution.Sum(r => r.Timer.ElapsedMilliseconds);
+                
+                // Re-enable GC if it was disabled
+                if (gcWasDisabled)
+                {
+                    GC.EndNoGCRegion();
+                    output.WriteLine("GC re-enabled");
+                }
+                
                 output.WriteLine($"Finished - Execution time was {executionTime} ms, " +
                     $"adjustment from warm-up {executionTime - warmupTime} ms");
 
@@ -220,7 +253,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             /// </summary>
             /// <param name="options"></param>
             public static List<BenchmarkResult> Run(string dataFile, string evidenceFile, 
-                PerformanceConfiguration config, TextWriter output, ushort threadCount)
+                PerformanceConfiguration config, TextWriter output, ushort threadCount, bool enableGC = true, long noGcRegionSize = 64 * 1024 * 1024)
             {
                 // Initialize a service collection which will be used to create the services
                 // required by the Pipeline and manage their lifetimes.
@@ -311,7 +344,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                             $"PerformanceGraph {config.PerformanceGraph}, " +
                             $"PredictiveGraph {config.PredictiveGraph}");
 
-                        return serviceProvider.GetRequiredService<Example>().Run(evidenceReader, output, threadCount);
+                        return serviceProvider.GetRequiredService<Example>().Run(evidenceReader, output, threadCount, enableGC, noGcRegionSize);
                     }
                 }
             }
@@ -323,7 +356,9 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
             // in the repository.
             var options = ExampleUtils.ParseOptions(args);
             if (options != null) {
+                // First try to use TAC-HashV41.hash if available
                 var dataFile = options.DataFilePath != null ? options.DataFilePath :
+                    ExampleUtils.FindFile("TAC-HashV41.hash") ?? 
                     // In this example, by default, the 51degrees "Lite" file needs to be somewhere in the
                     // project space, or you may specify another file as a command line parameter.
                     //
@@ -337,25 +372,66 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                     // that are relevant to device detection. For example, User-Agent and UA-CH headers.
                     ExampleUtils.FindFile(Constants.YAML_EVIDENCE_FILE_NAME);
 
-                var results = new Dictionary<PerformanceConfiguration, IList<BenchmarkResult>>();
+                // Run benchmarks with GC enabled (default behavior)
+                Console.WriteLine("\n==== Running benchmarks WITH Garbage Collection ====\n");
+                var resultsWithGC = new Dictionary<PerformanceConfiguration, IList<BenchmarkResult>>();
                 foreach (var config in _configs)
                 {
-                    var result = Example.Run(dataFile, evidenceFile, config, Console.Out, DEFAULT_THREAD_COUNT);
-                    results[config] = result;
+                    var result = Example.Run(dataFile, evidenceFile, config, Console.Out, DEFAULT_THREAD_COUNT, true);
+                    resultsWithGC[config] = result;
+                }
+
+                // Use the optimal NoGC region size (128MB showed best performance)
+                var optimalNoGcSize = 128 * 1024 * 1024; // 128MB
+                Console.WriteLine($"\n==== Running benchmarks WITHOUT Garbage Collection ({optimalNoGcSize / (1024 * 1024)}MB NoGC Region) ====\n");
+                var resultsWithoutGC = new Dictionary<PerformanceConfiguration, IList<BenchmarkResult>>();
+                
+                foreach (var config in _configs)
+                {
+                    var result = Example.Run(dataFile, evidenceFile, config, Console.Out, DEFAULT_THREAD_COUNT, false, optimalNoGcSize);
+                    resultsWithoutGC[config] = result;
+                }
+
+                // Print comparison summary
+                Console.WriteLine("\n==== Performance Comparison Summary ====\n");
+                Console.WriteLine("Configuration\t\t\t\tWith GC (ms/det)\tWithout GC (ms/det)\tImprovement %\tDet/Sec (GC)\tDet/Sec (No GC)");
+                Console.WriteLine(new string('-', 120));
+                
+                foreach (var config in _configs)
+                {
+                    var msWithGC = GetMsPerDetection(resultsWithGC[config], DEFAULT_THREAD_COUNT);
+                    var msWithoutGC = GetMsPerDetection(resultsWithoutGC[config], DEFAULT_THREAD_COUNT);
+                    var improvement = ((msWithGC - msWithoutGC) / msWithGC) * 100;
+                    var detectionsPerSecWithGC = 1000 / msWithGC;
+                    var detectionsPerSecWithoutGC = 1000 / msWithoutGC;
+                    
+                    var configName = $"{config.Profile}{(config.AllProperties ? " All" : " Specific")}";
+                    Console.WriteLine($"{configName,-35}\t{msWithGC:F4}\t\t{msWithoutGC:F4}\t\t{improvement:F1}%\t\t{detectionsPerSecWithGC:F0}\t\t{detectionsPerSecWithoutGC:F0}");
                 }
 
                 if (string.IsNullOrEmpty(options.JsonOutput) == false)
                 {
                     using (var jsonOutput = File.CreateText(options.JsonOutput))
                     {
-                        var jsonResults = results.ToDictionary(
-                            k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
-                            v => new Dictionary<string, float>()
-                            {
-                            {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
-                            {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
-                            {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
-                            });
+                        var jsonResults = new Dictionary<string, object>
+                        {
+                            ["WithGC"] = resultsWithGC.ToDictionary(
+                                k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
+                                v => new Dictionary<string, float>()
+                                {
+                                    {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
+                                    {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
+                                    {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
+                                }),
+                            ["WithoutGC"] = resultsWithoutGC.ToDictionary(
+                                k => $"{Enum.GetName(k.Key.Profile)}{(k.Key.AllProperties ? "_All" : "")}",
+                                v => new Dictionary<string, float>()
+                                {
+                                    {"DetectionsPerSecond", 1000 / GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) },
+                                    {"DetectionsPerSecondPerThread", 1000 / (GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) * DEFAULT_THREAD_COUNT) },
+                                    {"MsPerDetection", GetMsPerDetection(v.Value, DEFAULT_THREAD_COUNT) }
+                                })
+                        };
                         jsonOutput.Write(JsonSerializer.Serialize(jsonResults));
                     }
                 }
