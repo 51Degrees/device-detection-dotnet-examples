@@ -110,6 +110,10 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                 long noGcRegionSize = 64 * 1024 * 1024)
             {
                 var evidence = GetEvidence(evidenceReader).ToList();
+                
+                output.WriteLine($"Loaded {evidence.Count} evidence records");
+                // Apply UTF-8 preprocessing to eliminate string conversion overhead
+                evidence = Utf8EvidencePreprocessor.ConvertToUtf8(evidence);
 
                 // Make an initial run to warm up the system
                 output.WriteLine("Warming up");
