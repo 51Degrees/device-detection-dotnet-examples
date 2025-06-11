@@ -13,9 +13,9 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.135" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.16" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.16" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.16" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.17" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.17" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.17" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.1" />
