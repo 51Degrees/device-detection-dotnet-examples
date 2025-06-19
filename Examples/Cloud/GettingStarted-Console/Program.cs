@@ -45,7 +45,7 @@ using System.Text;
 /// @include{doc} example-require-resourcekey.txt
 ///
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection)
 /// - Microsoft.Extensions.Configuration.Json
 /// - Microsoft.Extensions.DependencyInjection
 /// - Microsoft.Extensions.Logging.Console
