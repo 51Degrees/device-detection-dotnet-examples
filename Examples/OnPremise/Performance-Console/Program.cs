@@ -59,7 +59,7 @@ using System.Threading.Tasks;
 /// @include{doc} example-require-datafile.txt
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
 {
