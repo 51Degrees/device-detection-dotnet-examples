@@ -35,7 +35,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
-/// @example Performance-Console/Program.cs
+/// @example OnPremise/Performance-Console/Program.cs
 ///
 /// The example illustrates a "clock-time" benchmark for assessing detection speed.
 ///
