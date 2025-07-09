@@ -11,7 +11,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.248" />
-		<PackageReference Include="System.Text.Json" Version="8.0.5" />
+		<PackageReference Include="System.Text.Json" Version="8.0.6" />
 		<PackageReference Include="YamlDotNet" Version="16.2.1" />
 	</ItemGroup>
 </Project>
