@@ -74,11 +74,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <ProjectReference Include="..\..\ExampleBase\FiftyOne.DeviceDetection.Examples.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\ExampleBase\FiftyOne.DeviceDetection.Examples.csproj" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
 
 </Project>
