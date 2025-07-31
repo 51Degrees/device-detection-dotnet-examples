@@ -12,7 +12,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.135" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.136" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="6.0.36" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="6.0.36" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.3" />
