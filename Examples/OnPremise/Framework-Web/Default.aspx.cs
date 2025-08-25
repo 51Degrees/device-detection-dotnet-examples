@@ -75,7 +75,7 @@ using System.Web.UI;
 /// `FiftyOne.DeviceDetection\device-detection-cxx\device-detection-data`
 /// Alternatively, you can obtain a [license key](http://51degrees.com/pricing) which can be used 
 /// to download a data file from our 
-/// [Distributor](https://51degrees.com/documentation/_info__distributor.html) service.
+/// [Distributor](/documentation/4.5/_services__distributor.html) service.
 /// 
 /// @include OnPremise/Framework-Web/App_Data/51Degrees.json
 /// 
