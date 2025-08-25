@@ -74,7 +74,7 @@ using System.Web.UI;
 /// [configurator](https://configure.51degrees.com/1QWJwHxl) site in order to get this example to 
 /// work. The previous link will pre-populate the key with the properties that are used in this
 /// example.
-/// See our [documentation](http://51degrees.com/documentation/4.4/_concepts__configurator.html) 
+/// See our [documentation](/documentation/4.5/_services__configurator.html) 
 /// for more detail on resource keys and the configurator site. Once created, the key will 
 /// need to be copied into the configuration file:
 /// 
