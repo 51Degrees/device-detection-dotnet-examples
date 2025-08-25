@@ -40,9 +40,9 @@ using System.Text;
 /// for a fuller example.
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.DependencyInjection
-/// - Microsoft.Extensions.Logging.Console
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.Cloud.Configurator
 {

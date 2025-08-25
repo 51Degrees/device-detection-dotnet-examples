@@ -52,13 +52,13 @@ using System.Text;
 /// keys that, when added to the evidence collection in flow data, could have some impact on the
 /// result returned by device detection.
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/Metadata-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/Metadata-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-datafile.txt
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.Logging.Console
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.Metadata
 {

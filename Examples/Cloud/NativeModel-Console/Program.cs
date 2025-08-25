@@ -39,13 +39,13 @@ using System.Net.Http;
 /// [Android devices](https://developer.android.com/reference/android/os/Build#MODEL) and 
 /// [iOS devices](https://gist.github.com/soapyigu/c99e1f45553070726f14c1bb0a54053b#file-machinename-swift)
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/main/Examples/Cloud/NativeModel-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/Cloud/NativeModel-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-resourcekey.txt
 ///
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.Logging.Console
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
 {

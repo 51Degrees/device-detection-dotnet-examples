@@ -50,14 +50,14 @@ using YamlDotNet.Serialization;
 /// performance and predictive power using Performance Profile, Graph and Difference and Drift 
 /// settings.
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/OfflineProcessing-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/OfflineProcessing-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-datafile.txt
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.Logging.Console
-/// - YamlDotNet
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
+/// - [YamlDotNet](https://www.nuget.org/packages/YamlDotNet/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
 {

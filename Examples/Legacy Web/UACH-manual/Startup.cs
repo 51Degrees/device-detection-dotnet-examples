@@ -43,7 +43,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// For example, setting the HTTP response headers to request user-agent 
 /// client hints.
 /// 
-/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/main/Examples/Legacy%20Web/UACH-manual).
+/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/version/4.5/Examples/Legacy%20Web/UACH-manual).
 /// 
 /// Required NuGet Dependencies:
 /// - [Microsoft.AspNetCore.App](https://www.nuget.org/packages/Microsoft.AspNetCore.App/)

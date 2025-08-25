@@ -37,7 +37,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// 
 /// @include{doc} example-web-integration-client-hints.txt
 /// 
-/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/main/Examples/Legacy%20Web/Cloud-UACH). 
+/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/version/4.5/Examples/Legacy%20Web/Cloud-UACH). 
 /// 
 /// To use the cloud service you will need to create a **resource key**. 
 /// The resource key is used as short-hand to store the particular set of 

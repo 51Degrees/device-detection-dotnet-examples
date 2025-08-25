@@ -42,7 +42,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// For example, setting the HTTP response headers to request user-agent 
 /// client hints.
 /// 
-/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/main/Examples/Legacy%20Web/Cloud-UACH-manual).
+/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/version/4.5/Examples/Legacy%20Web/Cloud-UACH-manual).
 /// 
 /// To use the cloud service you will need to create a **resource key**. 
 /// The resource key is used as short-hand to store the particular set of 

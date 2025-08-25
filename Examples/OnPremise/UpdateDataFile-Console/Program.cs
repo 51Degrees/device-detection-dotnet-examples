@@ -132,7 +132,7 @@ using System.Net.Http;
 /// ```
 /// 
 /// # Location
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/UpdateDataFile-Console/Program.cs).
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/UpdateDataFile-Console/Program.cs).
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
 {

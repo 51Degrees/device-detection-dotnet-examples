@@ -48,7 +48,7 @@ using System.Linq;
 /// page.
 /// 
 /// This example is available in full on 
-/// [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/MatchMetrics-Console/Program.cs).
+/// [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/MatchMetrics-Console/Program.cs).
 /// </summary>
 
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics

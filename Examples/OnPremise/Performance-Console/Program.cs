@@ -54,7 +54,7 @@ using System.Threading.Tasks;
 /// and [hash dataset options](https://51degrees.com/documentation/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance)
 /// for more information about adjusting performance.
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/Performance-Console/Program.cs).
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/Performance-Console/Program.cs).
 /// 
 /// @include{doc} example-require-datafile.txt
 /// 

@@ -35,12 +35,12 @@ using System.Text;
 /// 
 /// @include{doc} example-getting-started-onpremise.txt
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/master/Examples/OnPremise/GettingStarted-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/GettingStarted-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-datafile.txt
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
 {

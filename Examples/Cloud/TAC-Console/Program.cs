@@ -40,15 +40,15 @@ using System.Net.Http;
 /// based on a given 'TAC'. More background information on TACs can be found through various online 
 /// sources such as <a href="https://en.wikipedia.org/wiki/Type_Allocation_Code">Wikipedia</a>.
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/main/Examples/Cloud/TAC-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/Cloud/TAC-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-resourcekey.txt
 ///
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.Configuration.Json
-/// - Microsoft.Extensions.DependencyInjection
-/// - Microsoft.Extensions.Logging.Console
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.Configuration.Json](https://www.nuget.org/packages/Microsoft.Extensions.Configuration.Json/)
+/// - [Microsoft.Extensions.DependencyInjection](https://www.nuget.org/packages/Microsoft.Extensions.DependencyInjection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.Cloud.TacLookup
 {

@@ -28,7 +28,7 @@ using System.Web.UI;
 /// This example demonstrates how to use the cloud-based device detection API in a .NET Framework 
 /// website.
 /// 
-/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/master/Examples/OnPremise/Framework-Web).
+/// The source code for this example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/tree/version/4.5/Examples/OnPremise/Framework-Web).
 /// 
 /// @include{doc} example-require-datafile.txt
 /// 

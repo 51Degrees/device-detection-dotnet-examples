@@ -46,13 +46,13 @@ using System.IO;
 /// cloud. If you are only using a single product (for example - device detection) then not all
 /// of these keys will be relevant.
 /// 
-/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/main/Examples/Cloud/Metadata-Console/Program.cs). 
+/// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/Cloud/Metadata-Console/Program.cs). 
 /// 
 /// @include{doc} example-require-resourcekey.txt
 /// 
 /// Required NuGet Dependencies:
-/// - FiftyOne.DeviceDetection
-/// - Microsoft.Extensions.Logging.Console
+/// - [FiftyOne.DeviceDetection](https://www.nuget.org/packages/FiftyOne.DeviceDetection/)
+/// - [Microsoft.Extensions.Logging.Console](https://www.nuget.org/packages/Microsoft.Extensions.Logging.Console/)
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.Cloud.Metadata
 {
