@@ -50,8 +50,9 @@ using System.Threading.Tasks;
 /// properties from multiple components. If you don't specify any properties to detect, then all 
 /// properties are detected.
 ///
-/// Please review [performance options](https://51degrees.com/documentation/_device_detection__features__performance_options.html)
-/// and [hash dataset options](https://51degrees.com/documentation/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance)
+/// Please review [performance options](/documentation/4.5/_device_detection__features__performance_options.html),
+/// [performance graphs](/documentation/4.5/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance),
+/// and [hash dataset production](/documentation/4.5/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction)
 /// for more information about adjusting performance.
 /// 
 /// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/Performance-Console/Program.cs).

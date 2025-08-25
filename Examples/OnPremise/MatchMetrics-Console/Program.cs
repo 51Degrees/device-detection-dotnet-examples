@@ -42,9 +42,9 @@ using System.Linq;
 /// process - reducing the number of components required to return the properties requested reduces
 /// the overall time taken.
 /// 
-/// There is a [discussion](https://51degrees.com/documentation/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance)
-/// of metrics and controlling performance on our web site. See also the 
-/// [performance options](https://51degrees.com/documentation/_device_detection__features__performance_options.html)
+/// There is a [discussion](/documentation/4.5/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction)
+/// of metrics and data set production on our web site. See also the 
+/// [performance options](/documentation/4.5/_device_detection__features__performance_options.html)
 /// page.
 /// 
 /// This example is available in full on 
@@ -127,9 +127,10 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
                     .SetProperty("HardwareName")
                     // Only use the predictive graph to better handle variances
                     // between the training data and the target User-Agent string.
-                    // For a more detailed description of the differences between
-                    // performance and predictive, see
-                    // https://51degrees.com/documentation/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance
+                    // For a more detailed description of predictive graphs, see
+                    // /documentation/4.5/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Predictive
+                    // For more information on performance graphs, see
+                    // /documentation/4.5/_device_detection__hash.html#DeviceDetection_Hash_DataSetProduction_Performance
                     .SetUsePredictiveGraph(true)
                     .SetUsePerformanceGraph(false)
                     // build the pipeline
@@ -171,8 +172,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
                             output.WriteLine("--- Listing all available properties, by component, by property " +
                                     "name ---");
                             output.WriteLine("For a discussion of what the match properties mean, see: " +
-                                    "https://51degrees.com/documentation/_device_detection__hash" +
-                                    ".html#DeviceDetection_Hash_DataSetProduction_Performance\n");
+                                    "https://51degrees.com/documentation/4.5/_device_detection__hash" +
+                                    ".html#DeviceDetection_Hash_DataSetProduction\n");
                             
                             // get the properties available from the DeviceDetection engine
                             // which has the key "device". For the sake of illustration we will
