@@ -85,8 +85,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FiftyOne.Pipeline.JavaScriptBuilder" Version="4.4.138" />
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.138" />
+    <PackageReference Include="FiftyOne.Pipeline.JavaScriptBuilder" Version="4.4.140" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.140" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json">
       <Version>8.0.1</Version>
     </PackageReference>
