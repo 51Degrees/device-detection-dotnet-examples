@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.267" />
+    <PackageReference Include="FiftyOne.DeviceDetection" Version="4.4.268" />
     <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.4.142" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="6.0.36" />
     <PackageReference Include="Selenium.WebDriver" Version="4.27.0" />
