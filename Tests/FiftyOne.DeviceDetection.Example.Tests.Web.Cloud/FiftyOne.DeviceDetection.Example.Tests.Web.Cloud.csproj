@@ -8,6 +8,9 @@
     <Configurations>Debug;Release</Configurations>
 
     <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
+
+    <EnableDefaultContentItems>false</EnableDefaultContentItems>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,9 +33,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Examples\Cloud\GettingStarted-Web\GettingStarted-Web.csproj" />
-    <ProjectReference Include="..\..\Examples\Legacy Web\Cloud-UACH-manual\Cloud - Client-Hints Not Integrated.csproj" />
-    <ProjectReference Include="..\..\Examples\Legacy Web\Cloud-UACH\Cloud - Client-Hints.csproj" />
+    <ProjectReference Include="..\..\Examples\Cloud\GettingStarted-Web\GettingStarted-Web.csproj">
+      <EnableStaticWebAssets>false</EnableStaticWebAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Examples\Legacy Web\Cloud-UACH-manual\Cloud - Client-Hints Not Integrated.csproj">
+      <EnableStaticWebAssets>false</EnableStaticWebAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Examples\Legacy Web\Cloud-UACH\Cloud - Client-Hints.csproj">
+      <EnableStaticWebAssets>false</EnableStaticWebAssets>
+    </ProjectReference>
     <ProjectReference Include="..\FiftyOne.DeviceDetection.Example.Tests.Web\FiftyOne.DeviceDetection.Example.Tests.Web.csproj" />
   </ItemGroup>
 
