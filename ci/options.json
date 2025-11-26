@@ -24,10 +24,18 @@
         "PackageRequirement" : true
     },
     {
-        "Image": "macos-15",
+        "Image": "macos-latest",
         "Name": "macos_arm64_Release",
         "Configuration": "CoreRelease",
         "Arch": "arm64",
+        "BuildMethod": "dotnet",
+        "PackageRequirement" : true
+    },
+    {
+        "Image": "macos-15-intel",
+        "Name": "macos_x64_Release",
+        "Configuration": "CoreRelease",
+        "Arch": "x64",
         "BuildMethod": "dotnet",
         "PackageRequirement" : true
     }
