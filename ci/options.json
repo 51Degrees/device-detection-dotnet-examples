@@ -1,4 +1,4 @@
-[  
+[
     {
         "Image": "windows-latest",
         "Name": "Windows_x64_Release",
@@ -24,10 +24,10 @@
         "PackageRequirement" : true
     },
     {
-        "Image": "macos-13",
-        "Name": "macos_x64_Release",
+        "Image": "macos-15",
+        "Name": "macos_arm64_Release",
         "Configuration": "CoreRelease",
-        "Arch": "x64",
+        "Arch": "arm64",
         "BuildMethod": "dotnet",
         "PackageRequirement" : true
     }
