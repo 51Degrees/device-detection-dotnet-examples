@@ -120,11 +120,11 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     .Build())
                 {
                     var serializer = new Serializer();
-                    foreach (var evidence in GetEvidence(evidenceYaml, logger))
+                    foreach (var (isCorrupted, evidence) in GetEvidence(evidenceYaml, logger))
                     {
                         // write the yaml document separator
                         output.WriteLine("---");
-                    
+                        output.WriteLine($"isCorrupted: {isCorrupted}");
                         // Pass the record to the pipeline as evidence so that it can be analyzed
                         AnalyseEvidence(evidence, pipeline, output, serializer);
                     }

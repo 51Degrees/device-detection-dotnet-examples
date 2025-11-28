@@ -102,7 +102,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// A logger instance. If null is passed then progress messages will not be logged.
         /// </param>
         /// <returns></returns>
-        protected static IEnumerable<Dictionary<string, object>> GetEvidence(
+        protected static IEnumerable<(string IsCorrupted, Dictionary<string, object>)> GetEvidence(
             TextReader evidenceReader,
             ILogger logger = null)
         {
@@ -116,6 +116,8 @@ namespace FiftyOne.DeviceDetection.Examples
             // Keep going as long as we have more document records.
             while (yamlReader.TryConsume<DocumentStart>(out _))
             {
+                var isCorrupted = "False";
+
                 // Output progress.
                 records++;
                 if (logger != null && records % 1000 == 0)
@@ -127,15 +129,18 @@ namespace FiftyOne.DeviceDetection.Examples
                 var data = deserializer.Deserialize<Dictionary<string, object>>(yamlReader);
 
                 // Remove null values
-                foreach(var keyWithNullValue in data.Where(kvp => kvp.Value is null).Select(kvp => kvp.Key).ToList())
+                foreach(var keyWithNullValue in data
+                    .Where(kvp => kvp.Value is null)
+                    .Select(kvp => kvp.Key).ToList())
                 {
                     logger.LogWarning($"Document at offset {records-1} contains null value for key: '{keyWithNullValue}'!");
                     data.Remove(keyWithNullValue);
                 }
 
-                if (data.Count > 0)
+                if (data.Count > 0 && data.TryGetValue("header.user-agent", out var value))
                 {
-                    yield return data;
+                    isCorrupted = IsCorrupted(value.ToString());
+                    yield return (isCorrupted, data);
                 }
                 else
                 {
@@ -192,5 +197,36 @@ namespace FiftyOne.DeviceDetection.Examples
             message.AppendLine(textToAdd);
         }
 
+        /// <summary>
+        /// Basic string parsing to check if a user-agent string is corrupted
+        /// </summary>
+        /// <param name="ua"></param>
+        /// <returns></returns>
+        public static string IsCorrupted(string ua)
+        {
+            if (string.IsNullOrWhiteSpace(ua))
+                return "True - UserAgent value empty";
+
+            ua = ua.Trim();
+
+            // UA Very short (<6 chars)
+            if (ua.Length < 6)
+                return "True - UserAgent value less than 6 characters";
+
+            // UA URL encoded indicators
+            if (ua.Contains("%20") || ua.Contains("%2F") || ua.Contains("%3B"))
+                return "True - UserAgent value contains URL encoding indicators";
+
+            // UA Missing required spaces between tokens
+            // Mozilla/5.0(Linux)AppleWebKit/...
+            if (ua.StartsWith("Mozilla/5.0(", StringComparison.InvariantCultureIgnoreCase))
+                return "True - UserAgent value missing required spaces between tokens";
+
+            // UA "Mozilla/5.0..." 
+            if (ua.Contains("..."))
+                return "True - UserAgent value contains ellipsis";
+
+            return "False";
+        }
     }
 }
