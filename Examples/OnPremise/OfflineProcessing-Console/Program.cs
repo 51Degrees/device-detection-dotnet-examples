@@ -164,12 +164,23 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                         output.Add(entry.Key, entry.Value.ToString());
                     }
                     // Now add the values that we want to store against the record.
-                    output.Add("device.ismobile", device.IsMobile.HasValue ?
-                        device.IsMobile.Value.ToString() : "Unknown");
-                    output.Add("device.platformname", device.PlatformName.GetHumanReadable());
+                    output.Add("device.releaseage", device.ReleaseAge.GetHumanReadable());
+                    output.Add("device.isartificialintelligence", device.IsArtificialIntelligence.GetHumanReadable());
+                    output.Add("device.crawlername", device.CrawlerName.GetHumanReadable());
+                    output.Add("device.hardwarename", device.HardwareName.GetHumanReadable());
+                    output.Add("device.hardwaremodel", device.HardwareModel.GetHumanReadable());
+                    output.Add("device.hardwarefamily", device.HardwareFamily.GetHumanReadable());
+                    output.Add("device.platformreleaseage", device.PlatformReleaseAge.GetHumanReadable());
+                    output.Add("device.platformvendor", device.PlatformVendor.GetHumanReadable());
                     output.Add("device.platformversion", device.PlatformVersion.GetHumanReadable());
-                    output.Add("device.browsername", device.BrowserName.GetHumanReadable());
+                    output.Add("device.platformname", device.PlatformName.GetHumanReadable());
+                    output.Add("device.browserreleaseage", device.BrowserReleaseAge.GetHumanReadable());
                     output.Add("device.browserversion", device.BrowserVersion.GetHumanReadable());
+                    output.Add("device.browsername", device.BrowserName.GetHumanReadable());
+                    output.Add("device.browserfamily", device.BrowserFamily.GetHumanReadable());
+                    output.Add("device.istv", device.IsTv.GetHumanReadable());
+                    output.Add("device.devicetype", device.DeviceType.GetHumanReadable());
+
                     // DeviceId is a unique identifier for the combination of hardware, operating
                     // system, browser and crawler that has been detected.
                     // Our device detection solution uses machine learning to find the optimal

@@ -65,11 +65,13 @@ namespace FiftyOne.DeviceDetection.Examples
         {
             return apv.HasValue ? apv.Value : $"Unknown ({apv.NoValueMessage})";
         }
+
         public static string GetHumanReadable(this IAspectPropertyValue<IReadOnlyList<string>> apv)
         {
             return apv.HasValue ? string.Join(", ", apv.Value) : $"Unknown ({apv.NoValueMessage})";
         }
-        public static string GetHumanReadable(this IAspectPropertyValue<int> apv)
+        public static string GetHumanReadable<T>(this IAspectPropertyValue<T> apv)
+            where T : struct
         {
             return apv.HasValue ? apv.Value.ToString() : $"Unknown ({apv.NoValueMessage})";
         }
