@@ -108,7 +108,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                 TextWriter output,
                 int threadCount)
             {
-                var evidence = GetEvidence(evidenceReader).ToList();
+                var evidence = GetEvidence(evidenceReader).Select(i => i.Item2).ToList();
 
                 // Make an initial run to warm up the system
                 output.WriteLine("Warming up");
