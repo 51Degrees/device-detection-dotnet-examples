@@ -129,7 +129,7 @@ namespace FiftyOne.DeviceDetection.Examples
                 // Remove null values
                 foreach(var keyWithNullValue in data.Where(kvp => kvp.Value is null).Select(kvp => kvp.Key).ToList())
                 {
-                    logger.LogWarning($"Document at offset {records-1} contains null value for key: '{keyWithNullValue}'!");
+                    logger?.LogWarning($"Document at offset {records-1} contains null value for key: '{keyWithNullValue}'!");
                     data.Remove(keyWithNullValue);
                 }
 
@@ -139,7 +139,7 @@ namespace FiftyOne.DeviceDetection.Examples
                 }
                 else
                 {
-                    logger.LogWarning($"Document at offset {records - 1} contains no usable evidence!");
+                    logger?.LogWarning($"Document at offset {records - 1} contains no usable evidence!");
                     ++skipped;
                 }
 
