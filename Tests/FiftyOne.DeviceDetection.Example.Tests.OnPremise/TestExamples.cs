@@ -37,7 +37,6 @@ namespace FiftyOne.DeviceDetection.Example.Tests.OnPremise
     /// crashing or throwing any unhandled exceptions.
     /// </remarks>
     [TestClass]
-    [Timeout(120000)] // 2 minute timeout per test
     public class TestExamples
     {
         private string LicenseKey;

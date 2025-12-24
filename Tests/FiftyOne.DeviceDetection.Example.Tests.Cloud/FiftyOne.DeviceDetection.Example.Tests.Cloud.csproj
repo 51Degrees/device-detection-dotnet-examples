@@ -11,7 +11,8 @@
 	
 	<DefineConstants>TRACE;NETCORE</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-	
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
+
   </PropertyGroup>
 
   <ItemGroup>

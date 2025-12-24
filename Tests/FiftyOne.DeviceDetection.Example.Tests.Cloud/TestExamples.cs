@@ -40,7 +40,6 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Cloud
     /// crashing or throwing any unhandled exceptions.
     /// </remarks>
     [TestClass]
-    [Timeout(120000)] // 2 minute timeout per test
     public class TestExamples
     {
         private string ResourceKey;
