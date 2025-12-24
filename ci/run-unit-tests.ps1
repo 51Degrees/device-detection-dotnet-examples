@@ -15,6 +15,6 @@ param(
     -Configuration $Configuration `
     -Arch $Arch `
     -BuildMethod $BuildMethod `
-    -Filter ".*Tests\.((?!Web\.dll)).*\.dll"
+    -Filter ".*Tests\.(Cloud|OnPremise).*\.dll$"
 
 exit $LASTEXITCODE
