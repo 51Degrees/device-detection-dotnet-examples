@@ -15,7 +15,6 @@ param(
     -Configuration $Configuration `
     -Arch $Arch `
     -BuildMethod $BuildMethod `
-    -Filter ".*Tests\.(Cloud|OnPremise)\.csproj$" `
-    -DirNameFormatForDotnet "*Tests*"
+    -Filter ".*Tests\.(Cloud|OnPremise).*\.dll$"
 
 exit $LASTEXITCODE
