@@ -20,6 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+using FiftyOne.Common;
 using FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements;
 using FiftyOne.Pipeline.Core.FlowElements;
 using Microsoft.Extensions.Logging;
@@ -47,10 +48,6 @@ namespace FiftyOne.DeviceDetection.Examples
         /// </summary>
         public const string CLOUD_END_POINT_ENV_VAR = "51D_CLOUD_ENDPOINT";
 
-        /// <summary>
-        /// Timeout used when searching for files.
-        /// </summary>
-        private const int FindFileTimeoutMs = 10000;
 
         /// <summary>
         /// If data file is older than this number of days then a warning will be displayed.
@@ -157,47 +154,9 @@ namespace FiftyOne.DeviceDetection.Examples
             string filename,
             DirectoryInfo dir = null)
         {
-            var cancel = new CancellationTokenSource();
-            // Start the file system search as a separate task.
-            var searchTask = Task.Run(() => FindFile(filename, dir, cancel.Token));
-            // Wait for either the search or a timeout task to complete.
-            Task.WaitAny(searchTask, Task.Delay(FindFileTimeoutMs));
-            cancel.Cancel();
-            // If search has not got a result then return null.
-            return searchTask.IsCompleted ? searchTask.Result : null;
+            return FileUtils.FindFile(filename, dir);
         }
 
-        private static string FindFile(
-            string filename,
-            DirectoryInfo dir,
-            CancellationToken cancel)
-        {
-            if (dir == null)
-            {
-                dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-            }
-            string result = null;
-
-            try
-            {
-                var files = dir.GetFiles(filename, SearchOption.AllDirectories);
-                if (files.Length == 0 &&
-                    dir.Parent != null &&
-                    cancel.IsCancellationRequested == false)
-                {
-                    result = FindFile(filename, dir.Parent, cancel);
-                }
-                else if (files.Length > 0)
-                {
-                    result = files[0].FullName;
-                }
-            }
-            // No matter what goes wrong here, we just want to indicate that we
-            // couldn't find the file by returning null.
-            catch { result = null; }
-
-            return result;
-        }
 
         /// <summary>
         /// Get information about the specified data file
@@ -318,23 +277,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// <returns></returns>
         public static bool IsInvalidKey(string key)
         {
-            try
-            {
-                if (key == null) 
-                {
-                    return true;
-                }
-
-                byte[] data = Convert.FromBase64String(key);
-                string decodedString = Encoding.UTF8.GetString(data);
-
-                return key.Trim().Length < 19 ||
-                    decodedString.Length < 14;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            return KeyUtils.IsInvalidKey(key);
         }
 
         /// <summary>
