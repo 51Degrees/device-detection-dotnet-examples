@@ -186,9 +186,16 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     output.Add("device.platformversion", device.PlatformVersion.GetHumanReadable());
                     output.Add("device.browsername", device.BrowserName.GetHumanReadable());
                     output.Add("device.browserversion", device.BrowserVersion.GetHumanReadable());
-                    output.Add("device.hardwarevendor", device.HardwareVendor.GetHumanReadable());
-                    output.Add("device.hardwaremodel", device.HardwareModel.GetHumanReadable());
-                    output.Add("device.hardwarename", device.HardwareName.GetHumanReadable());
+
+                    // Other fields can easily be added when available in the source data file.
+                    // The following could be uncommented when used with a paid for Enterprise
+                    // data file. See https://51degrees.com/developers/property-dictionary
+                    // for a full list of available properties.
+
+                    //output.Add("device.hardwarevendor", device.HardwareVendor.GetHumanReadable());
+                    //output.Add("device.hardwaremodel", device.HardwareModel.GetHumanReadable());
+                    //output.Add("device.hardwarename", device.HardwareName.GetHumanReadable());
+
                     // DeviceId is a unique identifier for the combination of hardware, operating
                     // system, browser and crawler that has been detected.
                     // Our device detection solution uses machine learning to find the optimal
