@@ -20,6 +20,8 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+// Ignore Spelling: Offline Yaml Metadata
+
 using FiftyOne.DeviceDetection.Examples;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -90,16 +92,23 @@ namespace FiftyOne.DeviceDetection.Example.Tests.OnPremise
         }
 
         /// <summary>
-        /// Test the GettingStarted Example
+        /// Test the Offline Processing Example
         /// </summary>
         [TestMethod]
-        public void Example_OnPremise_OfflineProcessing()
+        public void Example_OnPremise_OfflineProcessing_Yaml()
         {
-            var example = new Examples.OnPremise.OfflineProcessing.Program.Example();
-            using (var reader = new StreamReader(File.OpenRead(EvidenceFile)))
-            {
-                example.Run(DataFile, reader, new LoggerFactory(), TextWriter.Null);
-            }
+            Example_OnPremise_OfflineProcessing(
+                new ExampleWriterYaml(TextWriter.Null));
+        }
+
+        /// <summary>
+        /// Test the Offline Processing Example
+        /// </summary>
+        [TestMethod]
+        public void Example_OnPremise_OfflineProcessing_Csv()
+        {
+            Example_OnPremise_OfflineProcessing(
+                new ExampleWriterCsv(TextWriter.Null));
         }
 
         /// <summary>
@@ -109,7 +118,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.OnPremise
         public void Example_OnPremise_Metadata()
         {
             var example = new Examples.OnPremise.Metadata.Program.Example();
-            example.Run(DataFile, new LoggerFactory(), TextWriter.Null);
+            example.Run(DataFile, new LoggerFactory(), TextWriter.Null, 
+                Pipeline.Engines.PerformanceProfiles.MaxPerformance);
         }
 
         /// <summary>
@@ -131,6 +141,20 @@ namespace FiftyOne.DeviceDetection.Example.Tests.OnPremise
         {
             Examples.OnPremise.MatchMetrics.Program.Initialize(
                 DataFile, TextWriter.Null);
+        }
+
+        /// <summary>
+        /// Test the offline processing example with 100 records to avoid delays.
+        /// </summary>
+        /// <param name="writer"></param>
+        public void Example_OnPremise_OfflineProcessing(IExampleWriter writer)
+        {
+            var example = new Examples.OnPremise.OfflineProcessing.Program.Example();
+            using (var reader = new StreamReader(File.OpenRead(EvidenceFile)))
+            {
+                example.Run(DataFile, reader, new LoggerFactory(), writer, 
+                    Pipeline.Engines.PerformanceProfiles.MaxPerformance);
+            }
         }
 
         private void VerifyLicenseKeyAvailable()

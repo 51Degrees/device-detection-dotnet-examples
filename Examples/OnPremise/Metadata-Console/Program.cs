@@ -66,7 +66,27 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Metadata
     {
         public class Example : ExampleBase
         {
-            public void Run(string dataFile, ILoggerFactory loggerFactory, TextWriter output)
+            /// <summary>
+            /// Extracts the metadata from the data file via the engine.
+            /// </summary>
+            /// <param name="dataFile">
+            /// The path to the device detection data file
+            /// </param>
+            /// <param name="loggerFactory">
+            /// Factory to use when creating loggers
+            /// </param>
+            /// <param name="output">
+            /// Output writer to use when writing results
+            /// </param>
+            /// <param name="profile">
+            /// Performance profile to use with the on premise engine. LowMemory
+            /// if not provided.
+            /// </param>
+            public void Run(
+                string dataFile,
+                ILoggerFactory loggerFactory,
+                TextWriter output,
+                PerformanceProfiles profile = PerformanceProfiles.LowMemory)
             {
                 // Build a new on-premise Hash engine with the low memory performance profile.
                 // Note that there is no need to construct a complete pipeline in order to access
@@ -79,7 +99,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Metadata
                     // configuration options:
                     // https://51degrees.com/documentation/_device_detection__features__performance_options.html
                     // https://51degrees.com/documentation/_features__automatic_datafile_updates.html
-                    .SetPerformanceProfile(PerformanceProfiles.LowMemory)
+                    .SetPerformanceProfile(profile)
                     // inhibit auto-update of the data file for this test
                     .SetAutoUpdate(false)
                     .SetDataFileSystemWatcher(false)
