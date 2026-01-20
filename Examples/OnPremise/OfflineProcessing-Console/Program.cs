@@ -20,11 +20,16 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+
+// Ignore Spelling: Yaml
+
 using FiftyOne.Pipeline.Core.FlowElements;
 using FiftyOne.Pipeline.Engines;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using YamlDotNet.Serialization;
 
 /// <summary>
@@ -43,12 +48,11 @@ using YamlDotNet.Serialization;
 /// ```
 /// 
 /// We create a device detection pipeline to read the data and find out about the associated device,
-/// we write this data to a YAML formatted output stream.
+/// we write this data to a YAML or CSV formatted output stream.
 /// 
 /// As well as explaining the basic operation of off line processing using the defaults, for
 /// advanced operation this example can be used to experiment with tuning device detection for
-/// performance and predictive power using Performance Profile, Graph and Difference and Drift 
-/// settings.
+/// performance and predictive power using Performance Profile, Difference, and Drift settings.
 /// 
 /// This example is available in full on [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/version/4.5/Examples/OnPremise/OfflineProcessing-Console/Program.cs). 
 /// 
@@ -78,14 +82,19 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
             /// <param name="loggerFactory">
             /// Factory to use when creating loggers
             /// </param>
-            /// <param name="output">
+            /// <param name="writer">
             /// Output writer to use when writing results
+            /// </param>
+            /// <param name="profile">
+            /// Performance profile to use with the on premise engine. LowMemory
+            /// if not provided.
             /// </param>
             public void Run(
                 string dataFile,
                 TextReader evidenceYaml,
                 ILoggerFactory loggerFactory,
-                TextWriter output)
+                IExampleWriter writer,
+                PerformanceProfiles profile = PerformanceProfiles.LowMemory)
             {
                 var logger = loggerFactory.CreateLogger<Program>();
                 // In this example, we use the DeviceDetectionPipelineBuilder and configure it
@@ -101,7 +110,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     // https://51degrees.com/documentation/_device_detection__features__performance_options.html
                     // https://51degrees.com/documentation/_features__automatic_datafile_updates.html
                     // https://51degrees.com/documentation/_features__usage_sharing.html
-                    .SetPerformanceProfile(PerformanceProfiles.LowMemory)
+                    .SetPerformanceProfile(profile)
                     // Inhibit sharing usage for this example.
                     // In general, off line processing usage should NOT be shared back to 51Degrees.
                     // This is because it will not contain the full set of information that is 
@@ -119,27 +128,34 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     .SetDataFileSystemWatcher(false)
                     .Build())
                 {
-                    var serializer = new Serializer();
                     foreach (var evidence in GetEvidence(evidenceYaml, logger))
                     {
-                        // write the yaml document separator
-                        output.WriteLine("---");
-                    
-                        // Pass the record to the pipeline as evidence so that it can be analyzed
-                        AnalyseEvidence(evidence, pipeline, output, serializer);
-                    }
-                    // write the yaml document end marker
-                    output.WriteLine("...");
+                        // Pass the record to the pipeline as evidence and
+                        // return the result as a dictionary.
+                        var result = AnalyseEvidence(evidence, pipeline);
 
-                    ExampleUtils.CheckDataFile(pipeline, loggerFactory.CreateLogger<Program>());
+                        // Write the result to the output writer.
+                        writer.Write(result);
+                    }
+
+                    ExampleUtils.CheckDataFile(
+                        pipeline, 
+                        loggerFactory.CreateLogger<Program>());
                 }
             }
 
-            private void AnalyseEvidence(
+            /// <summary>
+            /// Returns a dictionary of resulting property names and values
+            /// ready to be written to the output.
+            /// </summary>
+            /// <param name="evidence"></param>
+            /// <param name="pipeline"></param>
+            /// <param name="writer"></param>
+            /// <param name="serializer"></param>
+            /// <returns></returns>
+            private Dictionary<string, string> AnalyseEvidence(
                 Dictionary<string, object> evidence,
-                IPipeline pipeline,
-                TextWriter writer,
-                Serializer serializer)
+                IPipeline pipeline)
             {
                 // FlowData is a data structure that is used to convey information required for
                 // detection and the results of the detection through the pipeline.
@@ -170,6 +186,16 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     output.Add("device.platformversion", device.PlatformVersion.GetHumanReadable());
                     output.Add("device.browsername", device.BrowserName.GetHumanReadable());
                     output.Add("device.browserversion", device.BrowserVersion.GetHumanReadable());
+
+                    // Other fields can easily be added when available in the source data file.
+                    // The following could be uncommented when used with a paid for Enterprise
+                    // data file. See https://51degrees.com/developers/property-dictionary
+                    // for a full list of available properties.
+
+                    //output.Add("device.hardwarevendor", device.HardwareVendor.GetHumanReadable());
+                    //output.Add("device.hardwaremodel", device.HardwareModel.GetHumanReadable());
+                    //output.Add("device.hardwarename", device.HardwareName.GetHumanReadable());
+
                     // DeviceId is a unique identifier for the combination of hardware, operating
                     // system, browser and crawler that has been detected.
                     // Our device detection solution uses machine learning to find the optimal
@@ -184,7 +210,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
                     // This is much faster and avoids the potential for getting a different 
                     // result.
                     output.Add("device.deviceid", device.DeviceId.GetHumanReadable());
-                    serializer.Serialize(writer, output);
+                    return output;
                 }
             }
         }
@@ -217,7 +243,13 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.OfflineProcessing
 
             if (dataFile != null)
             {
-                using (var writer = new StreamWriter(File.OpenWrite(outputFile)))
+                using (var output = new StreamWriter(File.OpenWrite(outputFile)))
+                // Determine the format of the output based on the extension
+                using (IExampleWriter writer = 
+                    ".csv".Equals(new FileInfo(outputFile).Extension, 
+                    StringComparison.InvariantCultureIgnoreCase) ? 
+                    new ExampleWriterCsv(output) : 
+                    new ExampleWriterYaml(output))
                 using (var reader = new StreamReader(File.OpenRead(evidenceFile)))
                 {
                     new Example().Run(dataFile, reader, loggerFactory, writer);
