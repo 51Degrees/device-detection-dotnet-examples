@@ -10,7 +10,7 @@
   </PropertyGroup>
     
 	<ItemGroup>
-		<PackageReference Include="FiftyOne.DeviceDetection" Version="4.5.42" />
+		<PackageReference Include="FiftyOne.DeviceDetection" Version="4.5.45" />
 		<PackageReference Include="YamlDotNet" Version="16.2.1" />
 	</ItemGroup>
 </Project>
