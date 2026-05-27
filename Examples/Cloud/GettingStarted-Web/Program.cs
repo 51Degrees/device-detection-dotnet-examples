@@ -72,10 +72,18 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         config
                             .AddConfiguration(baseConfig)
                             .AddInMemoryCollection(overrides);
-                    })
-                    .UseUrls(Constants.AllUrls)
-                    .UseStartup<Startup>()
-                    .UseStaticWebAssets();
+                    });
+
+                    // honour ASPNETCORE_URLS if set, otherwise use the default URLs
+                    if (string.IsNullOrEmpty(
+                            Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+                    {
+                        builder.UseUrls(Constants.AllUrls);
+                    }
+
+                    builder
+                        .UseStartup<Startup>()
+                        .UseStaticWebAssets();
                 });
 
         private static IConfiguration CreateConfiguration()
@@ -135,6 +143,18 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         $"Once complete, populate the config file or environment variable " +
                         $"mentioned at the start of this message with the key.");
                 }
+            }
+
+            // override the cloud endpoint from the environment, regardless of the resource key
+            string endpoint = Environment.GetEnvironmentVariable("FIFTYONE_CLOUD_ENDPOINT");
+            if (string.IsNullOrEmpty(endpoint) == false)
+            {
+                var cloudEngineIndex = options.Elements.IndexOf(
+                    options.GetElementConfig(nameof(CloudRequestEngine)));
+                var endpointConfigKey = $"PipelineOptions:Elements:{cloudEngineIndex}" +
+                    $":BuildParameters:EndPoint";
+                Console.WriteLine($"Attempting to override '{endpointConfigKey}'");
+                result.Add(endpointConfigKey, endpoint);
             }
 
             return result;
