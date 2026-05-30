@@ -85,7 +85,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.42" />
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.45" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json">
       <Version>8.0.1</Version>
     </PackageReference>
