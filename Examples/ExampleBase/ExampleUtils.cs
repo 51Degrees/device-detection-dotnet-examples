@@ -57,6 +57,15 @@ namespace FiftyOne.DeviceDetection.Examples
         /// </summary>
         public const string CLOUD_END_POINT_ENV_VAR = "51D_CLOUD_ENDPOINT";
 
+        /// <summary>
+        /// Message displayed when a resource key leaves some of the
+        /// properties used by an example without values.
+        /// </summary>
+        public const string PRICING_MESSAGE =
+            "Some properties used by this example are not available " +
+            "with a free resource key. See https://51degrees.com/pricing " +
+            "to get a paid subscription with more properties.";
+
 
         /// <summary>
         /// If data file is older than this number of days then a warning will be displayed.

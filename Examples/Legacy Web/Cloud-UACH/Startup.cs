@@ -44,7 +44,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// properties you are interested in as well as any associated license keys 
 /// that entitle you to increased request limits and/or paid-for properties.
 /// 
-/// You can create a resource key using the 51Degrees [Configurator](https://configure.51degrees.com/X9F2f6Zm).
+/// You can create a free resource key using the 51Degrees [Configurator](https://configure.51degrees.com/Wkqxf3Bs).
 /// The properties used in this example are:
 ///   HardwareVendor, HardwareName, DeviceType
 ///   PlatformVendor, PlatformName, PlatformVersion
@@ -210,7 +210,7 @@ namespace Cloud_Client_Hints
                      resourceKey.ToString().StartsWith("!!")))
                 {
                     throw new Exception("You need to create a resource key at " +
-                        "https://configure.51degrees.com/X9F2f6Zm and paste " +
+                        "https://configure.51degrees.com/Wkqxf3Bs and paste " +
                         "it into the appsettings.json file in this example.");
                 }
             }

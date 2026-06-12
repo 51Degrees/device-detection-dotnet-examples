@@ -11,15 +11,37 @@ their applications.
 
 ## Cloud resource keys
 
-A resource key configured with the properties needed to run most of the examples
-can be obtained [here](https://configure.51degrees.com/jqz435Nc). To use the
-resource key in the example it can be supplied as an environment variable called
-"51DEGREES_RESOURCE_KEY". The legacy environment variable name
+The cloud property tiers changed in May 2026. The examples and this
+documentation now reflect what is free and what needs a paid subscription.
+
+A free resource key that selects the free tier properties can be created
+[here](https://configure.51degrees.com/Wkqxf3Bs). A resource key that also
+includes the paid properties used by the examples can be created
+[here](https://configure.51degrees.com/hYzn3TV3). See
+https://51degrees.com/pricing to get a paid subscription with more properties.
+
+Of the properties the examples display, the free tier includes:
+
+- IsMobile, DeviceType, IsCrawler, DeviceId, UserAgents
+- ScreenPixelsWidth, ScreenPixelsHeight, ScreenPixelsHeightJavaScript
+- The three SetHeader*Accept-CH properties
+- JavascriptGetHighEntropyValues
+
+A paid subscription is needed for:
+
+- HardwareVendor, HardwareName, HardwareModel
+- PlatformVendor, PlatformName, PlatformVersion
+- BrowserVendor, BrowserName, BrowserVersion
+- ScreenPixelsWidthJavaScript, JavascriptHardwareProfile, Promise, Fetch,
+  PriceBand
+- The TAC and native model hardware profile properties
+
+To use the resource key in the example it can be supplied as an environment
+variable called "51DEGREES_RESOURCE_KEY". The legacy environment variable name
 "SUPER_RESOURCE_KEY" is still supported, with the aligned "51DEGREES_RESOURCE_KEY"
 name checked first.
 
-Some cloud examples require an enhanced resource key containing a license key.
-And some on-premise examples require you to provide a license key. You can find
+Some on-premise examples require you to provide a license key. You can find
 out about resource keys and license keys at our [pricing
 page](https://51degrees.com/pricing).
 
