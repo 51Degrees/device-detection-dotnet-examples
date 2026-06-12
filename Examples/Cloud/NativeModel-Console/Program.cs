@@ -139,8 +139,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());

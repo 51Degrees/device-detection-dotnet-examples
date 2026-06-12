@@ -364,11 +364,22 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
 
             private string CheckDataFile(string dataFile, ILogger logger)
             {
-                // No filename specified use the default
+                // No filename specified. Check the environment variables for an explicit
+                // path before falling back to the default file name.
                 if (dataFile == null)
                 {
-                    dataFile = Constants.ENTERPRISE_HASH_DATA_FILE_NAME;
-                    logger.LogWarning($"No filename specified. Using default '{dataFile}'");
+                    dataFile = Environment.GetEnvironmentVariable(
+                        Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+                    if (string.IsNullOrWhiteSpace(dataFile))
+                    {
+                        dataFile = Environment.GetEnvironmentVariable(
+                            Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+                    }
+                    if (string.IsNullOrWhiteSpace(dataFile))
+                    {
+                        dataFile = Constants.ENTERPRISE_HASH_DATA_FILE_NAME;
+                        logger.LogWarning($"No filename specified. Using default '{dataFile}'");
+                    }
                 }
                 // Work out where the data file is if we don't have an absolute path.
                 if (dataFile != null && Path.IsPathRooted(dataFile) == false)

@@ -14,12 +14,32 @@ their applications.
 A resource key configured with the properties needed to run most of the examples
 can be obtained [here](https://configure.51degrees.com/jqz435Nc). To use the
 resource key in the example it can be supplied as an environment variable called
-"SUPER_RESOURCE_KEY".
+"51DEGREES_RESOURCE_KEY". The legacy environment variable name
+"SUPER_RESOURCE_KEY" is still supported, with the aligned "51DEGREES_RESOURCE_KEY"
+name checked first.
 
 Some cloud examples require an enhanced resource key containing a license key.
 And some on-premise examples require you to provide a license key. You can find
 out about resource keys and license keys at our [pricing
 page](https://51degrees.com/pricing).
+
+## On-premise data file
+
+The on-premise examples need a device detection data file. The examples locate
+the file in the following order:
+
+1. The "51DEGREES_DD_PATH" environment variable, which can be set to an
+   explicit path to the data file. The legacy "DEVICEDETECTIONDATAFILE"
+   environment variable is also still supported, and is checked after
+   "51DEGREES_DD_PATH".
+2. A search of the folder hierarchy, walking up from the working directory,
+   for the expected data file name.
+3. The free 'Lite' data file in its expected location, which is the
+   device-detection-data submodule of this repository.
+
+Note that the aligned variable names start with a digit, which POSIX shells
+do not accept in plain assignments. On Linux and macOS set them with the env
+command, for example `env 51DEGREES_RESOURCE_KEY=AAA dotnet run`.
 
 ## Running examples with changes to Pipeline packages
 

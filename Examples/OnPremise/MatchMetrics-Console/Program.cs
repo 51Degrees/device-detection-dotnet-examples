@@ -259,14 +259,18 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
 
             private string CheckDataFile(string dataFile)
             {
-                // No filename specified use the default
+                // No filename specified. Check the environment variables for an explicit
+                // path, then search the folder hierarchy for the default file name.
                 if (dataFile == null)
                 {
-                    dataFile = Constants.LITE_HASH_DATA_FILE_NAME;
-                    Logger.LogWarning($"No filename specified. Using default '{dataFile}'");
+                    Logger.LogWarning($"No filename specified. Checking the " +
+                        $"'{Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR}' environment " +
+                        $"variable, then searching for the default " +
+                        $"'{Constants.LITE_HASH_DATA_FILE_NAME}'");
+                    dataFile = ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
                 }
                 // Work out where the data file is if we don't have an absolute path.
-                if (dataFile != null && Path.IsPathRooted(dataFile) == false)
+                else if (Path.IsPathRooted(dataFile) == false)
                 {
                     dataFile = ExampleUtils.FindFile(dataFile);
                 }
