@@ -234,14 +234,6 @@
                 client-side values below will appear in the evidence values used and server-side results
                 after the refresh.
             </p>
-            <% if (engine.DataSourceTier == "Lite") { %>
-                <div class="c-eg-alert">
-                    WARNING: You are using the free 'Lite' data file. This does not include the client-side
-                    evidence capabilities of the paid-for data file, so you will not see any additional
-                    data below. Find out about the Enterprise data file on our
-                    <a href="https://51degrees.com/pricing">pricing page</a>.
-                </div>
-            <% } %>
         </div>
 
         <div class="c-eg-message">
