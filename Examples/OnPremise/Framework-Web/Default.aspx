@@ -182,7 +182,7 @@
                 WARNING: You are using the free 'Lite' data file. This does not include the client-side
                 evidence capabilities of the paid-for data file, so you will not see any additional
                 data below. Find out about the Enterprise data file on our
-                <a href="https://51degrees.com/pricing">pricing page</a>.
+                <a href="https://51degrees.com/pricing?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-onpremise-framework-web-default.aspx&amp;utm_term=client-side-evidence-and-apple-models">pricing page</a>.
             </div>
         <% } %>
     </div>   

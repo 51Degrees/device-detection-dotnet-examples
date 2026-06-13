@@ -136,11 +136,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         $"'appsettings.json' or the environment variable " +
                         $"'{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees cloud " +
                         $"service is accessed using a 'ResourceKey'. For more information " +
-                        $"see https://51degrees.com/documentation/_info__resource_keys.html. " +
+                        $"see https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required. " +
                         $"A free resource key can be created at " +
-                        $"https://configure.51degrees.com/Wkqxf3Bs and populates the free " +
+                        $"https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required and populates the free " +
                         $"properties. With a paid subscription, a key created at " +
-                        $"https://configure.51degrees.com/hYzn3TV3 includes all the " +
+                        $"https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required includes all the " +
                         $"properties used by this example. " +
                         $"Once complete, populate the config file or environment variable " +
                         $"mentioned at the start of this message with the key.");

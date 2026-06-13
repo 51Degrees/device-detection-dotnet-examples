@@ -63,7 +63,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
 
                 // In this example, we use the FiftyOnePipelineBuilder and configure it from a file.
                 // For more information about builders in general see the documentation at
-                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html
+                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-console-program.cs&utm_term=run
 
                 // Create the pipeline using the service provider and the configured options.
                 using (var pipeline = new FiftyOnePipelineBuilder(loggerFactory, serviceProvider)
@@ -127,7 +127,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
 
                     // Display the results of the detection, which are called device properties.
                     // See the property dictionary at
-                    // https://51degrees.com/developers/property-dictionary
+                    // https://51degrees.com/developers/property-dictionary?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-console-program.cs&utm_term=run
                     // for details of all available properties.
                     bool anyValueMissing = false;
                     anyValueMissing |= OutputValue("Mobile Device", device.IsMobile, message);
@@ -192,11 +192,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
                             $"'{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees cloud " +
                             $"service is accessed using a 'ResourceKey'. For more information " +
                             $"see " +
-                            $"https://51degrees.com/documentation/_info__resource_keys.html. " +
+                            $"https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-console-program.cs&utm_term=resource-key-required. " +
                             $"A free resource key can be created at " +
-                            $"https://configure.51degrees.com/Wkqxf3Bs and populates the free " +
+                            $"https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-console-program.cs&utm_term=resource-key-required and populates the free " +
                             $"properties. With a paid subscription, a key created at " +
-                            $"https://configure.51degrees.com/hYzn3TV3 includes all the " +
+                            $"https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-console-program.cs&utm_term=resource-key-required includes all the " +
                             $"properties used by this example. " +
                             $"Once complete, populate the config file or environment variable " +
                             $"mentioned at the start of this message with the key.");

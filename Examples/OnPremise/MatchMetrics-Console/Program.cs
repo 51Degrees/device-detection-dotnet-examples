@@ -123,7 +123,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
                     // in the device ID value.
                     //.SetProperty("BrowserName")
                     // If using the full on-premise data file this property will be
-                    // present in the data file. See https://51degrees.com/pricing
+                    // present in the data file. See https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-matchmetrics-console-program.cs&utm_term=run
                     .SetProperty("HardwareName")
                     // Only use the predictive graph to better handle variances
                     // between the training data and the target User-Agent string.
@@ -173,7 +173,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
                                     "name ---");
                             output.WriteLine("For a discussion of what the match properties mean, see: " +
                                     "https://51degrees.com/documentation/4.5/_device_detection__hash" +
-                                    ".html#DeviceDetection_Hash_DataSetProduction\n");
+                                    ".html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-matchmetrics-console-program.cs&utm_term=run#DeviceDetection_Hash_DataSetProduction\n");
                             
                             // get the properties available from the DeviceDetection engine
                             // which has the key "device". For the sake of illustration we will
