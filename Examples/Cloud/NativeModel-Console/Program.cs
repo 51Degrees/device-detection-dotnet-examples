@@ -139,8 +139,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
@@ -153,11 +152,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
                     $"The 51Degrees cloud service is accessed using a 'ResourceKey'. " +
                     $"For more information " +
                     $"see https://51degrees.com/documentation/_info__resource_keys.html. " +
-                    $"Native model lookup is not available as a free service. This means that " +
-                    $"you will first need a license key, which can be purchased from our " +
-                    $"pricing page: https://51degrees.com/pricing. Once this is done, a resource " +
+                    $"Native model lookup requires a paid subscription. See " +
+                    $"https://51degrees.com/pricing to get a paid subscription with more " +
+                    $"properties. Once subscribed, a resource " +
                     $"key with the properties required by this example can be created at " +
-                    $"https://configure.51degrees.com/QKyYH5XT. You can now populate the " +
+                    $"https://configure.51degrees.com/hYzn3TV3. You can now populate the " +
                     $"environment variable mentioned at the start of this message with the " +
                     $"resource key or pass it as the first argument on the command line.");
             }

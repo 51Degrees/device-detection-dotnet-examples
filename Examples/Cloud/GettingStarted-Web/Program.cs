@@ -123,8 +123,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                 var resourceKeyConfigKey = $"PipelineOptions:Elements:{cloudEngineIndex}" +
                     $":BuildParameters:ResourceKey";
 
-                string resourceKey = Environment.GetEnvironmentVariable(
-                        ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                string resourceKey = ExampleUtils.GetResourceKeyFromEnv();
 
                 if (string.IsNullOrEmpty(resourceKey) == false)
                 {
@@ -138,8 +137,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         $"'{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees cloud " +
                         $"service is accessed using a 'ResourceKey'. For more information " +
                         $"see https://51degrees.com/documentation/_info__resource_keys.html. " +
-                        $"A resource key with the properties required by this example can be " +
-                        $"created for free at https://configure.51degrees.com/1QWJwHxl. " +
+                        $"A free resource key can be created at " +
+                        $"https://configure.51degrees.com/Wkqxf3Bs and populates the free " +
+                        $"properties. With a paid subscription, a key created at " +
+                        $"https://configure.51degrees.com/hYzn3TV3 includes all the " +
+                        $"properties used by this example. " +
                         $"Once complete, populate the config file or environment variable " +
                         $"mentioned at the start of this message with the key.");
                 }

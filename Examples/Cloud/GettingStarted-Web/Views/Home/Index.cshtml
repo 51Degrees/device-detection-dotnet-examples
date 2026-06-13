@@ -91,6 +91,12 @@
         <tr class="lightyellow"><td><b>Device Id:</b></td><td> @Model.DeviceId</td></tr>
         <tr class="lightyellow"><td><b>Price Band:</b></td><td> @Model.PriceBand</td></tr>
     </table>
+    @if (Model.AnyValueMissing)
+    {
+        <div class="example-alert">
+            @ExampleUtils.PRICING_MESSAGE
+        </div>
+    }
     <br />
 
     <div id="evidence">

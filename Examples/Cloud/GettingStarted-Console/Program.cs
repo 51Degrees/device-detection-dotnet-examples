@@ -69,15 +69,25 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
                 using (var pipeline = new FiftyOnePipelineBuilder(loggerFactory, serviceProvider)
                     .BuildFromConfiguration(pipelineOptions))
                 {
+                    // Track whether any of the requested properties are left
+                    // without a value.
+                    bool anyValueMissing = false;
                     // Carry out some sample detections
                     foreach (var values in ExampleUtils.EvidenceValues)
                     {
-                        AnalyseEvidence(values, pipeline, output);
+                        anyValueMissing |= AnalyseEvidence(values, pipeline, output);
+                    }
+                    // A missing value usually means the resource key does not
+                    // include the property, so show the common message
+                    // explaining how to get a key with more properties.
+                    if (anyValueMissing)
+                    {
+                        output.WriteLine(ExampleUtils.PRICING_MESSAGE);
                     }
                 }
             }
 
-            private void AnalyseEvidence(
+            private bool AnalyseEvidence(
                 Dictionary<string, object> evidence,
                 IPipeline pipeline,
                 TextWriter output)
@@ -119,16 +129,18 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
                     // See the property dictionary at
                     // https://51degrees.com/developers/property-dictionary
                     // for details of all available properties.
-                    OutputValue("Mobile Device", device.IsMobile, message);
-                    OutputValue("Platform Name", device.PlatformName, message);
-                    OutputValue("Platform Version", device.PlatformVersion, message);
-                    OutputValue("Browser Name", device.BrowserName, message);
-                    OutputValue("Browser Version", device.BrowserVersion, message);
+                    bool anyValueMissing = false;
+                    anyValueMissing |= OutputValue("Mobile Device", device.IsMobile, message);
+                    anyValueMissing |= OutputValue("Platform Name", device.PlatformName, message);
+                    anyValueMissing |= OutputValue("Platform Version", device.PlatformVersion, message);
+                    anyValueMissing |= OutputValue("Browser Name", device.BrowserName, message);
+                    anyValueMissing |= OutputValue("Browser Version", device.BrowserVersion, message);
                     output.WriteLine(message.ToString());
+                    return anyValueMissing;
                 }
             }
 
-            private void OutputValue(string name,
+            private bool OutputValue(string name,
                 IAspectPropertyValue value,
                 StringBuilder message)
             {
@@ -140,6 +152,9 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
                 message.AppendLine(value.HasValue ?
                     $"\t{name}: " + value.Value :
                     $"\t{name}: " + value.NoValueMessage);
+                // Tell the caller whether the property was left without a
+                // value.
+                return value.HasValue == false;
             }
 
             /// <summary>
@@ -178,8 +193,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
                             $"service is accessed using a 'ResourceKey'. For more information " +
                             $"see " +
                             $"https://51degrees.com/documentation/_info__resource_keys.html. " +
-                            $"A resource key with the properties required by this example can be " +
-                            $"created for free at https://configure.51degrees.com/1QWJwHxl. " +
+                            $"A free resource key can be created at " +
+                            $"https://configure.51degrees.com/Wkqxf3Bs and populates the free " +
+                            $"properties. With a paid subscription, a key created at " +
+                            $"https://configure.51degrees.com/hYzn3TV3 includes all the " +
+                            $"properties used by this example. " +
                             $"Once complete, populate the config file or environment variable " +
                             $"mentioned at the start of this message with the key.");
                     }
@@ -196,8 +214,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedConsole
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             // Load the configuration file
             var config = new ConfigurationBuilder()

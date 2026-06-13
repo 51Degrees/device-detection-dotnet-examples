@@ -48,9 +48,19 @@ namespace FiftyOne.DeviceDetection.Examples
         public const string LICENSE_KEY_ENV_VAR = "DEVICEDETECTIONLICENSEKEY_DOTNET";
 
         /// <summary>
-        /// Environment variable key for the data file to use for the tests.
+        /// Environment variable key used to supply an explicit path to the
+        /// device detection data file. This aligned name is checked first,
+        /// before any legacy variable names.
         /// </summary>
-        public const string DEVICE_DETECTION_DATA_FILE_ENV_VAR = "DEVICEDETECTIONDATAFILE";
+        public const string DEVICE_DETECTION_DATA_FILE_ENV_VAR = "51DEGREES_DD_PATH";
+
+        /// <summary>
+        /// Legacy environment variable key used to supply an explicit path to
+        /// the device detection data file. Retained for backwards
+        /// compatibility and checked when
+        /// <see cref="DEVICE_DETECTION_DATA_FILE_ENV_VAR"/> is not set.
+        /// </summary>
+        public const string LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR = "DEVICEDETECTIONDATAFILE";
 
         /// <summary>
         /// Environment variable key for the evidence file to use for the tests.

@@ -27,6 +27,10 @@ dotnet dev-certs https
 
 $env:DEVICEDETECTIONDATAFILE = [IO.Path]::Combine($RepoPath, "device-detection-data", "TAC-HashV41.hash")
 $env:SUPER_RESOURCE_KEY = $Keys.TestResourceKey
+# Aligned environment variable names. These are checked first by the examples
+# and tests. The legacy names above are retained for backwards compatibility.
+${env:51DEGREES_DD_PATH} = [IO.Path]::Combine($RepoPath, "device-detection-data", "TAC-HashV41.hash")
+${env:51DEGREES_RESOURCE_KEY} = $Keys.TestResourceKey
 $env:DEVICEDETECTIONLICENSEKEY_DOTNET = $Keys.DeviceDetection
 $env:ACCEPTCH_BROWSER_KEY = $Keys.AcceptCHBrowserKey
 $env:ACCEPTCH_HARDWARE_KEY = $Keys.AcceptCHHardwareKey

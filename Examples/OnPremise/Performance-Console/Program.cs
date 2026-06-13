@@ -331,7 +331,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                     // Note that the Lite data file is only used for illustration, and has limited accuracy
                     // and capabilities. Find out about the Enterprise data file on our pricing page:
                     // https://51degrees.com/pricing
-                    ExampleUtils.FindFile(Constants.LITE_HASH_DATA_FILE_NAME);
+                    ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
                 // Do the same for the yaml evidence file.
                 var evidenceFile = options.EvidenceFile != null ? options.EvidenceFile :
                     // This file contains the 20,000 most commonly seen combinations of header values 

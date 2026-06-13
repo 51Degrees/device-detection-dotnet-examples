@@ -36,10 +36,19 @@ namespace FiftyOne.DeviceDetection.Examples
     public static class ExampleUtils
     {
         /// <summary>
-        /// The default environment variable key used to get the resource key 
-        /// to use when running cloud examples.
+        /// The default environment variable key used to get the resource key
+        /// to use when running cloud examples. This aligned name is checked
+        /// first, before any legacy variable names.
         /// </summary>
-        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "SUPER_RESOURCE_KEY";
+        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "51DEGREES_RESOURCE_KEY";
+
+        /// <summary>
+        /// The legacy environment variable key used to get the resource key
+        /// to use when running cloud examples. Retained for backwards
+        /// compatibility and checked when <see cref="CLOUD_RESOURCE_KEY_ENV_VAR"/>
+        /// is not set.
+        /// </summary>
+        public const string LEGACY_CLOUD_RESOURCE_KEY_ENV_VAR = "SUPER_RESOURCE_KEY";
 
         /// <summary>
         /// The default environment variable key used to get the end point URL
@@ -47,6 +56,15 @@ namespace FiftyOne.DeviceDetection.Examples
         /// appsettings.json configuration for testing custom end points.
         /// </summary>
         public const string CLOUD_END_POINT_ENV_VAR = "51D_CLOUD_ENDPOINT";
+
+        /// <summary>
+        /// Message displayed when a resource key leaves some of the
+        /// properties used by an example without values.
+        /// </summary>
+        public const string PRICING_MESSAGE =
+            "Some properties used by this example are not available " +
+            "with a free resource key. See https://51degrees.com/pricing " +
+            "to get a paid subscription with more properties.";
 
 
         /// <summary>
@@ -155,6 +173,44 @@ namespace FiftyOne.DeviceDetection.Examples
             DirectoryInfo dir = null)
         {
             return FileUtils.FindFile(filename, dir);
+        }
+
+        /// <summary>
+        /// Get the path to a device detection data file. The environment
+        /// variables are checked first for an explicit path. The aligned
+        /// variable named by <see cref="Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>
+        /// takes precedence over the legacy variable named by
+        /// <see cref="Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>.
+        /// If neither is set, the folder hierarchy is searched for the
+        /// supplied file name using <see cref="FindFile(string, DirectoryInfo)"/>.
+        /// </summary>
+        /// <param name="filename">
+        /// The data file name to search for when no environment variable
+        /// supplies an explicit path.
+        /// </param>
+        /// <param name="dir">
+        /// The directory to start searching from. If not provided the current
+        /// directory is used.
+        /// </param>
+        /// <returns>
+        /// The path to the data file, or null if no file could be found.
+        /// </returns>
+        public static string FindDataFile(
+            string filename,
+            DirectoryInfo dir = null)
+        {
+            var path = Environment.GetEnvironmentVariable(
+                Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = Environment.GetEnvironmentVariable(
+                    Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+            }
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = FindFile(filename, dir);
+            }
+            return path;
         }
 
 
@@ -396,6 +452,39 @@ namespace FiftyOne.DeviceDetection.Examples
             {
                 setValue(string.Empty);
             }
+        }
+
+        /// <summary>
+        /// Get the resource key from the environment. The aligned
+        /// '51DEGREES_RESOURCE_KEY' variable is checked first, followed by
+        /// the legacy 'SUPER_RESOURCE_KEY' variable.
+        /// </summary>
+        /// <returns>
+        /// The resource key, or null if neither environment variable is set.
+        /// </returns>
+        public static string GetResourceKeyFromEnv()
+        {
+            var key = Environment.GetEnvironmentVariable(
+                CLOUD_RESOURCE_KEY_ENV_VAR);
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                key = Environment.GetEnvironmentVariable(
+                    LEGACY_CLOUD_RESOURCE_KEY_ENV_VAR);
+            }
+            return key;
+        }
+
+        /// <summary>
+        /// Get the resource key from the environment and run the action with
+        /// the value, or an empty string if no resource key is set. The
+        /// aligned '51DEGREES_RESOURCE_KEY' variable is checked first,
+        /// followed by the legacy 'SUPER_RESOURCE_KEY' variable.
+        /// </summary>
+        /// <param name="setValue"></param>
+        public static void GetResourceKeyFromEnv(Action<string> setValue)
+        {
+            var key = GetResourceKeyFromEnv();
+            setValue(string.IsNullOrWhiteSpace(key) ? string.Empty : key);
         }
     }
 }

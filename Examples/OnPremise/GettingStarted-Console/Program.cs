@@ -183,7 +183,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                 // Note that the Lite data file is only used for illustration, and has limited accuracy
                 // and capabilities. Find out about the Enterprise data file on our pricing page:
                 // https://51degrees.com/pricing
-                ExampleUtils.FindFile(Constants.LITE_HASH_DATA_FILE_NAME);
+                ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());

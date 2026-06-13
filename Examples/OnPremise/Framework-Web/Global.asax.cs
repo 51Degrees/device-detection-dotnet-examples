@@ -37,7 +37,7 @@ namespace Framework_Web
         {
             // Modify the configuration to a full path to the data file if the standard example is being used.
             var configFile = new FileInfo(HttpContext.Current.Server.MapPath("~/App_Data/51Degrees.json"));
-            var fullPath = ExampleUtils.FindFile("51Degrees-LiteV4.1.hash", configFile.Directory);
+            var fullPath = ExampleUtils.FindDataFile("51Degrees-LiteV4.1.hash", configFile.Directory);
             if (String.IsNullOrEmpty(fullPath) == false)
             {
                 var config = File.ReadAllText(configFile.FullName);

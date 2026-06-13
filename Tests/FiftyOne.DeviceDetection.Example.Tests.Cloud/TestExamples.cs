@@ -54,8 +54,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Cloud
         [TestInitialize]
         public void Init()
         {
-            var resourceKey = Environment.GetEnvironmentVariable(
-                ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+            var resourceKey = ExampleUtils.GetResourceKeyFromEnv();
             ResourceKey = string.IsNullOrWhiteSpace(resourceKey) == false ?
                 resourceKey : "!!YOUR_RESOURCE_KEY!!";
 

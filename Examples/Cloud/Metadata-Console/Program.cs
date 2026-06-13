@@ -131,8 +131,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.Metadata
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
@@ -145,8 +144,11 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.Metadata
                     $"'{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees cloud service is " +
                     $"accessed using a 'ResourceKey'. For more information see " +
                     $"https://51degrees.com/documentation/_info__resource_keys.html. " +
-                    $"A resource key with the properties required by this example can be " +
-                    $"created for free at https://configure.51degrees.com/1QWJwHxl. " +
+                    $"A free resource key can be created at " +
+                    $"https://configure.51degrees.com/Wkqxf3Bs and populates the free " +
+                    $"properties. With a paid subscription, a key created at " +
+                    $"https://configure.51degrees.com/hYzn3TV3 includes all the " +
+                    $"properties used by this example. " +
                     $"Once complete, supply the resource key as a command line argument or via " +
                     $"the environment variable mentioned at the start of this message.");
             }
