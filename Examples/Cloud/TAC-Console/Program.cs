@@ -76,7 +76,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.TacLookup
                 // For a demonstration of how to do this in code instead, see the
                 // NativeModelLookup example.
                 // For more information about builders in general see the documentation at
-                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html
+                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-tac-console-program.cs&utm_term=run
 
                 // Create the pipeline using the service provider and the configured options.
                 using (var pipeline = new FiftyOnePipelineBuilder(loggerFactory, serviceProvider)
@@ -148,12 +148,12 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.TacLookup
                             $"the environment variable '{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. " +
                             $"The 51Degrees cloud service is accessed using a 'ResourceKey'. " +
                             $"For more information see " +
-                            $"https://51degrees.com/documentation/_info__resource_keys.html. " +
+                            $"https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-tac-console-program.cs&utm_term=resource-key-required. " +
                             $"TAC lookup requires a paid subscription. See " +
-                            $"https://51degrees.com/pricing to get a paid subscription with " +
+                            $"https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-tac-console-program.cs&utm_term=resource-key-required to get a paid subscription with " +
                             $"more properties. Once subscribed, a resource key with the " +
                             $"properties required by this example " +
-                            $"can be created at https://configure.51degrees.com/hYzn3TV3. You " +
+                            $"can be created at https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-tac-console-program.cs&utm_term=resource-key-required. You " +
                             $"can now populate the environment variable mentioned at the start " +
                             $"of this message with the resource key or pass it as the first " +
                             $"argument on the command line.");

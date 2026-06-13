@@ -49,7 +49,7 @@ using Microsoft.Extensions.DependencyInjection;
 /// properties you are interested in as well as any associated license keys 
 /// that entitle you to increased request limits and/or paid-for properties.
 /// 
-/// You can create a free resource key using the 51Degrees [Configurator](https://configure.51degrees.com/Wkqxf3Bs).
+/// You can create a free resource key using the 51Degrees [Configurator](https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-legacy-web-cloud-uach-manual-startup.cs&amp;utm_term=header).
 /// The properties used in this example are:
 ///   HardwareVendor, HardwareName, DeviceType
 ///   PlatformVendor, PlatformName, PlatformVersion
@@ -217,7 +217,7 @@ namespace Cloud_Client_Hints_Not_Integrated
                      resourceKey.ToString().StartsWith("!!")))
                 {
                     throw new Exception("You need to create a resource key at " +
-                        "https://configure.51degrees.com/Wkqxf3Bs and paste " +
+                        "https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-legacy-web-cloud-uach-manual-startup.cs&utm_term=resource-key-required and paste " +
                         "it into the appsettings.json file in this example.");
                 }
             }

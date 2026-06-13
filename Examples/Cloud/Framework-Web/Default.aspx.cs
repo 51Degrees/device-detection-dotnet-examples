@@ -71,9 +71,9 @@ using System.Web.UI;
 /// the same as those that will be available in the configuration file. 
 /// 
 /// Note that you will need to create a 'resource key' using our
-/// [configurator](https://configure.51degrees.com/Wkqxf3Bs) site in order to get this example to
+/// [configurator](https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-framework-web-default.aspx.cs&amp;utm_term=header) site in order to get this example to
 /// work. The previous link will pre-populate a free key with the free properties. A key created
-/// at [this link](https://configure.51degrees.com/hYzn3TV3) with a paid subscription also
+/// at [this link](https://configure.51degrees.com/hYzn3TV3?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-framework-web-default.aspx.cs&amp;utm_term=header) with a paid subscription also
 /// includes the paid properties used by this example.
 /// See our [documentation](/documentation/4.5/_services__configurator.html) 
 /// for more detail on resource keys and the configurator site. Once created, the key will 

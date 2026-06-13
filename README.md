@@ -15,10 +15,10 @@ The cloud property tiers changed in May 2026. The examples and this
 documentation now reflect what is free and what needs a paid subscription.
 
 A free resource key that selects the free tier properties can be created
-[here](https://configure.51degrees.com/Wkqxf3Bs). A resource key that also
+[here](https://configure.51degrees.com/Wkqxf3Bs?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=readme.md&utm_term=cloud-resource-keys). A resource key that also
 includes the paid properties used by the examples can be created
-[here](https://configure.51degrees.com/hYzn3TV3). See
-https://51degrees.com/pricing to get a paid subscription with more properties.
+[here](https://configure.51degrees.com/hYzn3TV3?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=readme.md&utm_term=cloud-resource-keys). See
+https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=readme.md&utm_term=cloud-resource-keys to get a paid subscription with more properties.
 
 Of the properties the examples display, the free tier includes:
 
@@ -43,7 +43,7 @@ name checked first.
 
 Some on-premise examples require you to provide a license key. You can find
 out about resource keys and license keys at our [pricing
-page](https://51degrees.com/pricing).
+page](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=readme.md&utm_term=cloud-resource-keys-2).
 
 ## On-premise data file
 
