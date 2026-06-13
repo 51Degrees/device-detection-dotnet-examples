@@ -36,9 +36,12 @@
     var engine = Model.Pipeline.GetElement<FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements.DeviceDetectionHashEngine>();
 }
 
-<h2>User Agent Client Hints Example</h2>
+<link rel="stylesheet" href="~/css/examples-main.min.css" />
 
-<p>
+<div class="c-eg-page">
+<h2 class="c-eg-page__title">User Agent Client Hints Example</h2>
+
+<p class="c-eg-page__lead">
     By default, the user-agent, sec-ch-ua and sec-ch-ua-mobile HTTP headers
     are sent.
     <br />
@@ -55,7 +58,7 @@
     additional client hints headers that have been requested
     will be included.
 </p>
-<button type="button" onclick="redirect()">Make second request</button>
+<button type="button" class="b-btn" onclick="redirect()">Make second request</button>
 
 <script>
     // This script will run when button will be clicked and device detection request will again
@@ -90,35 +93,49 @@
 </script>
 
 <div id="evidence">
-    <strong>Evidence values used:</strong>
-    <table>
-        <tr>
-            <th>Key</th>
-            <th>Value</th>
-        </tr>
+    <h3 class="c-eg-page__heading">Evidence values used</h3>
+    <table class="c-eg-table">
+        <thead class="c-eg-table__head">
+            <tr class="c-eg-table__row">
+                <th class="c-eg-table__cell">Key</th>
+                <th class="c-eg-table__cell">Value</th>
+            </tr>
+        </thead>
+        <tbody>
         @foreach (var entry in Model.GetEvidence().AsDictionary()
           .Where(e => engine.EvidenceKeyFilter.Include(e.Key)))
         {
-            <tr>
-                <td>@(entry.Key)</td>
-                <td>@(entry.Value)</td>
+            <tr class="c-eg-table__row c-eg-table__row--used">
+                <td class="c-eg-table__cell c-eg-table__cell--key">@(entry.Key)</td>
+                <td class="c-eg-table__cell">@(entry.Value)</td>
             </tr>
         }
+        </tbody>
     </table>
 </div>
-<br />
-<div id=description></div>
+
+<div id="description"></div>
+
 <div id="content">
-    <strong>Detection results:</strong>
-    <p>
-        Hardware Vendor: @(hardwareVendor.HasValue ? hardwareVendor.Value : $"Unknown ({hardwareVendor.NoValueMessage})")<br />
-        Hardware Name: @(hardwareName.HasValue ? string.Join(", ", hardwareName.Value) : $"Unknown ({hardwareName.NoValueMessage})")<br />
-        Device Type: @(deviceType.HasValue ? deviceType.Value : $"Unknown ({deviceType.NoValueMessage})")<br />
-        Platform Vendor: @(platformVendor.HasValue ? platformVendor.Value : $"Unknown ({platformVendor.NoValueMessage})")<br />
-        Platform Name: @(platformName.HasValue ? platformName.Value : $"Unknown ({platformName.NoValueMessage})")<br />
-        Platform Version: @(platformVersion.HasValue ? platformVersion.Value : $"Unknown ({platformVersion.NoValueMessage})")<br />
-        Browser Vendor: @(browserVendor.HasValue ? browserVendor.Value : $"Unknown ({browserVendor.NoValueMessage})")<br />
-        Browser Name: @(browserName.HasValue ? browserName.Value : $"Unknown ({browserName.NoValueMessage})")<br />
-        Browser Version: @(browserVersion.HasValue ? browserVersion.Value : $"Unknown ({browserVersion.NoValueMessage})")
-    </p>
+    <h3 class="c-eg-page__heading">Detection results</h3>
+    <table class="c-eg-table">
+        <thead class="c-eg-table__head">
+            <tr class="c-eg-table__row">
+                <th class="c-eg-table__cell">Key</th>
+                <th class="c-eg-table__cell">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Hardware Vendor:</td><td class="c-eg-table__cell">@(hardwareVendor.HasValue ? hardwareVendor.Value : $"Unknown ({hardwareVendor.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Hardware Name:</td><td class="c-eg-table__cell">@(hardwareName.HasValue ? string.Join(", ", hardwareName.Value) : $"Unknown ({hardwareName.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Device Type:</td><td class="c-eg-table__cell">@(deviceType.HasValue ? deviceType.Value : $"Unknown ({deviceType.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Platform Vendor:</td><td class="c-eg-table__cell">@(platformVendor.HasValue ? platformVendor.Value : $"Unknown ({platformVendor.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Platform Name:</td><td class="c-eg-table__cell">@(platformName.HasValue ? platformName.Value : $"Unknown ({platformName.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Platform Version:</td><td class="c-eg-table__cell">@(platformVersion.HasValue ? platformVersion.Value : $"Unknown ({platformVersion.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Browser Vendor:</td><td class="c-eg-table__cell">@(browserVendor.HasValue ? browserVendor.Value : $"Unknown ({browserVendor.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Browser Name:</td><td class="c-eg-table__cell">@(browserName.HasValue ? browserName.Value : $"Unknown ({browserName.NoValueMessage})")</td></tr>
+            <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Browser Version:</td><td class="c-eg-table__cell">@(browserVersion.HasValue ? browserVersion.Value : $"Unknown ({browserVersion.NoValueMessage})")</td></tr>
+        </tbody>
+    </table>
+</div>
 </div>
