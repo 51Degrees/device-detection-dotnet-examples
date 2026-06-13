@@ -243,6 +243,11 @@
                 </div>
             <% } %>
         </div>
+
+        <div class="c-eg-message">
+          <p class="c-eg-message__text">Want to try on-premise? <a href="https://51degrees.com/contact-us">Contact us</a> to discuss requirements.</p>
+          <a class="b-btn c-eg-message__cta" href="https://51degrees.com/contact-us">Contact us</a>
+        </div>
     </div>
 
     <%-- The shared examples.js helper subscribes to the 51Degrees.core.js 'complete'
