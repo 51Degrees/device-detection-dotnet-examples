@@ -27,60 +27,22 @@
     var resourceUrl = $"{Model.CloudEndPoint}/api/v4/{Model.ResourceKey}.js";
 }
 
-<div id="content"></div>
+<div class="c-eg-page">
+    <h2 class="c-eg-page__title">Client-side only example</h2>
+    <p class="c-eg-page__lead">
+        Detection runs entirely client-side. The 51Degrees JavaScript collects evidence in the browser
+        and populates the results below once it completes, with no server-side rendering.
+    </p>
+    <div id="content"></div>
+</div>
 
+@* The cloud resource script raises the 'complete' event with the detection
+    results. The shared examples.js helper subscribes to it and appends the
+    results table into #content. *@
 <script async src="@resourceUrl" type="text/javascript"></script>
+<script src="~/js/examples.min.js"></script>
 <script>
     window.onload = function () {
-        // Subscribe to the 'complete' event.
-        fod.complete(function (data) {
-
-            // When the event fires, use the supplied data to populate a new table.
-            let fieldValues = [];
-
-            var hardwareName = typeof data.device.hardwarename == "undefined" ?
-                "Unknown" : data.device.hardwarename.join(", ")
-            fieldValues.push(["Hardware Name: ", hardwareName]);
-            fieldValues.push(["Platform: ",
-                data.device.platformname + " " + data.device.platformversion]);
-            fieldValues.push(["Browser: ",
-                data.device.browsername + " " + data.device.browserversion]);
-            fieldValues.push(["Screen width (pixels): ", data.device.screenpixelswidth]);
-            fieldValues.push(["Screen height (pixels): ", data.device.screenpixelsheight]);
-            displayValues(fieldValues);
-        });
-    }
-
-    // Helper function to add a table that displays the supplied values.
-    function displayValues(fieldValues) {
-        var table = document.createElement("table");
-        var tr = document.createElement("tr");
-        addToRow(tr, "th", "Key", false);
-        addToRow(tr, "th", "Value", false);
-        table.appendChild(tr);
-
-        fieldValues.forEach(function (entry) {
-            var tr = document.createElement("tr");
-            tr.classList.add("lightyellow");
-            addToRow(tr, "td", entry[0], true);
-            addToRow(tr, "td", entry[1], false);
-            table.appendChild(tr);
-        });
-
-        var element = document.getElementById("content");
-        element.appendChild(table);
-    }
-
-    // Helper function to add an entry to a table row.
-    function addToRow(row, elementName, text, strong) {
-        var entry = document.createElement(elementName);
-        var textNode = document.createTextNode(text);
-        if (strong === true) {
-            var strongNode = document.createElement("strong");
-            strongNode.appendChild(textNode);
-            textNode = strongNode;
-        }
-        entry.appendChild(textNode);
-        row.appendChild(entry);
-    }
+        fodExamples.bindDeviceCallback({ targetId: "content" });
+    };
 </script>
