@@ -42,6 +42,14 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb.Model
         public string ScreenWidth { get; private set; }
         public string ScreenHeight { get; private set; }
         public string DeviceId { get; private set; }
+        public string PriceBand { get; private set; }
+
+        /// <summary>
+        /// True if any of the properties displayed by this example did not
+        /// have a value. This usually means the resource key does not
+        /// include them.
+        /// </summary>
+        public bool AnyValueMissing { get; private set; }
 
         public IFlowData FlowData { get; private set; }
 
@@ -86,6 +94,18 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb.Model
             ScreenWidth = deviceData.TryGetValue(d => d.ScreenPixelsWidth.GetHumanReadable());
             ScreenHeight = deviceData.TryGetValue(d => d.ScreenPixelsHeight.GetHumanReadable());
             DeviceId = deviceData.TryGetValue(d => d.DeviceId.GetHumanReadable());
+            PriceBand = deviceData.TryGetValue(d => d.PriceBand.GetHumanReadable());
+
+            // The helper functions above return a string starting with
+            // 'Unknown' when a property does not have a value. Track this so
+            // that the page can show a message about the properties included
+            // in the resource key being used.
+            AnyValueMissing = new[]
+            {
+                HardwareVendor, HardwareName, DeviceType, PlatformVendor,
+                PlatformName, PlatformVersion, BrowserVendor, BrowserName,
+                BrowserVersion, ScreenWidth, ScreenHeight, DeviceId, PriceBand
+            }.Any(v => v.StartsWith("Unknown ("));
         }
     }
 }

@@ -97,8 +97,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Metadata
                     // We use the low memory profile as its performance is sufficient for this
                     // example. See the documentation for more detail on this and other
                     // configuration options:
-                    // https://51degrees.com/documentation/_device_detection__features__performance_options.html
-                    // https://51degrees.com/documentation/_features__automatic_datafile_updates.html
+                    // https://51degrees.com/documentation/_device_detection__features__performance_options.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-metadata-console-program.cs&utm_term=run
+                    // https://51degrees.com/documentation/_features__automatic_datafile_updates.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-metadata-console-program.cs&utm_term=run
                     .SetPerformanceProfile(profile)
                     // inhibit auto-update of the data file for this test
                     .SetAutoUpdate(false)
@@ -237,8 +237,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Metadata
                 //
                 // Note that the Lite data file is only used for illustration, and has limited accuracy
                 // and capabilities. Find out about the Enterprise data file on our pricing page:
-                // https://51degrees.com/pricing
-                ExampleUtils.FindFile(Constants.LITE_HASH_DATA_FILE_NAME);
+                // https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-metadata-console-program.cs&utm_term=main
+                ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());

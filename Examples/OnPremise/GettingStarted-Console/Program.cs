@@ -52,7 +52,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
             {
                 // In this example, we use the DeviceDetectionPipelineBuilder and configure it
                 // in code. For more information about builders in general see the documentation at
-                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html
+                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=run
 
                 // Note that we wrap the creation of a pipeline in a using to control its life cycle
                 using (var pipeline = new DeviceDetectionPipelineBuilder(loggerFactory)
@@ -60,9 +60,9 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                     // We use the low memory profile as its performance is sufficient for this
                     // example. See the documentation for more detail on this and other
                     // configuration options:
-                    // https://51degrees.com/documentation/_device_detection__features__performance_options.html
-                    // https://51degrees.com/documentation/_features__automatic_datafile_updates.html
-                    // https://51degrees.com/documentation/_features__usage_sharing.html
+                    // https://51degrees.com/documentation/_device_detection__features__performance_options.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=run
+                    // https://51degrees.com/documentation/_features__automatic_datafile_updates.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=run
+                    // https://51degrees.com/documentation/_features__usage_sharing.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=run
                     .SetPerformanceProfile(PerformanceProfiles.LowMemory)
                     // inhibit sharing usage for this example, usually this should be set to "true"
                     .SetShareUsage(false)
@@ -137,7 +137,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
 
                     // Display the results of the detection, which are called device properties.
                     // See the property dictionary at
-                    // https://51degrees.com/developers/property-dictionary
+                    // https://51degrees.com/developers/property-dictionary?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=run
                     // for details of all available properties.
                     OutputValue("Mobile Device", device.IsMobile, message);
                     OutputValue("Platform Name", device.PlatformName, message);
@@ -182,8 +182,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                 //
                 // Note that the Lite data file is only used for illustration, and has limited accuracy
                 // and capabilities. Find out about the Enterprise data file on our pricing page:
-                // https://51degrees.com/pricing
-                ExampleUtils.FindFile(Constants.LITE_HASH_DATA_FILE_NAME);
+                // https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-gettingstarted-console-program.cs&utm_term=main
+                ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());

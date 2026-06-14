@@ -43,10 +43,10 @@ using System.Net.Http;
 /// # License Key
 /// In order to test this example you will need a 51Degrees Enterprise license which can be
 /// purchased from our
-/// <a href="https://51degrees.com/pricing">pricing page</a>.
+/// <a href="https://51degrees.com/pricing?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-onpremise-updatedatafile-console-program.cs&amp;utm_term=header">pricing page</a>.
 /// 
 /// # Data Files
-/// You can find out more about data files, licenses etc. at our [FAQ page](https://51degrees.com/resources/faqs)
+/// You can find out more about data files, licenses etc. at our [FAQ page](https://51degrees.com/resources/faqs?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-onpremise-updatedatafile-console-program.cs&amp;utm_term=header)
 /// 
 /// ## Enterprise Data File
 /// Enterprise (fully-featured) data files are typically released by 51Degrees five days a week
@@ -261,7 +261,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
                         // file to a temporary file (createTempDataCopy parameter == true).
                         //
                         // For automatic updates to work you will also need to provide a license key.
-                        // A license key can be obtained with a subscription from https://51degrees.com/pricing
+                        // A license key can be obtained with a subscription from https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-updatedatafile-console-program.cs&utm_term=run
                         .UseOnPremise(dataFile, licenseKey, true)
                         // Enable update on startup, the auto update system
                         // will be used to check for an update before the
@@ -350,7 +350,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
                 {
                     logger.LogError("In order to test this example you will need a 51Degrees " +
                         "Enterprise license which can be obtained on a trial basis or purchased " +
-                        "from our pricing page https://51degrees.com/pricing. You must supply the " +
+                        "from our pricing page https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-updatedatafile-console-program.cs&utm_term=license-key-required. You must supply the " +
                         "license key " + keySubmissionPaths);
                     throw new ArgumentException("No license key available", nameof(licenseKey));
                 }
@@ -364,11 +364,22 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
 
             private string CheckDataFile(string dataFile, ILogger logger)
             {
-                // No filename specified use the default
+                // No filename specified. Check the environment variables for an explicit
+                // path before falling back to the default file name.
                 if (dataFile == null)
                 {
-                    dataFile = Constants.ENTERPRISE_HASH_DATA_FILE_NAME;
-                    logger.LogWarning($"No filename specified. Using default '{dataFile}'");
+                    dataFile = Environment.GetEnvironmentVariable(
+                        Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+                    if (string.IsNullOrWhiteSpace(dataFile))
+                    {
+                        dataFile = Environment.GetEnvironmentVariable(
+                            Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+                    }
+                    if (string.IsNullOrWhiteSpace(dataFile))
+                    {
+                        dataFile = Constants.ENTERPRISE_HASH_DATA_FILE_NAME;
+                        logger.LogWarning($"No filename specified. Using default '{dataFile}'");
+                    }
                 }
                 // Work out where the data file is if we don't have an absolute path.
                 if (dataFile != null && Path.IsPathRooted(dataFile) == false)

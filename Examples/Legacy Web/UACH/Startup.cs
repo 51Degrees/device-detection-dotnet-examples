@@ -208,7 +208,7 @@ namespace Client_Hints
                             $"appsettings.json file. Also, note that the " +
                             $"free 'lite' data file is insufficient to run " +
                             $"this example. A paid-for file can be obtained " +
-                            $"from https://51degrees.com/pricing.");
+                            $"from https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-legacy-web-uach-startup.cs&utm_term=data-file-required.");
                     }
                 }
             }

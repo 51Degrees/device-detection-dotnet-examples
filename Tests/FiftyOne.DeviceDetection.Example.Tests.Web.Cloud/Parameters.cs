@@ -31,6 +31,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
     public static class Parameters
     {
         public static string SUPER_KEY { get; private set; }
+        public static string V5_BESPOKE_KEY { get; private set; }
         public static string BROWSER_KEY { get; private set; }
         public static string HARDWARE_KEY { get; private set; }
         public static string PLATFORM_KEY { get; private set; }
@@ -50,15 +51,15 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
                 // BrowserVersion
                 // In addition, each key will need to have specific setup
                 // for the '*Accept-CH' properties:
-                // SUPER_RESOURCE_KEY - SetHeaderBrowserAccept-CH, 
-                //    SetHeaderHardwareAccept-CH, SetHeaderPlatformAccept-CH
+                // 51DEGREES_RESOURCE_KEY (or legacy SUPER_RESOURCE_KEY) -
+                //    SetHeaderBrowserAccept-CH, SetHeaderHardwareAccept-CH,
+                //    SetHeaderPlatformAccept-CH
                 // ACCEPTCH_BROWSER_KEY - SetHeaderBrowserAccept-CH only
                 // ACCEPTCH_HARDWARE_KEY - SetHeaderHardwareAccept-CH only
                 // ACCEPTCH_PLATFORM_KEY - SetHeaderPlatformAccept-CH only
                 // ACCEPTCH_NONE_KEY - No *Accept-CH properties.
-                ExampleUtils.GetKeyFromEnv(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR,
-                    v => SUPER_KEY = v);
+                ExampleUtils.GetResourceKeyFromEnv(v => SUPER_KEY = v);
+                ExampleUtils.GetKeyFromEnv("RESOURCE_KEY_CLOUD_V5_BESPOKE", v => V5_BESPOKE_KEY = v);
                 ExampleUtils.GetKeyFromEnv("ACCEPTCH_BROWSER_KEY", v => BROWSER_KEY = v);
                 ExampleUtils.GetKeyFromEnv("ACCEPTCH_HARDWARE_KEY", v => HARDWARE_KEY = v);
                 ExampleUtils.GetKeyFromEnv("ACCEPTCH_PLATFORM_KEY", v => PLATFORM_KEY = v);
@@ -78,10 +79,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
             List<string> ResourceKeys = new List<string>()
             {
                 SUPER_KEY,
-                BROWSER_KEY,
-                HARDWARE_KEY,
-                PLATFORM_KEY,
-                NO_ACCEPTCH_KEY
+                V5_BESPOKE_KEY
             };
 
             List<string> UserAgents = new List<string>()
@@ -108,17 +106,20 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
                     permutation.UserAgent == Base.EDGE_UA)
                 {
                     if (permutation.ResourceKey == BROWSER_KEY ||
-                        permutation.ResourceKey == SUPER_KEY)
+                        permutation.ResourceKey == SUPER_KEY ||
+                        permutation.ResourceKey == V5_BESPOKE_KEY)
                     {
                         expectedAcceptCH.AddRange(Base.BROWSER_ACCEPT_CH);
                     }
                     if (permutation.ResourceKey == HARDWARE_KEY ||
-                        permutation.ResourceKey == SUPER_KEY)
+                        permutation.ResourceKey == SUPER_KEY ||
+                        permutation.ResourceKey == V5_BESPOKE_KEY)
                     {
                         expectedAcceptCH.AddRange(Base.HARDWARE_ACCEPT_CH);
                     }
                     if (permutation.ResourceKey == PLATFORM_KEY ||
-                        permutation.ResourceKey == SUPER_KEY)
+                        permutation.ResourceKey == SUPER_KEY ||
+                        permutation.ResourceKey == V5_BESPOKE_KEY)
                     {
                         expectedAcceptCH.AddRange(Base.PLATFORM_ACCEPT_CH);
                     }

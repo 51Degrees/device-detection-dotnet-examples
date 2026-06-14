@@ -151,13 +151,13 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GetAllProperties
 
         static void Main(string[] args)
         {
-            // Obtain a resource key for free at https://configure.51degrees.com
+            // Obtain a resource key for free at https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=main
             string resourceKey = "!!YOUR_RESOURCE_KEY!!";
 
             if (resourceKey.StartsWith("!!"))
             {
                 Console.WriteLine("You need to create a resource key at " +
-                    "https://configure.51degrees.com and paste it into the code, " +
+                    "https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=resource-key-required and paste it into the code, " +
                     "replacing !!YOUR_RESOURCE_KEY!!.");
                 Console.WriteLine("Make sure to include all the properties " +
                     "that you want to see displayed by this example.");

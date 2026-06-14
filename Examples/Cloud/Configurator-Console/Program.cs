@@ -30,13 +30,13 @@ using System.Net.Http;
 using System.Text;
 
 /// <summary>
-/// This example is displayed at the end of the [Configurator](https://configure.51degrees.com/)
+/// This example is displayed at the end of the [Configurator](https://configure.51degrees.com/?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-configurator-console-program.cs&amp;utm_term=header)
 /// process, which is used to create resource keys for use with the 51Degrees cloud service.
 /// 
 /// It shows how to call the cloud with the newly created key and how to access the values 
 /// of the selected properties.
 ///
-/// See [Getting Started](https://51degrees.com/documentation/_examples__device_detection__getting_started__console__cloud.html)
+/// See [Getting Started](https://51degrees.com/documentation/_examples__device_detection__getting_started__console__cloud.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-configurator-console-program.cs&amp;utm_term=header)
 /// for a fuller example.
 /// 
 /// Required NuGet Dependencies:
@@ -148,9 +148,12 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.Configurator
                             $"variable '{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees " +
                             $"cloud service is accessed using a 'ResourceKey'. For more " +
                             $"information see " +
-                            $"https://51degrees.com/documentation/_info__resource_keys.html. " +
-                            $"A resource key with the properties required by this example can be " +
-                            $"created for free at https://configure.51degrees.com/1QWJwHxl. " +
+                            $"https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-configurator-console-program.cs&utm_term=resource-key-required. " +
+                            $"A free resource key can be created at " +
+                            $"https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-configurator-console-program.cs&utm_term=resource-key-required and populates the free " +
+                            $"properties. With a paid subscription, a key created at " +
+                            $"https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-configurator-console-program.cs&utm_term=resource-key-required includes all the " +
+                            $"properties used by this example. " +
                             $"Once complete, pass the key as a command line argument or " +
                             $"populate the environment variable mentioned at the start of this " +
                             $"message");
@@ -169,8 +172,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.Configurator
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             Example.Run(resourceKey, Console.Out);
         }

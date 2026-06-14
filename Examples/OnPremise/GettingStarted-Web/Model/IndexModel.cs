@@ -43,6 +43,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
         public string ScreenWidth { get; private set; }
         public string ScreenHeight { get; private set; }
         public string DeviceId { get; private set; }
+        public string PriceBand { get; private set; }
 
         public IFlowData FlowData { get; private set; }
 
@@ -91,6 +92,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
             ScreenWidth = deviceData.TryGetValue(d => d.ScreenPixelsWidth.GetHumanReadable());
             ScreenHeight = deviceData.TryGetValue(d => d.ScreenPixelsHeight.GetHumanReadable());
             DeviceId = deviceData.TryGetValue(d => d.DeviceId.GetHumanReadable());
+            PriceBand = deviceData.TryGetValue(d => d.PriceBand.GetHumanReadable());
         }
     }
 }

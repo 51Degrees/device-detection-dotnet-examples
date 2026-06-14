@@ -72,10 +72,18 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         config
                             .AddConfiguration(baseConfig)
                             .AddInMemoryCollection(overrides);
-                    })
-                    .UseUrls(Constants.AllUrls)
-                    .UseStartup<Startup>()
-                    .UseStaticWebAssets();
+                    });
+
+                    // honour ASPNETCORE_URLS if set, otherwise use the default URLs
+                    if (string.IsNullOrEmpty(
+                            Environment.GetEnvironmentVariable("ASPNETCORE_URLS")))
+                    {
+                        builder.UseUrls(Constants.AllUrls);
+                    }
+
+                    builder
+                        .UseStartup<Startup>()
+                        .UseStaticWebAssets();
                 });
 
         private static IConfiguration CreateConfiguration()
@@ -115,8 +123,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                 var resourceKeyConfigKey = $"PipelineOptions:Elements:{cloudEngineIndex}" +
                     $":BuildParameters:ResourceKey";
 
-                string resourceKey = Environment.GetEnvironmentVariable(
-                        ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                string resourceKey = ExampleUtils.GetResourceKeyFromEnv();
 
                 if (string.IsNullOrEmpty(resourceKey) == false)
                 {
@@ -129,12 +136,27 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GettingStartedWeb
                         $"'appsettings.json' or the environment variable " +
                         $"'{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. The 51Degrees cloud " +
                         $"service is accessed using a 'ResourceKey'. For more information " +
-                        $"see https://51degrees.com/documentation/_info__resource_keys.html. " +
-                        $"A resource key with the properties required by this example can be " +
-                        $"created for free at https://configure.51degrees.com/1QWJwHxl. " +
+                        $"see https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required. " +
+                        $"A free resource key can be created at " +
+                        $"https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required and populates the free " +
+                        $"properties. With a paid subscription, a key created at " +
+                        $"https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-gettingstarted-web-program.cs&utm_term=resource-key-required includes all the " +
+                        $"properties used by this example. " +
                         $"Once complete, populate the config file or environment variable " +
                         $"mentioned at the start of this message with the key.");
                 }
+            }
+
+            // override the cloud endpoint from the environment, regardless of the resource key
+            string endpoint = Environment.GetEnvironmentVariable("FIFTYONE_CLOUD_ENDPOINT");
+            if (string.IsNullOrEmpty(endpoint) == false)
+            {
+                var cloudEngineIndex = options.Elements.IndexOf(
+                    options.GetElementConfig(nameof(CloudRequestEngine)));
+                var endpointConfigKey = $"PipelineOptions:Elements:{cloudEngineIndex}" +
+                    $":BuildParameters:EndPoint";
+                Console.WriteLine($"Attempting to override '{endpointConfigKey}'");
+                result.Add(endpointConfigKey, endpoint);
             }
 
             return result;

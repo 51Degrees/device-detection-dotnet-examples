@@ -75,7 +75,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
                 // This example creates the pipeline and engines in code. For a demonstration
                 // of how to do this using a configuration file instead, see the TacLookup example.
                 // For more information about builders in general see the documentation at
-                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html
+                // https://51degrees.com/documentation/_concepts__configuration__builders__index.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=run
                 var cloudRequestEngineBuilder = new CloudRequestEngineBuilder(loggerFactory, httpClient)
                     .SetResourceKey(resourceKey);
 
@@ -139,8 +139,7 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
             // Use the command line args to get the resource key if present.
             // Otherwise, get it from the environment variable.
             string resourceKey = args.Length > 0 ? args[0] :
-                Environment.GetEnvironmentVariable(
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR);
+                ExampleUtils.GetResourceKeyFromEnv();
 
             // Configure a logger to output to the console.
             var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
@@ -152,12 +151,12 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
                     $"environment variable '{ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR}'. " +
                     $"The 51Degrees cloud service is accessed using a 'ResourceKey'. " +
                     $"For more information " +
-                    $"see https://51degrees.com/documentation/_info__resource_keys.html. " +
-                    $"Native model lookup is not available as a free service. This means that " +
-                    $"you will first need a license key, which can be purchased from our " +
-                    $"pricing page: https://51degrees.com/pricing. Once this is done, a resource " +
+                    $"see https://51degrees.com/documentation/_info__resource_keys.html?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=resource-key-required. " +
+                    $"Native model lookup requires a paid subscription. See " +
+                    $"https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=resource-key-required to get a paid subscription with more " +
+                    $"properties. Once subscribed, a resource " +
                     $"key with the properties required by this example can be created at " +
-                    $"https://configure.51degrees.com/QKyYH5XT. You can now populate the " +
+                    $"https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=resource-key-required. You can now populate the " +
                     $"environment variable mentioned at the start of this message with the " +
                     $"resource key or pass it as the first argument on the command line.");
             }

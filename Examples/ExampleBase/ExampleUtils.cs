@@ -20,6 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+using FiftyOne.Common;
 using FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements;
 using FiftyOne.Pipeline.Core.FlowElements;
 using Microsoft.Extensions.Logging;
@@ -35,10 +36,19 @@ namespace FiftyOne.DeviceDetection.Examples
     public static class ExampleUtils
     {
         /// <summary>
-        /// The default environment variable key used to get the resource key 
-        /// to use when running cloud examples.
+        /// The default environment variable key used to get the resource key
+        /// to use when running cloud examples. This aligned name is checked
+        /// first, before any legacy variable names.
         /// </summary>
-        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "SUPER_RESOURCE_KEY";
+        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "51DEGREES_RESOURCE_KEY";
+
+        /// <summary>
+        /// The legacy environment variable key used to get the resource key
+        /// to use when running cloud examples. Retained for backwards
+        /// compatibility and checked when <see cref="CLOUD_RESOURCE_KEY_ENV_VAR"/>
+        /// is not set.
+        /// </summary>
+        public const string LEGACY_CLOUD_RESOURCE_KEY_ENV_VAR = "SUPER_RESOURCE_KEY";
 
         /// <summary>
         /// The default environment variable key used to get the end point URL
@@ -48,9 +58,14 @@ namespace FiftyOne.DeviceDetection.Examples
         public const string CLOUD_END_POINT_ENV_VAR = "51D_CLOUD_ENDPOINT";
 
         /// <summary>
-        /// Timeout used when searching for files.
+        /// Message displayed when a resource key leaves some of the
+        /// properties used by an example without values.
         /// </summary>
-        private const int FindFileTimeoutMs = 10000;
+        public const string PRICING_MESSAGE =
+            "Some properties used by this example are not available " +
+            "with a free resource key. See https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-examplebase-exampleutils.cs&utm_term=pricing_message " +
+            "to get a paid subscription with more properties.";
+
 
         /// <summary>
         /// If data file is older than this number of days then a warning will be displayed.
@@ -157,47 +172,47 @@ namespace FiftyOne.DeviceDetection.Examples
             string filename,
             DirectoryInfo dir = null)
         {
-            var cancel = new CancellationTokenSource();
-            // Start the file system search as a separate task.
-            var searchTask = Task.Run(() => FindFile(filename, dir, cancel.Token));
-            // Wait for either the search or a timeout task to complete.
-            Task.WaitAny(searchTask, Task.Delay(FindFileTimeoutMs));
-            cancel.Cancel();
-            // If search has not got a result then return null.
-            return searchTask.IsCompleted ? searchTask.Result : null;
+            return FileUtils.FindFile(filename, dir);
         }
 
-        private static string FindFile(
+        /// <summary>
+        /// Get the path to a device detection data file. The environment
+        /// variables are checked first for an explicit path. The aligned
+        /// variable named by <see cref="Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>
+        /// takes precedence over the legacy variable named by
+        /// <see cref="Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>.
+        /// If neither is set, the folder hierarchy is searched for the
+        /// supplied file name using <see cref="FindFile(string, DirectoryInfo)"/>.
+        /// </summary>
+        /// <param name="filename">
+        /// The data file name to search for when no environment variable
+        /// supplies an explicit path.
+        /// </param>
+        /// <param name="dir">
+        /// The directory to start searching from. If not provided the current
+        /// directory is used.
+        /// </param>
+        /// <returns>
+        /// The path to the data file, or null if no file could be found.
+        /// </returns>
+        public static string FindDataFile(
             string filename,
-            DirectoryInfo dir,
-            CancellationToken cancel)
+            DirectoryInfo dir = null)
         {
-            if (dir == null)
+            var path = Environment.GetEnvironmentVariable(
+                Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
+            if (string.IsNullOrWhiteSpace(path))
             {
-                dir = new DirectoryInfo(Directory.GetCurrentDirectory());
+                path = Environment.GetEnvironmentVariable(
+                    Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
             }
-            string result = null;
-
-            try
+            if (string.IsNullOrWhiteSpace(path))
             {
-                var files = dir.GetFiles(filename, SearchOption.AllDirectories);
-                if (files.Length == 0 &&
-                    dir.Parent != null &&
-                    cancel.IsCancellationRequested == false)
-                {
-                    result = FindFile(filename, dir.Parent, cancel);
-                }
-                else if (files.Length > 0)
-                {
-                    result = files[0].FullName;
-                }
+                path = FindFile(filename, dir);
             }
-            // No matter what goes wrong here, we just want to indicate that we
-            // couldn't find the file by returning null.
-            catch { result = null; }
-
-            return result;
+            return path;
         }
+
 
         /// <summary>
         /// Get information about the specified data file
@@ -295,14 +310,14 @@ namespace FiftyOne.DeviceDetection.Examples
                         $"data file is available from the device-detection-data repository on " +
                         $"GitHub https://github.com/51Degrees/device-detection-data. Find out " +
                         $"about the Enterprise data file, which includes automatic daily " +
-                        $"updates, on our pricing page: https://51degrees.com/pricing");
+                        $"updates, on our pricing page: https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-examplebase-exampleutils.cs&utm_term=data-file-age-warning");
                 }
                 if (info.Tier == "Lite")
                 {
                     logger.LogWarning($"This example is using the 'Lite' data file. This is " +
                         $"used for illustration, and has limited accuracy and capabilities. " +
                         $"Find out about the Enterprise data file on our pricing page: " +
-                        $"https://51degrees.com/pricing");
+                        $"https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-examplebase-exampleutils.cs&utm_term=lite-data-file");
                 }
             }
         }
@@ -318,23 +333,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// <returns></returns>
         public static bool IsInvalidKey(string key)
         {
-            try
-            {
-                if (key == null) 
-                {
-                    return true;
-                }
-
-                byte[] data = Convert.FromBase64String(key);
-                string decodedString = Encoding.UTF8.GetString(data);
-
-                return key.Trim().Length < 19 ||
-                    decodedString.Length < 14;
-            }
-            catch (Exception)
-            {
-                return true;
-            }
+            return KeyUtils.IsInvalidKey(key);
         }
 
         /// <summary>
@@ -384,7 +383,7 @@ namespace FiftyOne.DeviceDetection.Examples
             //-
             //[getHighEntropyValues()](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData/getHighEntropyValues)
             //-
-            //[device.sua](https://51degrees.com/blog/openrtb-structured-user-agent-and-user-agent-client-hints)
+            //[device.sua](https://51degrees.com/blog/openrtb-structured-user-agent-and-user-agent-client-hints?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-examplebase-exampleutils.cs&utm_term=evidencevalues)
             //- [OpenRTB 2.6
             //spec](https://github.com/InteractiveAdvertisingBureau/openrtb2.x/blob/main/2.6.md#objectuseragent)
 
@@ -453,6 +452,39 @@ namespace FiftyOne.DeviceDetection.Examples
             {
                 setValue(string.Empty);
             }
+        }
+
+        /// <summary>
+        /// Get the resource key from the environment. The aligned
+        /// '51DEGREES_RESOURCE_KEY' variable is checked first, followed by
+        /// the legacy 'SUPER_RESOURCE_KEY' variable.
+        /// </summary>
+        /// <returns>
+        /// The resource key, or null if neither environment variable is set.
+        /// </returns>
+        public static string GetResourceKeyFromEnv()
+        {
+            var key = Environment.GetEnvironmentVariable(
+                CLOUD_RESOURCE_KEY_ENV_VAR);
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                key = Environment.GetEnvironmentVariable(
+                    LEGACY_CLOUD_RESOURCE_KEY_ENV_VAR);
+            }
+            return key;
+        }
+
+        /// <summary>
+        /// Get the resource key from the environment and run the action with
+        /// the value, or an empty string if no resource key is set. The
+        /// aligned '51DEGREES_RESOURCE_KEY' variable is checked first,
+        /// followed by the legacy 'SUPER_RESOURCE_KEY' variable.
+        /// </summary>
+        /// <param name="setValue"></param>
+        public static void GetResourceKeyFromEnv(Action<string> setValue)
+        {
+            var key = GetResourceKeyFromEnv();
+            setValue(string.IsNullOrWhiteSpace(key) ? string.Empty : key);
         }
     }
 }

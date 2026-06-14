@@ -63,13 +63,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.OnPremise
                 licenseKey: "!!YOUR_LICENSE_KEY!!";
 
             // Set Device Data file
-            DataFile = Environment.GetEnvironmentVariable(
-                Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
-            if (string.IsNullOrWhiteSpace(DataFile))
-            {
-                DataFile = ExampleUtils.FindFile(
-                    Constants.LITE_HASH_DATA_FILE_NAME);
-            }
+            DataFile = ExampleUtils.FindDataFile(
+                Constants.LITE_HASH_DATA_FILE_NAME);
 
             // Set evidence file for offline processing example.
             EvidenceFile = Environment.GetEnvironmentVariable(
