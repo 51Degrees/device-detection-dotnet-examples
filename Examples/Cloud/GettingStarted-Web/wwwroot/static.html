@@ -1,19 +1,20 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width">
-    <link rel="stylesheet" href="/css/site.css">
+    <link rel="stylesheet" href="/css/examples-main.min.css">
     <title>Example GetHighEntropyValues Static HTML</title>
 </head>
 <body>
     <div id="content"></div>
     <!--
-        The JavascriptGetHighEntropyValues javascript will be used to determine the UACH values. When port 5002 
+        The JavascriptGetHighEntropyValues javascript will be used to determine the UACH values. When port 5002
         resource is accessed from port 5001 this will be a cross origin script include. This static page can therefore
         be used to verify that the CORS configuration is valid.
     -->
     <script async src="https://localhost:5001/51Degrees.core.js" type="text/javascript"></script>
+    <script src="/js/examples.min.js"></script>
     <script>
 
         // Used to verify the cookie matches the result from
@@ -30,57 +31,10 @@
             ])
             .then((v) => ghe = v);
 
+        // The shared examples.js helper subscribes to the 'complete' event and
+        // appends a results table into #content using the pattern-library classes.
         window.onload = function () {
-            // Subscribe to the 'complete' event.
-            fod.complete(function (data) {
-
-                // When the event fires, use the supplied data to populate a new table.
-                let fieldValues = [];
-
-                var hardwareName = typeof data.device.hardwarename == "undefined" ?
-                    "Unknown" : data.device.hardwarename.join(", ")
-                fieldValues.push(["Hardware Name: ", hardwareName]);
-                fieldValues.push(["Platform: ",
-                    data.device.platformname + " " + data.device.platformversion]);
-                fieldValues.push(["Browser: ",
-                    data.device.browsername + " " + data.device.browserversion]);
-                fieldValues.push(["Screen width (pixels): ", data.device.screenpixelswidth]);
-                fieldValues.push(["Screen height (pixels): ", data.device.screenpixelsheight]);
-                displayValues(fieldValues);
-            });
-        }
-
-        // Helper function to add a table that displays the supplied values.
-        function displayValues(fieldValues) {
-            var table = document.createElement("table");
-            var tr = document.createElement("tr");
-            addToRow(tr, "th", "Key", false);
-            addToRow(tr, "th", "Value", false);
-            table.appendChild(tr);
-
-            fieldValues.forEach(function (entry) {
-                var tr = document.createElement("tr");
-                tr.classList.add("lightyellow");
-                addToRow(tr, "td", entry[0], true);
-                addToRow(tr, "td", entry[1], false);
-                table.appendChild(tr);
-            });
-
-            var element = document.getElementById("content");
-            element.appendChild(table);
-        }
-
-        // Helper function to add an entry to a table row.
-        function addToRow(row, elementName, text, strong) {
-            var entry = document.createElement(elementName);
-            var textNode = document.createTextNode(text);
-            if (strong === true) {
-                var strongNode = document.createElement("strong");
-                strongNode.appendChild(textNode);
-                textNode = strongNode;
-            }
-            entry.appendChild(textNode);
-            row.appendChild(entry);
+            fodExamples.bindDeviceCallback({ targetId: "content" });
         }
     </script>
 </body>

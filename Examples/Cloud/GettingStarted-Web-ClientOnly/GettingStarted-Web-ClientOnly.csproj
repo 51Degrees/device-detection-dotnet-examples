@@ -24,7 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="wwwroot\css\site.css">
+    <Content Update="wwwroot\css\examples-main.min.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\js\examples.min.js">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="wwwroot\favicon.ico">

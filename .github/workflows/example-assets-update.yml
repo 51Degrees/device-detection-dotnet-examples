@@ -1,0 +1,19 @@
+name: Example Assets Update
+
+# Refreshes the shared web-example CSS/JS (examples-main) committed in this repo
+# from the latest examples-assets release, via the common-ci reusable workflow.
+# The assets change rarely, so this runs weekly and only opens a PR if they
+# changed. common-ci is not a submodule; it is referenced as a reusable workflow.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  Example_Assets_Update:
+    uses: 51Degrees/common-ci/.github/workflows/nightly-example-assets-update.yml@main
+    with:
+      repo-name: ${{ github.event.repository.name }}
+    secrets:
+      token: ${{ secrets.ACCESS_TOKEN }}
