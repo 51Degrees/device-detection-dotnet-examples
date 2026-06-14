@@ -63,15 +63,26 @@ namespace FiftyOne.DeviceDetection.Examples
         /// <returns></returns>
         public static string GetHumanReadable(this IAspectPropertyValue<string> apv)
         {
-            return apv.HasValue ? apv.Value : $"Unknown ({apv.NoValueMessage})";
+            return apv != null && apv.HasValue ? apv.Value : NoValue(apv);
         }
         public static string GetHumanReadable(this IAspectPropertyValue<IReadOnlyList<string>> apv)
         {
-            return apv.HasValue ? string.Join(", ", apv.Value) : $"Unknown ({apv.NoValueMessage})";
+            return apv != null && apv.HasValue ? string.Join(", ", apv.Value) : NoValue(apv);
         }
         public static string GetHumanReadable(this IAspectPropertyValue<int> apv)
         {
-            return apv.HasValue ? apv.Value.ToString() : $"Unknown ({apv.NoValueMessage})";
+            return apv != null && apv.HasValue ? apv.Value.ToString() : NoValue(apv);
+        }
+
+        /// <summary>
+        /// Build the 'Unknown' message for a property that has no value. Handles the
+        /// case where the property is entirely absent from the response (a null
+        /// <see cref="IAspectPropertyValue{T}"/>), which happens when the resource key
+        /// or data file does not include the property.
+        /// </summary>
+        private static string NoValue<T>(IAspectPropertyValue<T> apv)
+        {
+            return $"Unknown ({(apv == null ? "property missing from the resource key or data file" : apv.NoValueMessage)})";
         }
     }
 }
