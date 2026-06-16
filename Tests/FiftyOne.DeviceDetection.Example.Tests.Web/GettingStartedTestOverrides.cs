@@ -32,10 +32,11 @@ using Xunit;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
-    public class GettingStartedTestOverrides<T> : GettingStartedTestBase<T>
+    public class GettingStartedTestOverrides<T, TFactory> : GettingStartedTestBase<T, TFactory>
         where T : class
+        where TFactory : WebApplicationFactory<T>
     {
-        public GettingStartedTestOverrides(WebApplicationFactory<T> factory) : base(factory) { }
+        public GettingStartedTestOverrides(TFactory factory) : base(factory) { }
 
         /// <summary>
         /// Profile ids to use for testing. These are extracted from 51Degrees
