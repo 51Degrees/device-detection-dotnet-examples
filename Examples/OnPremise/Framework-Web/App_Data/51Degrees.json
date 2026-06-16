@@ -30,7 +30,12 @@
     "BuildParameters": {
       "ClientSideEnabled": true,
       "ClientSideEvidenceEnabled": true,
-      "UseAsyncScript": true
+      "UseAsyncScript": true,
+
+      //Suppress and log exceptions thrown from within (Web)Pipeline.Process().
+      //Set to `true` here so a device-detection failure degrades gracefully instead of
+      //returning a 500 for every request. Use `false` while developing to surface mistakes loudly.
+      "SuppressProcessExceptions": true
     }
   }
 }

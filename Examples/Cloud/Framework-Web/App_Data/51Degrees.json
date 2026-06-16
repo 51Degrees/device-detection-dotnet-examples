@@ -33,10 +33,10 @@
       "ClientSideEvidenceEnabled": true,
       "UseAsyncScript": true,
 
-      //Suppress and log any exceptions thrown from within (Web)Pipeline.Process() method
-      //By default it is `false`, we recommend keeping it that way during testing, but
-      //set to `true` in production to avoid any possible service unavailability
-      "SuppressProcessExceptions": false
+      //Suppress and log exceptions thrown from within (Web)Pipeline.Process().
+      //Set to `true` here so a device-detection failure degrades gracefully instead of
+      //returning a 500 for every request. Use `false` while developing to surface mistakes loudly.
+      "SuppressProcessExceptions": true
     }
   }
 }
