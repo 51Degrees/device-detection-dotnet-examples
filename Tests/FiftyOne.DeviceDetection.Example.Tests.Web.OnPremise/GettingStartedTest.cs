@@ -21,13 +21,12 @@
  * ********************************************************************* */
 
 using FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
 {
-    public class GettingStartedTest : GettingStartedTestOverrides<Program>
+    public class GettingStartedTest : GettingStartedTestOverrides<Program, DataFileWebApplicationFactory<Program>>
     {
-        public GettingStartedTest(WebApplicationFactory<Program> factory) : base(factory) { }
+        public GettingStartedTest(DataFileWebApplicationFactory<Program> factory) : base(factory) { }
 
         protected override bool SupportsPropertyOverrides => false;
     }
