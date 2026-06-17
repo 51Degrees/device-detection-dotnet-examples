@@ -30,12 +30,13 @@ using Xunit;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
-    public class GettingStartedTestBase<T>: IClassFixture<WebApplicationFactory<T>>
+    public class GettingStartedTestBase<T, TFactory> : IClassFixture<TFactory>
         where T : class
+        where TFactory : WebApplicationFactory<T>
     {
-        protected readonly WebApplicationFactory<T> Factory;
+        protected readonly TFactory Factory;
 
-        public GettingStartedTestBase(WebApplicationFactory<T> factory)
+        public GettingStartedTestBase(TFactory factory)
         {
             Factory = factory;
         }

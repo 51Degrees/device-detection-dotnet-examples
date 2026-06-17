@@ -25,7 +25,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
 {
-    public class GettingStartedTest : GettingStartedTestOverrides<Program>
+    public class GettingStartedTest : GettingStartedTestOverrides<Program, WebApplicationFactory<Program>>
     {
         public GettingStartedTest(WebApplicationFactory<Program> factory) : base(factory) { }
     }
