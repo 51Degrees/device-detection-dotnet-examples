@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>FiftyOne.DeviceDetection.Examples.Cloud.GetAllProperties</AssemblyName>
     <Platforms>AnyCPU;x86;x64;ARM64</Platforms>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
@@ -78,7 +78,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
   </ItemGroup>
 
 </Project>
