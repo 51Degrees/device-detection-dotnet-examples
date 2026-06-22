@@ -51,7 +51,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
                 // BrowserVersion
                 // In addition, each key will need to have specific setup
                 // for the '*Accept-CH' properties:
-                // 51DEGREES_RESOURCE_KEY (or legacy SUPER_RESOURCE_KEY) -
+                // _51DEGREES_RESOURCE_KEY (or legacy SUPER_RESOURCE_KEY) -
                 //    SetHeaderBrowserAccept-CH, SetHeaderHardwareAccept-CH,
                 //    SetHeaderPlatformAccept-CH
                 // ACCEPTCH_BROWSER_KEY - SetHeaderBrowserAccept-CH only

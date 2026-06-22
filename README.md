@@ -37,8 +37,8 @@ A paid subscription is needed for:
 - The TAC and native model hardware profile properties
 
 To use the resource key in the example it can be supplied as an environment
-variable called "51DEGREES_RESOURCE_KEY". The legacy environment variable name
-"SUPER_RESOURCE_KEY" is still supported, with the aligned "51DEGREES_RESOURCE_KEY"
+variable called "_51DEGREES_RESOURCE_KEY". The legacy environment variable name
+"SUPER_RESOURCE_KEY" is still supported, with the aligned "_51DEGREES_RESOURCE_KEY"
 name checked first.
 
 Some on-premise examples require you to provide a license key. You can find
@@ -50,10 +50,10 @@ page](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_camp
 The on-premise examples need a device detection data file. The examples locate
 the file in the following order:
 
-1. The "51DEGREES_DD_PATH" environment variable, which can be set to an
+1. The "_51DEGREES_DD_PATH" environment variable, which can be set to an
    explicit path to the data file. The legacy "DEVICEDETECTIONDATAFILE"
    environment variable is also still supported, and is checked after
-   "51DEGREES_DD_PATH".
+   "_51DEGREES_DD_PATH".
 2. A search of the folder hierarchy, walking up from the working directory,
    for the expected data file name.
 3. The free 'Lite' data file in its expected location, which is the
@@ -61,7 +61,7 @@ the file in the following order:
 
 Note that the aligned variable names start with a digit, which POSIX shells
 do not accept in plain assignments. On Linux and macOS set them with the env
-command, for example `env 51DEGREES_RESOURCE_KEY=AAA dotnet run`.
+command, for example `env _51DEGREES_RESOURCE_KEY=AAA dotnet run`.
 
 ## Running examples with changes to Pipeline packages
 

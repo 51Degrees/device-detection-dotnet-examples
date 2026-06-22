@@ -40,7 +40,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// to use when running cloud examples. This aligned name is checked
         /// first, before any legacy variable names.
         /// </summary>
-        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "51DEGREES_RESOURCE_KEY";
+        public const string CLOUD_RESOURCE_KEY_ENV_VAR = "_51DEGREES_RESOURCE_KEY";
 
         /// <summary>
         /// The legacy environment variable key used to get the resource key
@@ -157,9 +157,9 @@ namespace FiftyOne.DeviceDetection.Examples
         }
 
         /// <summary>
-        /// Uses a background task to search for the specified filename within the working 
+        /// Uses a background task to search for the specified filename within the working
         /// directory.
-        /// If the file cannot be found, the algorithm will move to the parent directory and 
+        /// If the file cannot be found, the algorithm will move to the parent directory and
         /// repeat the process.
         /// This continues until the file is found or a timeout is triggered.
         /// </summary>
@@ -219,7 +219,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// </summary>
         /// <param name="dataFile"></param>
         /// <param name="engineBuilder"></param>
-        public static DataFileInfo GetDataFileInfo(string dataFile, 
+        public static DataFileInfo GetDataFileInfo(string dataFile,
             DeviceDetectionHashEngineBuilder engineBuilder)
         {
             DataFileInfo result = new DataFileInfo();
@@ -337,7 +337,7 @@ namespace FiftyOne.DeviceDetection.Examples
         }
 
         /// <summary>
-        /// This collection contains the various input values that will be passed to the device 
+        /// This collection contains the various input values that will be passed to the device
         /// detection algorithm when running examples
         /// </summary>
         public static readonly List<Dictionary<string, object>>
@@ -371,8 +371,8 @@ namespace FiftyOne.DeviceDetection.Examples
                     "\"Google Chrome\";v=\"98\"" },
                 { "header.sec-ch-ua-platform", "\"Windows\"" },
                 { "header.sec-ch-ua-platform-version", "\"14.0.0\"" }
-            }, 
-            
+            },
+
             //A note on User-Agent Client Hint representations:
             //There are 3 common ways to represent UACH:
             //- [HTTP header map](https://wicg.github.io/ua-client-hints/)
@@ -388,14 +388,14 @@ namespace FiftyOne.DeviceDetection.Examples
             //spec](https://github.com/InteractiveAdvertisingBureau/openrtb2.x/blob/main/2.6.md#objectuseragent)
 
             //51Degrees historically used HTTP header map to represent User-Agent Client Hints and expected the evidence to
-            //be provided as HTTP headers (or same name query parameters).  
+            //be provided as HTTP headers (or same name query parameters).
 
             //However in version 4.5 we introduced the ability to perform device detection using the 2 other User-Agent
             //Client Hints representations as evidence (internally it is done through conversion to the HTTP-header
             //representation, but it's an implementation detail).  The 2 evidence parameter names in question are:
             //`51D_gethighentropyvalues` and `51D_structureduseragent` - the engine consumes them as either
             //query or cookie params.
-            
+
             new Dictionary<string, object>()
             {
 
@@ -418,13 +418,13 @@ namespace FiftyOne.DeviceDetection.Examples
              "SwibW9iaWxlIjpmYWxzZSwibW9kZWwiOiIiLCJwbGF0Zm9ybSI6Im1hY09TIiwicGxhdGZvcm1WZXJzaW9uIjoiMTUuMS4xIn0="
              },
             },
-        
+
             //`query.51D_structureduseragent` or `cookie.51D_structureduseragent` is a JSON-string representation of
             //User-Agent Client Hints used in the
             //[OpenRTB 2.6](https://github.com/InteractiveAdvertisingBureau/openrtb2.x/blob/main/2.6.md#objectuseragent)
             new Dictionary<string, object>()
             {
-            {"query.51D_structureduseragent", 
+            {"query.51D_structureduseragent",
                 "{\"browsers\":[{\"brand\":\"Chromium\",\"version\":[\"124\",\"0\",\"6367\",\"91\"]},{\"brand\":"+
                 "\"Google Chrome\",\"version\":[\"124\",\"0\",\"6367\",\"91\"]},{\"brand\":\"Not-A.Brand\",\"version\""+
                 ":[\"99\",\"0\",\"0\",\"0\"]}],\"platform\":{\"brand\":\"Windows\",\"version\":[\"14\",\"0\",\"0\"]},"+
@@ -456,7 +456,7 @@ namespace FiftyOne.DeviceDetection.Examples
 
         /// <summary>
         /// Get the resource key from the environment. The aligned
-        /// '51DEGREES_RESOURCE_KEY' variable is checked first, followed by
+        /// '_51DEGREES_RESOURCE_KEY' variable is checked first, followed by
         /// the legacy 'SUPER_RESOURCE_KEY' variable.
         /// </summary>
         /// <returns>
@@ -477,7 +477,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// <summary>
         /// Get the resource key from the environment and run the action with
         /// the value, or an empty string if no resource key is set. The
-        /// aligned '51DEGREES_RESOURCE_KEY' variable is checked first,
+        /// aligned '_51DEGREES_RESOURCE_KEY' variable is checked first,
         /// followed by the legacy 'SUPER_RESOURCE_KEY' variable.
         /// </summary>
         /// <param name="setValue"></param>
