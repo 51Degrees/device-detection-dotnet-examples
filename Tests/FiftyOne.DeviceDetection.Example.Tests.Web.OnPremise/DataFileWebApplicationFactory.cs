@@ -46,7 +46,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            // FindDataFile honours the 51DEGREES_DD_PATH / DEVICEDETECTIONDATAFILE
+            // FindDataFile honours the _51DEGREES_DD_PATH / DEVICEDETECTIONDATAFILE
             // environment variables before falling back to the directory search,
             // matching the precedence used by the example itself.
             var dataFile = ExampleUtils.FindDataFile(LiteDataFileName);

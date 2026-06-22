@@ -42,7 +42,7 @@ namespace FiftyOne.DeviceDetection.Examples
         public const string YAML_EVIDENCE_FILE_NAME = "20000 Evidence Records.yml";
 
         /// <summary>
-        /// Environment variable key for the license key file to use for the 
+        /// Environment variable key for the license key file to use for the
         /// tests.
         /// </summary>
         public const string LICENSE_KEY_ENV_VAR = "DEVICEDETECTIONLICENSEKEY_DOTNET";
@@ -52,7 +52,7 @@ namespace FiftyOne.DeviceDetection.Examples
         /// device detection data file. This aligned name is checked first,
         /// before any legacy variable names.
         /// </summary>
-        public const string DEVICE_DETECTION_DATA_FILE_ENV_VAR = "51DEGREES_DD_PATH";
+        public const string DEVICE_DETECTION_DATA_FILE_ENV_VAR = "_51DEGREES_DD_PATH";
 
         /// <summary>
         /// Legacy environment variable key used to supply an explicit path to

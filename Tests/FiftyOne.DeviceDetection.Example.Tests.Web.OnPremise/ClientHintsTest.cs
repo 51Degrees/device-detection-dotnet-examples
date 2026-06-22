@@ -71,7 +71,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
                     "data file that is included with the source code. " +
                     "A paid-for data file can be obtained from " +
                     "https://51degrees.com/pricing You can then configure " +
-                    "the 51DEGREES_DD_PATH environment variable " +
+                    "the _51DEGREES_DD_PATH environment variable " +
                     "with the full path to the file.");
             }
 
