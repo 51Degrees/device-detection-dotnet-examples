@@ -8,10 +8,19 @@
  *
  * If a copy of the EUPL was not distributed with this file, You can obtain
  * one at https://opensource.org/licenses/EUPL-1.2.
+ *
+ * The 'Compatible Licences' set out in the Appendix to the EUPL (as may be
+ * amended by the European Commission) shall be deemed incompatible for
+ * the purposes of the Work and the provisions of the compatibility
+ * clause in Article 5 of the EUPL shall not apply.
+ *
+ * If using the Work as, or as part of, a network application, by
+ * including the attribution notice(s) required under Article 5 of the EUPL
+ * in the end user terms of the application under an appropriate heading,
+ * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
 using FiftyOne.DeviceDetection.Examples;
-using FiftyOne.DeviceDetection.Shared.Data;
 using FiftyOne.Pipeline.Core.FlowElements;
 using FiftyOne.Pipeline.Engines;
 using Microsoft.Extensions.Logging;
@@ -24,42 +33,203 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>
+/// @example OnPremise/PerformanceMultiProperty-Console/Program.cs
+///
 /// Multi-property "clock-time" performance benchmark.
 ///
 /// The standard Performance-Console reads a single property (IsMobile) per
 /// detection, which is the least favourable case for the property-read
-/// optimisations (issue #524): those savings are *per property read*, so a
-/// one-property loop barely shows them. This example instead reads *every*
-/// available property on each detection - much closer to how real integrations
-/// consume the results - so the read-path improvement is obvious in the
-/// end-to-end detections/sec number.
+/// optimisations (device-detection-dotnet#524): those savings are *per property
+/// read*, so a one-property loop barely shows them. This example instead reads
+/// *every* available scalar property on each detection - much closer to how real
+/// integrations consume the results - so the read-path improvement is visible in
+/// the end-to-end detections/sec number. It also reports an isolated
+/// property-read throughput that removes the detection cost entirely.
 ///
 /// Run with an optional data file and evidence file:
-///   dotnet run -- [dataFile] [evidenceFile] [threadCount]
+///   dotnet run -- [-d dataFile] [-u evidenceFile]
+///
+/// This example is available in full on
+/// [GitHub](https://github.com/51Degrees/device-detection-dotnet-examples/blob/main/Examples/OnPremise/PerformanceMultiProperty-Console/Program.cs).
+///
+/// @include{doc} example-require-datafile.txt
 /// </summary>
 namespace FiftyOne.DeviceDetection.Examples.OnPremise.PerformanceMultiProperty
 {
     public class Program
     {
-        // Small ExampleBase subclass so we can reuse the protected YAML reader.
-        private class EvidenceReader : ExampleBase
+        private const int DEFAULT_THREAD_COUNT = 4;
+        private const long READS_PER_THREAD = 5_000_000;
+
+        public class Example : ExampleBase
         {
-            public static List<Dictionary<string, object>> Read(string path)
+            public void Run(
+                string dataFile,
+                string evidenceFile,
+                TextWriter output,
+                int threadCount)
             {
-                using (var reader = new StreamReader(File.OpenRead(path)))
+                using (var loggerFactory = LoggerFactory.Create(b => { }))
+                using (var pipeline = new DeviceDetectionPipelineBuilder(loggerFactory)
+                    .UseOnPremise(dataFile, null, false)
+                    .SetPerformanceProfile(PerformanceProfiles.MaxPerformance)
+                    .SetShareUsage(false)
+                    .SetAutoUpdate(false)
+                    .SetDataUpdateOnStartUp(false)
+                    .SetDataFileSystemWatcher(false)
+                    .Build())
                 {
-                    return GetEvidence(reader).ToList();
+                    var evidence = ReadEvidence(evidenceFile);
+                    var properties = ExampleUtils.DiscoverReadableScalarProperties(
+                        pipeline, evidence[0]);
+                    if (properties.Count == 0)
+                    {
+                        output.WriteLine("No readable scalar properties were found in the " +
+                            "data file, so there is nothing to benchmark.");
+                        return;
+                    }
+
+                    output.WriteLine($"Reading {properties.Count} scalar properties per " +
+                        $"detection over {evidence.Count:N0} evidence records on " +
+                        $"{threadCount} threads.");
+                    output.WriteLine($"Data: {Path.GetFileName(dataFile)}, profile: MaxPerformance.");
+                    output.WriteLine();
+
+                    output.WriteLine("Warming up...");
+                    Benchmark(pipeline, evidence, properties, threadCount);
+                    GC.Collect();
+                    Task.Delay(500).Wait();
+
+                    output.WriteLine("Running detection throughput...");
+                    var msPerDetection = Benchmark(pipeline, evidence, properties, threadCount);
+                    Report(msPerDetection, properties.Count, threadCount, output);
+
+                    // Isolated property-read throughput: process one detection per
+                    // thread, then read every property in a tight loop. This removes
+                    // the CreateFlowData / Process / native-detection cost (which
+                    // dominates and adds noise) so the property-read path - the work
+                    // the #524 fixes target - is measured directly.
+                    output.WriteLine();
+                    output.WriteLine("Running isolated property-read throughput...");
+                    ReadThroughput(pipeline, evidence, properties, threadCount, output);
                 }
             }
-        }
 
-        private class BenchmarkResult
-        {
-            public long Count;
-            public readonly Stopwatch Timer = new Stopwatch();
-        }
+            /// <summary>
+            /// Run one timed pass over the evidence, reading every property inside
+            /// each detection's timed region, and return the mean ms per detection.
+            /// </summary>
+            private static double Benchmark(
+                IPipeline pipeline,
+                List<Dictionary<string, object>> evidence,
+                List<string> properties,
+                int threadCount)
+            {
+                long totalDetections = 0;
+                long totalTicks = 0;
+                var lockObj = new object();
 
-        private const int DEFAULT_THREAD_COUNT = 4;
+                Parallel.ForEach(evidence,
+                    new ParallelOptions { MaxDegreeOfParallelism = threadCount },
+                    () => new long[2], // [0] = detections, [1] = stopwatch ticks
+                    (values, loopState, local) =>
+                    {
+                        var sw = Stopwatch.StartNew();
+                        using (var data = pipeline.CreateFlowData())
+                        {
+                            data.AddEvidence(values).Process();
+                            var device = data.Get<IDeviceData>();
+                            // Read every property - the work the #524 fixes target.
+                            for (int i = 0; i < properties.Count; i++)
+                            {
+                                var value = device[properties[i]];
+                            }
+                        }
+                        sw.Stop();
+                        local[0] += 1;
+                        local[1] += sw.ElapsedTicks;
+                        return local;
+                    },
+                    local =>
+                    {
+                        lock (lockObj)
+                        {
+                            totalDetections += local[0];
+                            totalTicks += local[1];
+                        }
+                    });
+
+                var totalMs = totalTicks * 1000.0 / Stopwatch.Frequency;
+                return totalMs / (totalDetections * threadCount);
+            }
+
+            private static void Report(
+                double msPerDetection, int propertyCount, int threadCount, TextWriter output)
+            {
+                var detectionsPerSecond = 1000.0 / msPerDetection;
+                output.WriteLine();
+                output.WriteLine($"Overall: {propertyCount} properties each.");
+                output.WriteLine($"  Detections/sec:      {detectionsPerSecond:N0}");
+                output.WriteLine($"  Property reads/sec:  {detectionsPerSecond * propertyCount:N0}");
+                output.WriteLine($"  ms per detection:    {msPerDetection:N4}");
+                output.WriteLine($"  Concurrent threads:  {threadCount}");
+            }
+
+            private static void ReadThroughput(
+                IPipeline pipeline,
+                List<Dictionary<string, object>> evidence,
+                List<string> properties,
+                int threadCount,
+                TextWriter output)
+            {
+                var elapsedMs = new double[threadCount];
+                var reads = new long[threadCount];
+                var threads = new Thread[threadCount];
+                for (int t = 0; t < threadCount; t++)
+                {
+                    int idx = t;
+                    var values = evidence[idx % evidence.Count];
+                    threads[idx] = new Thread(() =>
+                    {
+                        // Each thread reads its OWN device data - no cross-thread lock
+                        // contention, so this measures raw read cost.
+                        using (var data = pipeline.CreateFlowData())
+                        {
+                            data.AddEvidence(values).Process();
+                            var device = data.Get<IDeviceData>();
+                            for (int w = 0; w < 100_000; w++) // warm up this thread
+                            {
+                                var _ = device[properties[w % properties.Count]];
+                            }
+                            var sw = Stopwatch.StartNew();
+                            long n = 0;
+                            while (n < READS_PER_THREAD)
+                            {
+                                for (int i = 0; i < properties.Count && n < READS_PER_THREAD; i++)
+                                {
+                                    var _ = device[properties[i]];
+                                    n++;
+                                }
+                            }
+                            sw.Stop();
+                            // Stopwatch ticks -> ms in double, so the derived ns/read is
+                            // not quantised to whole-millisecond resolution.
+                            elapsedMs[idx] = sw.ElapsedTicks * 1000.0 / Stopwatch.Frequency;
+                            reads[idx] = n;
+                        }
+                    });
+                }
+                foreach (var th in threads) { th.Start(); }
+                foreach (var th in threads) { th.Join(); }
+
+                long totalReads = reads.Sum();
+                double wallMs = elapsedMs.Max(); // threads run concurrently
+                double readsPerSecond = totalReads / (wallMs / 1000.0);
+                double nsPerRead = wallMs * 1e6 / (totalReads / (double)threadCount);
+                output.WriteLine($"  Property reads/sec (all threads): {readsPerSecond:N0}");
+                output.WriteLine($"  ns per read (per thread):         {nsPerRead:N1}");
+            }
+        }
 
         public static void Main(string[] args)
         {
@@ -68,199 +238,24 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.PerformanceMultiProperty
 
             var dataFile = options.DataFilePath ??
                 ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
-            // FindDataFile honours the DEVICE_DETECTION_DATA_FILE env var; if that
-            // points at a file that isn't present, fall back to the Lite file that
-            // ships in the data submodule so the example still runs.
-            if (string.IsNullOrWhiteSpace(dataFile) || !File.Exists(dataFile))
-            {
-                dataFile = ExampleUtils.FindFile(Constants.LITE_HASH_DATA_FILE_NAME);
-            }
             var evidenceFile = options.EvidenceFile ??
                 ExampleUtils.FindFile(Constants.YAML_EVIDENCE_FILE_NAME);
-            int threadCount = DEFAULT_THREAD_COUNT;
 
-            using (var loggerFactory = LoggerFactory.Create(b => { }))
-            using (var pipeline = new DeviceDetectionPipelineBuilder(loggerFactory)
-                .UseOnPremise(dataFile, null, false)
-                .SetPerformanceProfile(PerformanceProfiles.MaxPerformance)
-                .SetShareUsage(false)
-                .SetAutoUpdate(false)
-                .SetDataUpdateOnStartUp(false)
-                .SetDataFileSystemWatcher(false)
-                .Build())
+            if (string.IsNullOrWhiteSpace(dataFile) || File.Exists(dataFile) == false)
             {
-                var evidence = EvidenceReader.Read(evidenceFile);
-
-                // Every property the "device" element can produce, that actually
-                // resolves against this data file (Lite exposes fewer than
-                // Enterprise). Read by name via the indexer on each detection.
-                var properties = DiscoverReadableProperties(pipeline, evidence[0]);
-
-                Console.WriteLine($"Reading {properties.Count} scalar properties per detection " +
-                    $"over {evidence.Count:N0} evidence records on {threadCount} threads.");
-                Console.WriteLine($"Data: {Path.GetFileName(dataFile)}, profile: MaxPerformance.");
-                Console.WriteLine();
-
-                Console.WriteLine("Warming up...");
-                Benchmark(pipeline, evidence, properties, threadCount);
-                GC.Collect();
-                Task.Delay(500).Wait();
-
-                Console.WriteLine("Running detection throughput...");
-                var results = Benchmark(pipeline, evidence, properties, threadCount);
-                Report(results, properties.Count, threadCount);
-
-                // Isolated property-read throughput: process one detection per
-                // thread, then read every property in a tight loop. This removes
-                // the CreateFlowData / Process / native-detection cost (which
-                // dominates and adds noise) so the property-read path - the work
-                // the #524 fixes actually target - is measured directly.
-                Console.WriteLine();
-                Console.WriteLine("Running isolated property-read throughput...");
-                ReadThroughput(pipeline, evidence, properties, threadCount);
+                Console.WriteLine($"Data file not found: '{dataFile}'. Supply one with " +
+                    "'-d <path>', or run 'git submodule update --recursive' to fetch the " +
+                    "bundled Lite file.");
+                return;
             }
-        }
-
-        private static void ReadThroughput(
-            IPipeline pipeline,
-            List<Dictionary<string, object>> evidence,
-            List<string> properties,
-            int threadCount)
-        {
-            const long readsPerThread = 5_000_000;
-            var elapsed = new long[threadCount];
-            var reads = new long[threadCount];
-            var threads = new Thread[threadCount];
-            for (int t = 0; t < threadCount; t++)
+            if (string.IsNullOrWhiteSpace(evidenceFile) || File.Exists(evidenceFile) == false)
             {
-                int idx = t;
-                var values = evidence[idx % evidence.Count];
-                threads[idx] = new Thread(() =>
-                {
-                    // Each thread reads its OWN device data - no cross-thread lock
-                    // contention, so this measures raw read cost.
-                    using (var data = pipeline.CreateFlowData())
-                    {
-                        data.AddEvidence(values).Process();
-                        var device = data.Get<IDeviceData>();
-                        for (int w = 0; w < 100_000; w++) // warm up this thread
-                        {
-                            var _ = device[properties[w % properties.Count]];
-                        }
-                        var sw = Stopwatch.StartNew();
-                        long n = 0;
-                        while (n < readsPerThread)
-                        {
-                            for (int i = 0; i < properties.Count && n < readsPerThread; i++)
-                            {
-                                var _ = device[properties[i]];
-                                n++;
-                            }
-                        }
-                        sw.Stop();
-                        elapsed[idx] = sw.ElapsedMilliseconds;
-                        reads[idx] = n;
-                    }
-                });
+                Console.WriteLine($"Evidence file not found: '{evidenceFile}'. Supply one " +
+                    "with '-u <path>', or run 'git submodule update --recursive'.");
+                return;
             }
-            foreach (var th in threads) { th.Start(); }
-            foreach (var th in threads) { th.Join(); }
 
-            long totalReads = reads.Sum();
-            long wallMs = elapsed.Max(); // threads run concurrently
-            double readsPerSecond = totalReads / (wallMs / 1000.0);
-            double nsPerRead = (double)wallMs * 1e6 / (totalReads / (double)threadCount);
-            Console.WriteLine($"  Property reads/sec (all threads): {readsPerSecond:N0}");
-            Console.WriteLine($"  ns per read (per thread):         {nsPerRead:N1}");
-        }
-
-        // Match-metric properties are computed in managed code (not via the native
-        // value getters), so they don't exercise the property-read fast paths.
-        private static readonly HashSet<string> MetricProperties =
-            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "DeviceId", "Difference", "Drift", "Method",
-                "Iterations", "MatchedNodes", "UserAgents"
-            };
-
-        // The fast paths (issue #524, fix #4) cover the scalar value types.
-        private static readonly HashSet<Type> ScalarTypes =
-            new HashSet<Type> { typeof(string), typeof(bool), typeof(int), typeof(double) };
-
-        private static List<string> DiscoverReadableProperties(
-            IPipeline pipeline, Dictionary<string, object> sampleEvidence)
-        {
-            // "device" is the DeviceDetectionHashEngine element data key. Keep only
-            // the scalar, non-metric properties, so the benchmark measures the work
-            // the #524 change actually targets rather than being diluted by the
-            // managed-computed metrics and multi-value (list) properties.
-            var candidates = pipeline.ElementAvailableProperties["device"].Values
-                .Where(p => ScalarTypes.Contains(p.Type) && !MetricProperties.Contains(p.Name))
-                .Select(p => p.Name)
-                .ToList();
-
-            var readable = new List<string>();
-            using (var data = pipeline.CreateFlowData())
-            {
-                data.AddEvidence(sampleEvidence).Process();
-                var device = data.Get<IDeviceData>();
-                foreach (var name in candidates)
-                {
-                    try { var _ = device[name]; readable.Add(name); }
-                    catch { /* not available in this data file */ }
-                }
-            }
-            return readable;
-        }
-
-        private static List<BenchmarkResult> Benchmark(
-            IPipeline pipeline,
-            List<Dictionary<string, object>> evidence,
-            List<string> properties,
-            int threadCount)
-        {
-            var results = new List<BenchmarkResult>();
-            Parallel.ForEach(evidence,
-                new ParallelOptions { MaxDegreeOfParallelism = threadCount },
-                () => new BenchmarkResult(),
-                (values, loopState, result) =>
-                {
-                    result.Timer.Start();
-                    using (var data = pipeline.CreateFlowData())
-                    {
-                        data.AddEvidence(values).Process();
-                        var device = data.Get<IDeviceData>();
-                        // Read every property - this is the work the #524
-                        // optimisations target.
-                        for (int i = 0; i < properties.Count; i++)
-                        {
-                            var value = device[properties[i]];
-                        }
-                    }
-                    result.Timer.Stop();
-                    result.Count++;
-                    return result;
-                },
-                result => { lock (results) { results.Add(result); } });
-            return results;
-        }
-
-        private static void Report(
-            List<BenchmarkResult> results, int propertyCount, int threadCount)
-        {
-            long detections = results.Sum(r => r.Count);
-            long milliseconds = results.Sum(r => r.Timer.ElapsedMilliseconds);
-            double msPerDetection = (double)milliseconds / (detections * threadCount);
-            double detectionsPerSecond = 1000.0 / msPerDetection;
-            double propertyReadsPerSecond = detectionsPerSecond * propertyCount;
-
-            Console.WriteLine();
-            Console.WriteLine($"Overall: {detections:N0} detections, " +
-                $"{propertyCount} properties each.");
-            Console.WriteLine($"  Detections/sec:      {detectionsPerSecond:N0}");
-            Console.WriteLine($"  Property reads/sec:  {propertyReadsPerSecond:N0}");
-            Console.WriteLine($"  ms per detection:    {msPerDetection:N4}");
-            Console.WriteLine($"  Concurrent threads:  {threadCount}");
+            new Example().Run(dataFile, evidenceFile, Console.Out, DEFAULT_THREAD_COUNT);
         }
     }
 }
