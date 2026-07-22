@@ -148,6 +148,20 @@ namespace FiftyOne.DeviceDetection.Examples
             }
         }
 
+        /// <summary>
+        /// Read a YAML evidence file into a materialised list. Exposed so the
+        /// performance examples can load evidence without each re-declaring a
+        /// wrapper around the protected <see cref="GetEvidence"/> reader.
+        /// </summary>
+        public static List<Dictionary<string, object>> ReadEvidence(
+            string evidenceFilePath, ILogger logger = null)
+        {
+            using (var reader = new StreamReader(File.OpenRead(evidenceFilePath)))
+            {
+                return GetEvidence(reader, logger).ToList();
+            }
+        }
+
         protected static IEnumerable<string> Report(
             List<string> input,
             int count,

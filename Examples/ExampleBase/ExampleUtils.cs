@@ -27,6 +27,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -485,6 +486,44 @@ namespace FiftyOne.DeviceDetection.Examples
         {
             var key = GetResourceKeyFromEnv();
             setValue(string.IsNullOrWhiteSpace(key) ? string.Empty : key);
+        }
+
+        // Match-metric properties are computed in managed code (not via the native
+        // value getters), and multi-value (list) properties don't exercise the
+        // scalar value getters, so both are excluded when a benchmark wants to
+        // measure only the scalar property-read path.
+        private static readonly HashSet<string> _metricProperties =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "DeviceId", "Difference", "Drift", "Method", "Iterations", "MatchedNodes", "UserAgents" };
+        private static readonly HashSet<Type> _scalarValueTypes =
+            new HashSet<Type> { typeof(string), typeof(bool), typeof(int), typeof(double) };
+
+        /// <summary>
+        /// The scalar, non-metric 'device' properties that actually resolve against
+        /// the loaded data file (Lite exposes far fewer than Enterprise). Shared by
+        /// the property-read performance examples so they measure the same set.
+        /// </summary>
+        public static List<string> DiscoverReadableScalarProperties(
+            IPipeline pipeline, Dictionary<string, object> sampleEvidence)
+        {
+            var candidates = pipeline.ElementAvailableProperties["device"].Values
+                .Where(p => _scalarValueTypes.Contains(p.Type)
+                    && _metricProperties.Contains(p.Name) == false)
+                .Select(p => p.Name)
+                .ToList();
+
+            var readable = new List<string>();
+            using (var data = pipeline.CreateFlowData())
+            {
+                data.AddEvidence(sampleEvidence).Process();
+                var device = data.Get<IDeviceData>();
+                foreach (var name in candidates)
+                {
+                    try { var _ = device[name]; readable.Add(name); }
+                    catch { /* not available in this data file */ }
+                }
+            }
+            return readable;
         }
     }
 }
