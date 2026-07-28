@@ -11,7 +11,7 @@
 
   <ItemGroup>
 	<PackageReference Include="FiftyOne.DeviceDetection" Version="4.5.130" />
-	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.72" />
+	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.73" />
 	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.29" />
   </ItemGroup>
   
