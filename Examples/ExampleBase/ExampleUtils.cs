@@ -315,8 +315,9 @@ namespace FiftyOne.DeviceDetection.Examples
                 }
                 if (info.Tier == "Lite")
                 {
-                    logger.LogWarning($"This example is using the 'Lite' data file. This is " +
-                        $"used for illustration, and has limited accuracy and capabilities. " +
+                    logger.LogWarning($"This example is using the 'Lite' data file. This " +
+                        $"contains a more limited set of properties than the Enterprise " +
+                        $"data file. " +
                         $"Find out about the Enterprise data file on our pricing page: " +
                         $"https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-examplebase-exampleutils.cs&utm_term=lite-data-file");
                 }
