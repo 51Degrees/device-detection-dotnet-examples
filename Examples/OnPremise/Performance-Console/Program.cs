@@ -328,8 +328,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.Performance
                     // In this example, by default, the 51degrees "Lite" file needs to be somewhere in the
                     // project space, or you may specify another file as a command line parameter.
                     //
-                    // Note that the Lite data file is only used for illustration, and has limited accuracy
-                    // and capabilities. Find out about the Enterprise data file on our pricing page:
+                    // Note that the Lite data file contains a more limited set of properties than the
+                    // Enterprise data file. Find out about the Enterprise data file on our pricing page:
                     // https://51degrees.com/pricing?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-onpremise-performance-console-program.cs&utm_term=main
                     ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);
                 // Do the same for the yaml evidence file.
