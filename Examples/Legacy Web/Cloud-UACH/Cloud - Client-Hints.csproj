@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="FiftyOne.DeviceDetection" Version="4.5.140" />
+	<PackageReference Include="FiftyOne.DeviceDetection" Version="4.5.142" />
 	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.81" />
-	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.29" />
+	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.30" />
   </ItemGroup>
   
 </Project>
