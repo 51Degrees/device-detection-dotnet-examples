@@ -148,6 +148,14 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb
             else
             {
                 foundDataFile = File.Exists(dataFile);
+                if (foundDataFile)
+                {
+                    // Add an override for the absolute path to the data file.
+                    // Without this the absolute path is verified and then
+                    // discarded, and the engine goes on to use whatever is named
+                    // in appsettings.json.
+                    overrides.Add(dataFileConfigKey, dataFile);
+                }
             }
 
             if (foundDataFile == false)
