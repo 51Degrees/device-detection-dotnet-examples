@@ -146,13 +146,8 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                     OutputValue("Browser Version", device.BrowserVersion, message);
                     OutputValue("DeviceId", device.DeviceId, message);
 
-                    // IsHeadless, HasWebDriver and IsVisible are newer properties
-                    // that the generated IDeviceData interface does not expose yet,
-                    // so they are read by name. IsHeadless comes from the
-                    // User-Agent. HasWebDriver and IsVisible can only be answered
-                    // by JavaScript running in the browser, so in a console example
-                    // they report the value the data file holds before that
-                    // JavaScript has run. See the web example for the JavaScript.
+                    // The generated IDeviceData interface does not expose these
+                    // three properties yet, so they are read by name.
                     OutputNamedValue("Headless Browser", device, "IsHeadless", message);
                     OutputNamedValue("Has Web Driver", device, "HasWebDriver", message);
                     OutputNamedValue("Window Visible", device, "IsVisible", message);

@@ -73,10 +73,6 @@ namespace FiftyOne.DeviceDetection.Examples
         {
             return apv != null && apv.HasValue ? apv.Value.ToString() : NoValue(apv);
         }
-        public static string GetHumanReadable(this IAspectPropertyValue<bool> apv)
-        {
-            return apv != null && apv.HasValue ? apv.Value.ToString() : NoValue(apv);
-        }
 
         /// <summary>
         /// Get a human-readable version of a property looked up by name rather than

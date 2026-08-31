@@ -87,15 +87,6 @@
             </tbody>
         </table>
 
-        <p class="c-eg-page__lead">
-            Headless browser is read from the User-Agent. Has web driver and window visible can
-            only be answered by JavaScript running in the browser, so on the very first request
-            they show what the data file holds before that JavaScript has run. The JavaScript
-            writes the answers into the <code>51D_HasWebDriver</code> and <code>51D_IsVisible</code>
-            cookies, which are sent with the callback below and with any later request, so reload
-            this page to see the values the browser reported.
-        </p>
-
         <h3 class="c-eg-page__heading">Evidence used</h3>
         <p class="c-eg-legend">
             Evidence was
@@ -177,31 +168,6 @@
 <script src="~/js/examples.min.js"></script>
 <script>
     window.onload = function () {
-        fodExamples.bindDeviceCallback({
-            targetId: "content",
-            // The default field list is replaced so that the three newer
-            // properties appear in the callback results as well. The keys are
-            // the lower case property names used in the JSON response.
-            fields: function (data) {
-                var device = (data && data.device) || {};
-                var hardwareName = typeof device.hardwarename === "undefined" ?
-                    "Unknown" : [].concat(device.hardwarename).join(", ");
-                var join = function (a, b) {
-                    return [a, b].filter(function (v) {
-                        return v !== null && v !== undefined && v !== "";
-                    }).join(" ");
-                };
-                return [
-                    ["Hardware Name:", hardwareName],
-                    ["Platform:", join(device.platformname, device.platformversion)],
-                    ["Browser:", join(device.browsername, device.browserversion)],
-                    ["Screen width (pixels):", device.screenpixelswidth],
-                    ["Screen height (pixels):", device.screenpixelsheight],
-                    ["Headless browser:", device.isheadless],
-                    ["Has web driver:", device.haswebdriver],
-                    ["Window visible:", device.isvisible]
-                ];
-            }
-        });
+        fodExamples.bindDeviceCallback({ targetId: "content" });
     };
 </script>
