@@ -431,6 +431,18 @@ namespace FiftyOne.DeviceDetection.Examples
                 "\"Google Chrome\",\"version\":[\"124\",\"0\",\"6367\",\"91\"]},{\"brand\":\"Not-A.Brand\",\"version\""+
                 ":[\"99\",\"0\",\"0\",\"0\"]}],\"platform\":{\"brand\":\"Windows\",\"version\":[\"14\",\"0\",\"0\"]},"+
                 "\"mobile\":0,\"architecture\":\"x86\",\"source\":2}"},
+            },
+
+            // A User-Agent from a headless browser. Chrome and browsers based on
+            // it announce this with the 'HeadlessChrome' token in place of
+            // 'Chrome', which is what the IsHeadless property reads. Note that
+            // IsHeadless reports what the browser says about itself and does not
+            // on its own mean the session is automated.
+            new Dictionary<string, object>()
+            {
+                { "header.user-agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+                    "(KHTML, like Gecko) HeadlessChrome/139.0.0.0 Safari/537.36" }
             }
         };
 

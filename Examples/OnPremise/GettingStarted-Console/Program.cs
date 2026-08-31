@@ -145,6 +145,18 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                     OutputValue("Browser Name", device.BrowserName, message);
                     OutputValue("Browser Version", device.BrowserVersion, message);
                     OutputValue("DeviceId", device.DeviceId, message);
+
+                    // IsHeadless, HasWebDriver and IsVisible are newer properties
+                    // that the generated IDeviceData interface does not expose yet,
+                    // so they are read by name. IsHeadless comes from the
+                    // User-Agent. HasWebDriver and IsVisible can only be answered
+                    // by JavaScript running in the browser, so in a console example
+                    // they report the value the data file holds before that
+                    // JavaScript has run. See the web example for the JavaScript.
+                    OutputNamedValue("Headless Browser", device, "IsHeadless", message);
+                    OutputNamedValue("Has Web Driver", device, "HasWebDriver", message);
+                    OutputNamedValue("Window Visible", device, "IsVisible", message);
+
                     message.AppendLine("Matched");
                     foreach(var entry in device.UserAgents.Value)
                     {
@@ -169,6 +181,21 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedConsole
                 message.AppendLine(value.HasValue ?
                     $"\t{name}: " + value.Value :
                     $"\t{name}: " + value.NoValueMessage);
+            }
+
+            /// <summary>
+            /// Output a property that is looked up by name because the strongly
+            /// typed <see cref="IDeviceData"/> interface does not expose it. The
+            /// helper reports 'No value' plus the reason when the data file in use
+            /// does not contain the property, which is the case for the Lite file.
+            /// </summary>
+            private void OutputNamedValue(string name,
+                IDeviceData device,
+                string propertyName,
+                StringBuilder message)
+            {
+                message.AppendLine(
+                    $"\t{name}: " + device.GetHumanReadableByName(propertyName));
             }
         }
 

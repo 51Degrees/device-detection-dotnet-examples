@@ -73,6 +73,57 @@ namespace FiftyOne.DeviceDetection.Examples
         {
             return apv != null && apv.HasValue ? apv.Value.ToString() : NoValue(apv);
         }
+        public static string GetHumanReadable(this IAspectPropertyValue<bool> apv)
+        {
+            return apv != null && apv.HasValue ? apv.Value.ToString() : NoValue(apv);
+        }
+
+        /// <summary>
+        /// Get a human-readable version of a property looked up by name rather than
+        /// through the strongly typed <see cref="IDeviceData"/> interface. A property
+        /// is present in the data file and in the cloud response before the generated
+        /// interface is rebuilt to include it, so this is the only way for an example
+        /// to display a newly added property. Behaves like
+        /// <see cref="GetHumanReadable(IAspectPropertyValue{string})"/>, returning
+        /// 'No value' and a reason when the property is absent or has no value.
+        /// </summary>
+        /// <param name="data">
+        /// The element data to read the property from.
+        /// </param>
+        /// <param name="propertyName">
+        /// Name of the property, for example 'IsHeadless'. Matching is case
+        /// insensitive because the dictionary keys differ in case between the
+        /// on-premise and cloud engines.
+        /// </param>
+        public static string GetHumanReadableByName<T>(
+            this T data,
+            string propertyName)
+            where T : IElementData
+        {
+            object raw = null;
+            var found = false;
+            foreach (var entry in data.AsDictionary())
+            {
+                if (string.Equals(entry.Key, propertyName,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    raw = entry.Value;
+                    found = true;
+                    break;
+                }
+            }
+            if (found == false || raw == null)
+            {
+                return "No value (property missing from the resource key or " +
+                    "data file)";
+            }
+            if (raw is IAspectPropertyValue apv)
+            {
+                return apv.HasValue ? apv.Value.ToString() :
+                    $"No value ({apv.NoValueMessage})";
+            }
+            return raw.ToString();
+        }
 
         /// <summary>
         /// Build the 'Unknown' message for a property that has no value. Handles the
