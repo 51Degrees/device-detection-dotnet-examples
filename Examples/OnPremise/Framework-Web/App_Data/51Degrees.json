@@ -13,7 +13,11 @@
           "DataFileSystemWatcher": false,
           "DataUpdateOnStartUp": false,
           // Explicitly include just the properties used by the example.
-          "Properties": "HardwareVendor,HardwareModel,HardwareName,IsMobile,JavascriptGetHighEntropyValues,Promise,Fetch,DeviceType,PlatformVendor,PlatformName,PlatformVersion,BrowserVendor,BrowserName,BrowserVersion,ScreenPixelsWidth,ScreenPixelsHeight,JavascriptScreenPixelsWidth,JavascriptScreenPixelsHeight,JavascriptHardwareProfile"
+          // IsVisible and HasWebDriver are answered by the JavaScript held in
+          // IsVisibleJavaScript and HasWebDriverJavaScript, so both halves of
+          // each pair are listed. IsHeadless is read from the User-Agent.
+          // These three are only in the Enterprise and TAC data files.
+          "Properties": "HardwareVendor,HardwareModel,HardwareName,IsMobile,JavascriptGetHighEntropyValues,Promise,Fetch,DeviceType,PlatformVendor,PlatformName,PlatformVersion,BrowserVendor,BrowserName,BrowserVersion,ScreenPixelsWidth,ScreenPixelsHeight,JavascriptScreenPixelsWidth,JavascriptScreenPixelsHeight,JavascriptHardwareProfile,IsHeadless,IsVisible,IsVisibleJavaScript,HasWebDriver,HasWebDriverJavaScript"
         }
       },
       {
