@@ -27,8 +27,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
     [TestClass]
     public class GettingStartedFirefoxTest : GettingStartedSeleniumTest
     {
-        [ClassInitialize]
-        public void ClassInitialize()
+        [TestInitialize]
+        public void InitializeDriver()
         {
             InitializeFirefoxDriver();
         }

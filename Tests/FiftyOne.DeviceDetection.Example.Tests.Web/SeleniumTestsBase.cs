@@ -103,25 +103,26 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         }
 
         /// <summary>
-        /// Cleans up after the test.
+        /// Cleans up after the test. The driver is disposed here rather than in
+        /// a [ClassCleanup] method because MSTest requires class level fixture
+        /// methods to be static, which cannot reach the instance
+        /// <see cref="Driver"/>. A class that declared a non-static
+        /// [ClassInitialize] or [ClassCleanup] method was silently dropped at
+        /// discovery, so none of its tests ran at all.
         /// </summary>
         [TestCleanup]
         public void TestCleanup()
-        {
-            if (ServerTask != null)
-            {
-                StopSource.Cancel(true);
-                ServerTask.Wait();
-            }
-        }
-
-        [ClassCleanup]
-        public void ClassCleanup()
         {
             if (Driver != null)
             {
                 Driver.Quit();
                 Driver.Dispose();
+                Driver = null;
+            }
+            if (ServerTask != null)
+            {
+                StopSource.Cancel(true);
+                ServerTask.Wait();
             }
         }
 
@@ -213,8 +214,21 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         private static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
             IWebDriver driver)
         {
-            var domains = (driver as IDevTools).GetDevToolsSession()
-                .GetVersionSpecificDomains<DevToolsSessionDomains>();
+            DevToolsSessionDomains domains;
+            try
+            {
+                domains = (driver as IDevTools).GetDevToolsSession()
+                    .GetVersionSpecificDomains<DevToolsSessionDomains>();
+            }
+            catch (WebDriverException)
+            {
+                // The installed browser is newer than the DevTools protocol
+                // versions this Selenium build knows about, so no session can be
+                // started. Returning null leaves the tests that need the network
+                // adapter to report themselves inconclusive rather than failing
+                // every test in the class at driver creation.
+                return null;
+            }
 
             // If the dev tools support session network inspection then
             // initialize the network interface and add a reference to the
