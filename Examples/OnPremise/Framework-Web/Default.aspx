@@ -108,6 +108,9 @@
                 <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Browser Version:</td><td class="c-eg-table__cell"> <%= deviceData.TryGetValue(d => d.BrowserVersion.GetHumanReadable()) %></td></tr>
                 <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Screen width (pixels):</td><td class="c-eg-table__cell"> <%= deviceData.TryGetValue(d => d.ScreenPixelsWidth.GetHumanReadable()) %></td></tr>
                 <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Screen height (pixels):</td><td class="c-eg-table__cell"> <%= deviceData.TryGetValue(d => d.ScreenPixelsHeight.GetHumanReadable()) %></td></tr>
+                <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Headless browser:</td><td class="c-eg-table__cell"> <%= deviceData.GetHumanReadableByName("IsHeadless") %></td></tr>
+                <tr class="c-eg-table__row c-eg-table__row--alt"><td class="c-eg-table__cell c-eg-table__cell--key">Has web driver:</td><td class="c-eg-table__cell"> <%= deviceData.GetHumanReadableByName("HasWebDriver") %></td></tr>
+                <tr class="c-eg-table__row"><td class="c-eg-table__cell c-eg-table__cell--key">Window visible:</td><td class="c-eg-table__cell"> <%= deviceData.GetHumanReadableByName("IsVisible") %></td></tr>
                 </tbody>
             </table>
 

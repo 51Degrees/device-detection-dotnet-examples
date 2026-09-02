@@ -44,6 +44,9 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
         public string ScreenHeight { get; private set; }
         public string DeviceId { get; private set; }
         public string PriceBand { get; private set; }
+        public string IsHeadless { get; private set; }
+        public string HasWebDriver { get; private set; }
+        public string IsVisible { get; private set; }
 
         public IFlowData FlowData { get; private set; }
 
@@ -93,6 +96,17 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.GettingStartedWeb.Model
             ScreenHeight = deviceData.TryGetValue(d => d.ScreenPixelsHeight.GetHumanReadable());
             DeviceId = deviceData.TryGetValue(d => d.DeviceId.GetHumanReadable());
             PriceBand = deviceData.TryGetValue(d => d.PriceBand.GetHumanReadable());
+
+            // IsHeadless, HasWebDriver and IsVisible are newer properties that the
+            // generated IDeviceData interface does not expose yet, so they are read
+            // by name. On the first request HasWebDriver and IsVisible show what the
+            // data file holds before any JavaScript has run. The values shown after
+            // the client-side callback, and on a reload of this page, are the ones
+            // the browser reported through the 51D_HasWebDriver and 51D_IsVisible
+            // cookies.
+            IsHeadless = deviceData.GetHumanReadableByName("IsHeadless");
+            HasWebDriver = deviceData.GetHumanReadableByName("HasWebDriver");
+            IsVisible = deviceData.GetHumanReadableByName("IsVisible");
         }
     }
 }
