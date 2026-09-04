@@ -246,6 +246,20 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 }
             }
 
+            // Record what device detection was actually given and what it made
+            // of it. Without the user agent in the log a mismatch below cannot be
+            // diagnosed from a CI run: the assertion message alone does not say
+            // which evidence produced the wrong answer, and the browser is not
+            // available afterwards to ask again. Logged on success as well as
+            // failure so a passing leg can be compared against a failing one.
+            Console.WriteLine($"[detection] userAgent = '{userAgent}'");
+            Console.WriteLine(
+                $"[detection] browserName = '{detectedBrowserName}', " +
+                $"browserVersion = '{detectedBrowserVersion}'");
+            Console.WriteLine(
+                $"[driver] browserName = '{BrowserName}', " +
+                $"browserVersion = '{BrowserVersion}'");
+
             // Assert
             Assert.IsTrue(result);
             Assert.IsNotNull(detectedBrowserName);
@@ -255,7 +269,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Assert.IsTrue(detectedBrowserName.Contains(
                 BrowserName,
                 StringComparison.InvariantCultureIgnoreCase),
-                $"Expected '{BrowserName}' to be present in '{detectedBrowserName}'");
+                $"Expected '{BrowserName}' to be present in '{detectedBrowserName}' " +
+                $"for user agent '{userAgent}'");
 
             // Check the major browser information is the same. Some profiles
             // carry no browser version, so there is nothing to compare against.
