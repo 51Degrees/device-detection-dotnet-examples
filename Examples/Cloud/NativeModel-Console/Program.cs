@@ -23,7 +23,9 @@
 using FiftyOne.DeviceDetection.Cloud.Data;
 using FiftyOne.DeviceDetection.Cloud.FlowElements;
 using FiftyOne.Pipeline.CloudRequestEngine.FlowElements;
+using FiftyOne.Pipeline.Core.Exceptions;
 using FiftyOne.Pipeline.Core.FlowElements;
+using FiftyOne.Pipeline.Engines;
 using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
@@ -162,7 +164,38 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.NativeModelLookup
             }
             else
             {
-                new Example().Run(resourceKey, loggerFactory, Console.Out);
+                // A resource key without the 'hardware' properties makes
+                // the pipeline refuse at start-up. That is a subscription
+                // that does not cover this example rather than a fault, so
+                // it is reported plainly and the process still exits
+                // non-zero, because the example did not do its work.
+                try
+                {
+                    new Example().Run(
+                        resourceKey, loggerFactory, Console.Out);
+                }
+                catch (PipelineException exception)
+                {
+                    ExampleUtils.ReportMissingProperties(
+                        exception,
+                        Console.Out,
+                        "the 'hardware' properties a native model lookup " +
+                        "returns, which need a paid subscription",
+                        "https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=resource-key-required");
+                    loggerFactory.Dispose();
+                    Environment.Exit(1);
+                }
+                catch (PropertyMissingException exception)
+                {
+                    ExampleUtils.ReportMissingProperties(
+                        exception,
+                        Console.Out,
+                        "every 'hardware' property this example displays, " +
+                        "which needs a paid subscription",
+                        "https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-nativemodel-console-program.cs&utm_term=resource-key-required");
+                    loggerFactory.Dispose();
+                    Environment.Exit(1);
+                }
             }
 
             // Dispose the logger to ensure any messages get flushed

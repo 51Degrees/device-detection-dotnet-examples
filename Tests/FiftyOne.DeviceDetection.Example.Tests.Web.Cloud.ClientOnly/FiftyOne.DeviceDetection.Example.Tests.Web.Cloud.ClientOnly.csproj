@@ -26,4 +26,15 @@
     <ProjectReference Include="..\FiftyOne.DeviceDetection.Example.Tests.Web\FiftyOne.DeviceDetection.Example.Tests.Web.csproj" />
   </ItemGroup>
 
+  <!--
+    The discovery guard is shared source rather than a shared project so
+    that every test assembly checks itself. A class MSTest cannot discover
+    is dropped silently, so the check has to live inside the assembly it
+    is checking.
+  -->
+  <ItemGroup>
+    <Compile Include="..\Shared\TestDiscoveryGuard.cs"
+             Link="TestDiscoveryGuard.cs" />
+  </ItemGroup>
+
 </Project>

@@ -62,9 +62,10 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Cloud
                 ResourceKey.StartsWith("!!") == true)
             {
                 Assert.Fail(
-                    $"ResourceKey must be specified in the Init method or " +
-                    "as Environment variable '" + 
-                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR + "'");
+                    "A resource key is needed to run this test. Set one " +
+                    "of these environment variables: " +
+                    ExampleUtils
+                        .CLOUD_RESOURCE_KEY_ENV_VAR_DESCRIPTION + ".");
             }
 
             var cloudEndPoint = Environment.GetEnvironmentVariable(
