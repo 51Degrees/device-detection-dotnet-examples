@@ -20,8 +20,8 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.97" />
-	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.30" />
+	<PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.99" />
+	<PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.31" />
   </ItemGroup>
 
   <ItemGroup>
