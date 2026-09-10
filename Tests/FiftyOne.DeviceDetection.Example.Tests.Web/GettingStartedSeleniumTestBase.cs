@@ -346,8 +346,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Console.WriteLine(
                 $"[detection] evidence = {ReadHighEntropyEvidence()}");
             Console.WriteLine(
-                $"[browser] highEntropyValues = " +
-                $"{ReadBrowserHighEntropyValues()}");
+                "[browser] highEntropyValues = " +
+                ReadBrowserHighEntropyValues());
             Console.WriteLine(
                 $"[detection] browserName = '{detectedBrowserName}', " +
                 $"browserVersion = '{detectedBrowserVersion}'");
