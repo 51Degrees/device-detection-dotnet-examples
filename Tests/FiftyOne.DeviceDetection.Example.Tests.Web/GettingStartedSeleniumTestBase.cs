@@ -180,6 +180,96 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 headerValuePairs[KEY].Equals("*"));
         }
 
+        /// <summary>
+        /// Bounds the call below. The driver default is 30 seconds, longer
+        /// than TEST_TIMEOUT, which a diagnostic must not be able to spend.
+        /// </summary>
+        private static readonly TimeSpan HIGH_ENTROPY_TIMEOUT =
+            TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Reads the high entropy evidence the engine is given, which the
+        /// user agent on its own does not identify.
+        /// </summary>
+        /// <returns>
+        /// The decoded 51D_GetHighEntropyValues cookie, or a message saying
+        /// why there is none.
+        /// </returns>
+        private string ReadHighEntropyEvidence()
+        {
+            try
+            {
+                var cookie = Driver.Manage().Cookies.GetCookieNamed(
+                    "51D_GetHighEntropyValues");
+                if (cookie == null)
+                {
+                    return "no 51D_GetHighEntropyValues cookie";
+                }
+                return ASCIIEncoding.ASCII.GetString(
+                    Convert.FromBase64String(cookie.Value));
+            }
+            catch (Exception exception)
+            {
+                // A diagnostic must not decide the result: throwing here
+                // would replace whatever the test actually found.
+                return $"unavailable: {exception.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Reads the high entropy values the browser offers, which tells a
+        /// missing cookie apart from a browser that has nothing to put in
+        /// one. Firefox has no navigator.userAgentData at all.
+        /// </summary>
+        /// <returns>
+        /// The values as JSON, or a message saying why there are none.
+        /// </returns>
+        private string ReadBrowserHighEntropyValues()
+        {
+            const string script = @"
+                var callback = arguments[arguments.length - 1];
+                if (!navigator.userAgentData) {
+                    callback('navigator.userAgentData is not supported');
+                    return;
+                }
+                navigator.userAgentData.getHighEntropyValues([
+                    'architecture', 'bitness', 'brands', 'fullVersionList',
+                    'mobile', 'model', 'platform', 'platformVersion'])
+                    .then(function (values) {
+                        callback(JSON.stringify(values));
+                    })
+                    .catch(function (error) {
+                        callback('rejected: ' + error);
+                    });";
+            var timeouts = Driver.Manage().Timeouts();
+            var originalTimeout = timeouts.AsynchronousJavaScript;
+            try
+            {
+                timeouts.AsynchronousJavaScript = HIGH_ENTROPY_TIMEOUT;
+                var js = (IJavaScriptExecutor)Driver;
+                return (string)js.ExecuteAsyncScript(script);
+            }
+            catch (Exception exception)
+            {
+                // As above: diagnostics report, they do not decide.
+                return $"unavailable: {exception.Message}";
+            }
+            finally
+            {
+                // The timeout is driver wide, so later tests inherit
+                // whatever is left here. A throw from the restore would
+                // escape the method and replace the real failure, so it is
+                // swallowed for the same reason the catch above returns text.
+                try
+                {
+                    timeouts.AsynchronousJavaScript = originalTimeout;
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+
         [DataTestMethod]
         [DynamicData(nameof(Parameters.HttpsUrlsData), typeof(Parameters))]
         public void VerifyExample_GetHighEntropyValues_Fod_Completes(string url)
@@ -253,6 +343,11 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             // available afterwards to ask again. Logged on success as well as
             // failure so a passing leg can be compared against a failing one.
             Console.WriteLine($"[detection] userAgent = '{userAgent}'");
+            Console.WriteLine(
+                $"[detection] evidence = {ReadHighEntropyEvidence()}");
+            Console.WriteLine(
+                "[browser] highEntropyValues = " +
+                ReadBrowserHighEntropyValues());
             Console.WriteLine(
                 $"[detection] browserName = '{detectedBrowserName}', " +
                 $"browserVersion = '{detectedBrowserVersion}'");
