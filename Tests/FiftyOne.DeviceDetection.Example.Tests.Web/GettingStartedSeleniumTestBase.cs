@@ -180,6 +180,106 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 headerValuePairs[KEY].Equals("*"));
         }
 
+        /// <summary>
+        /// How long to wait for the browser to report its high entropy
+        /// values. The call is a diagnostic, so it must not be able to hold a
+        /// test open for the driver's default asynchronous script timeout,
+        /// which is 30 seconds and longer than the test timeout itself.
+        /// </summary>
+        private static readonly TimeSpan HIGH_ENTROPY_TIMEOUT =
+            TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// The decoded 51D_GetHighEntropyValues cookie, which is the high
+        /// entropy evidence the browser sends back for the engine to use, or
+        /// a short message explaining why it is not available.
+        /// </summary>
+        /// <remarks>
+        /// The user agent on its own does not identify the evidence behind a
+        /// browser name mismatch: the same headless user agent resolves to a
+        /// different browser name depending on whether the high entropy
+        /// values reached the engine alongside it. This is the value that
+        /// reaches the engine, so an empty or missing cookie and a populated
+        /// one are different diagnoses for the same failed assertion.
+        /// </remarks>
+        private string ReadHighEntropyEvidence()
+        {
+            try
+            {
+                var cookie = Driver.Manage().Cookies.GetCookieNamed(
+                    "51D_GetHighEntropyValues");
+                if (cookie == null)
+                {
+                    return "no 51D_GetHighEntropyValues cookie";
+                }
+                return ASCIIEncoding.ASCII.GetString(
+                    Convert.FromBase64String(cookie.Value));
+            }
+            catch (Exception exception)
+            {
+                return $"unavailable: {exception.Message}";
+            }
+        }
+
+        /// <summary>
+        /// The high entropy client hint values the browser reports, as JSON,
+        /// or a short message explaining why they are not available.
+        /// </summary>
+        /// <remarks>
+        /// Read from the browser rather than from the evidence, so that a
+        /// missing cookie can be told apart from a browser that offers
+        /// nothing to put in one. Firefox has no navigator.userAgentData at
+        /// all, which is worth having in the log next to what device
+        /// detection made of it.
+        ///
+        /// Both of these are diagnostic aids, so every error is turned into
+        /// text rather than thrown: an exception here would replace whatever
+        /// the test had actually found with an unrelated failure.
+        /// </remarks>
+        private string ReadBrowserHighEntropyValues()
+        {
+            const string script = @"
+                var callback = arguments[arguments.length - 1];
+                if (!navigator.userAgentData) {
+                    callback('navigator.userAgentData is not supported');
+                    return;
+                }
+                navigator.userAgentData.getHighEntropyValues([
+                    'architecture', 'bitness', 'brands', 'fullVersionList',
+                    'mobile', 'model', 'platform', 'platformVersion'])
+                    .then(function (values) {
+                        callback(JSON.stringify(values));
+                    })
+                    .catch(function (error) {
+                        callback('rejected: ' + error);
+                    });";
+            var timeouts = Driver.Manage().Timeouts();
+            var originalTimeout = timeouts.AsynchronousJavaScript;
+            try
+            {
+                timeouts.AsynchronousJavaScript = HIGH_ENTROPY_TIMEOUT;
+                var js = (IJavaScriptExecutor)Driver;
+                return (string)js.ExecuteAsyncScript(script);
+            }
+            catch (Exception exception)
+            {
+                return $"unavailable: {exception.Message}";
+            }
+            finally
+            {
+                try
+                {
+                    timeouts.AsynchronousJavaScript = originalTimeout;
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(
+                        $"[detection] could not restore the asynchronous " +
+                        $"script timeout: {exception.Message}");
+                }
+            }
+        }
+
         [DataTestMethod]
         [DynamicData(nameof(Parameters.HttpsUrlsData), typeof(Parameters))]
         public void VerifyExample_GetHighEntropyValues_Fod_Completes(string url)
@@ -253,6 +353,11 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             // available afterwards to ask again. Logged on success as well as
             // failure so a passing leg can be compared against a failing one.
             Console.WriteLine($"[detection] userAgent = '{userAgent}'");
+            Console.WriteLine(
+                $"[detection] evidence = {ReadHighEntropyEvidence()}");
+            Console.WriteLine(
+                $"[browser] highEntropyValues = " +
+                $"{ReadBrowserHighEntropyValues()}");
             Console.WriteLine(
                 $"[detection] browserName = '{detectedBrowserName}', " +
                 $"browserVersion = '{detectedBrowserVersion}'");
