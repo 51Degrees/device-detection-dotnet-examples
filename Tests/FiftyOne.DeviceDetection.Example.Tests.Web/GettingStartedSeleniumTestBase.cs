@@ -181,27 +181,20 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         }
 
         /// <summary>
-        /// How long to wait for the browser to report its high entropy
-        /// values. The call is a diagnostic, so it must not be able to hold a
-        /// test open for the driver's default asynchronous script timeout,
-        /// which is 30 seconds and longer than the test timeout itself.
+        /// Bounds the call below. The driver default is 30 seconds, longer
+        /// than TEST_TIMEOUT, which a diagnostic must not be able to spend.
         /// </summary>
         private static readonly TimeSpan HIGH_ENTROPY_TIMEOUT =
             TimeSpan.FromSeconds(5);
 
         /// <summary>
-        /// The decoded 51D_GetHighEntropyValues cookie, which is the high
-        /// entropy evidence the browser sends back for the engine to use, or
-        /// a short message explaining why it is not available.
+        /// Reads the high entropy evidence the engine is given, which the
+        /// user agent on its own does not identify.
         /// </summary>
-        /// <remarks>
-        /// The user agent on its own does not identify the evidence behind a
-        /// browser name mismatch: the same headless user agent resolves to a
-        /// different browser name depending on whether the high entropy
-        /// values reached the engine alongside it. This is the value that
-        /// reaches the engine, so an empty or missing cookie and a populated
-        /// one are different diagnoses for the same failed assertion.
-        /// </remarks>
+        /// <returns>
+        /// The decoded 51D_GetHighEntropyValues cookie, or a message saying
+        /// why there is none.
+        /// </returns>
         private string ReadHighEntropyEvidence()
         {
             try
@@ -217,25 +210,20 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             }
             catch (Exception exception)
             {
+                // A diagnostic must not decide the result: throwing here
+                // would replace whatever the test actually found.
                 return $"unavailable: {exception.Message}";
             }
         }
 
         /// <summary>
-        /// The high entropy client hint values the browser reports, as JSON,
-        /// or a short message explaining why they are not available.
+        /// Reads the high entropy values the browser offers, which tells a
+        /// missing cookie apart from a browser that has nothing to put in
+        /// one. Firefox has no navigator.userAgentData at all.
         /// </summary>
-        /// <remarks>
-        /// Read from the browser rather than from the evidence, so that a
-        /// missing cookie can be told apart from a browser that offers
-        /// nothing to put in one. Firefox has no navigator.userAgentData at
-        /// all, which is worth having in the log next to what device
-        /// detection made of it.
-        ///
-        /// Both of these are diagnostic aids, so every error is turned into
-        /// text rather than thrown: an exception here would replace whatever
-        /// the test had actually found with an unrelated failure.
-        /// </remarks>
+        /// <returns>
+        /// The values as JSON, or a message saying why there are none.
+        /// </returns>
         private string ReadBrowserHighEntropyValues()
         {
             const string script = @"
@@ -263,19 +251,21 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             }
             catch (Exception exception)
             {
+                // As above: diagnostics report, they do not decide.
                 return $"unavailable: {exception.Message}";
             }
             finally
             {
+                // The timeout is driver wide, so later tests inherit
+                // whatever is left here. A throw from the restore would
+                // escape the method and replace the real failure, so it is
+                // swallowed for the same reason the catch above returns text.
                 try
                 {
                     timeouts.AsynchronousJavaScript = originalTimeout;
                 }
-                catch (Exception exception)
+                catch (Exception)
                 {
-                    Console.WriteLine(
-                        $"[detection] could not restore the asynchronous " +
-                        $"script timeout: {exception.Message}");
                 }
             }
         }
