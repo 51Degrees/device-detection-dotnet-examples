@@ -93,9 +93,13 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.Cloud
         {
             if (string.IsNullOrWhiteSpace(resourceKey))
             {
-                Assert.Inconclusive("Unable to run this test as no " +
-                    "resource key was passed from the relevant environment " +
-                    "variables. (See ClientHintsExampleTestBase.GetEnvVars)");
+                Assert.Inconclusive(
+                    "Skipped because no resource key reached this test. " +
+                    "Set one of these environment variables: " +
+                    ExampleUtils
+                        .CLOUD_RESOURCE_KEY_ENV_VAR_DESCRIPTION + ". The " +
+                    "Accept-CH cases also need the per header keys named " +
+                    "in Parameters.GetEnvVars.");
             }
 
             ResourceKey = resourceKey;

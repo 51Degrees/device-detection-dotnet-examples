@@ -146,11 +146,9 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             {
                 Driver = new ChromeDriver(chromeOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create a ChromeDriver, check " +
-                    "that the Chromium driver is installed");
+                SkipBecauseBrowserUnavailable("Chrome", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Chrome";
@@ -172,11 +170,9 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             {
                 Driver = new EdgeDriver(edgeOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create a FirefoxDriver, check " +
-                    "that the Edge driver is installed");
+                SkipBecauseBrowserUnavailable("Edge", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Edge";
@@ -199,16 +195,47 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             {
                 Driver = new FirefoxDriver(firefoxOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create a EdgeDriver, check " +
-                    "that the Edge driver is installed");
+                SkipBecauseBrowserUnavailable("Firefox", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Firefox";
             BrowserVersion = Version.Parse(
                 (string)Driver.Capabilities["browserVersion"]);
+        }
+
+        /// <summary>
+        /// Skips the test because the browser it needs could not be
+        /// started, saying which browser it was and what the driver
+        /// reported. The old messages named the wrong browser, so somebody
+        /// reading a skipped Firefox test was told to install the Edge
+        /// driver, and the reason the driver refused was thrown away
+        /// entirely. A skip nobody can act on is no better than a test that
+        /// never ran.
+        /// </summary>
+        /// <param name="browserName">
+        /// The browser the test needs, for example "Chrome".
+        /// </param>
+        /// <param name="exception">
+        /// What the driver threw.
+        /// </param>
+        protected static void SkipBecauseBrowserUnavailable(
+            string browserName,
+            WebDriverException exception)
+        {
+            var message =
+                $"Skipped because a {browserName} driver could not be " +
+                $"started, so this test did not run. Install {browserName} " +
+                "and let Selenium Manager fetch the matching driver, or " +
+                "put the driver on the PATH. The driver reported: " +
+                exception.Message;
+
+            // Written to the console as well as carried on the result,
+            // because the console logger shows only the word "Skipped" and
+            // a person looking at a build needs the reason.
+            Console.WriteLine(message);
+            Assert.Inconclusive(message);
         }
 
         private static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
