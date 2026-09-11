@@ -29,4 +29,11 @@
     <ProjectReference Include="..\..\Examples\ExampleBase\FiftyOne.DeviceDetection.Examples.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- So the OnPremise suite can exercise GetNetwork without a browser. -->
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>
