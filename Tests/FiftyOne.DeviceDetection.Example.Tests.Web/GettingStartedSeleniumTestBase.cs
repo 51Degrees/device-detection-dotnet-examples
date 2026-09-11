@@ -205,7 +205,10 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 {
                     return "no 51D_GetHighEntropyValues cookie";
                 }
-                return ASCIIEncoding.ASCII.GetString(
+                // The payload is UTF-8 JSON, and model, platform and brand
+                // values are not all ASCII. Decoding as ASCII would replace
+                // exactly the characters worth seeing with question marks.
+                return Encoding.UTF8.GetString(
                     Convert.FromBase64String(cookie.Value));
             }
             catch (Exception exception)
@@ -241,32 +244,29 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                     .catch(function (error) {
                         callback('rejected: ' + error);
                     });";
-            var timeouts = Driver.Manage().Timeouts();
-            var originalTimeout = timeouts.AsynchronousJavaScript;
             try
             {
-                timeouts.AsynchronousJavaScript = HIGH_ENTROPY_TIMEOUT;
-                var js = (IJavaScriptExecutor)Driver;
-                return (string)js.ExecuteAsyncScript(script);
+                // Reading the timeout is itself a call to the driver, so it
+                // belongs inside the catch along with everything else here.
+                var timeouts = Driver.Manage().Timeouts();
+                var originalTimeout = timeouts.AsynchronousJavaScript;
+                try
+                {
+                    timeouts.AsynchronousJavaScript = HIGH_ENTROPY_TIMEOUT;
+                    var js = (IJavaScriptExecutor)Driver;
+                    return (string)js.ExecuteAsyncScript(script);
+                }
+                finally
+                {
+                    // Driver wide, so later tests inherit whatever is left
+                    // here.
+                    timeouts.AsynchronousJavaScript = originalTimeout;
+                }
             }
             catch (Exception exception)
             {
                 // As above: diagnostics report, they do not decide.
                 return $"unavailable: {exception.Message}";
-            }
-            finally
-            {
-                // The timeout is driver wide, so later tests inherit
-                // whatever is left here. A throw from the restore would
-                // escape the method and replace the real failure, so it is
-                // swallowed for the same reason the catch above returns text.
-                try
-                {
-                    timeouts.AsynchronousJavaScript = originalTimeout;
-                }
-                catch (Exception)
-                {
-                }
             }
         }
 
