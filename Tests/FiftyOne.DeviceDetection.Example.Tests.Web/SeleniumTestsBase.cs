@@ -225,13 +225,25 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 (string)Driver.Capabilities["browserVersion"]);
         }
 
-        private static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
+        internal static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
             IWebDriver driver)
         {
+            // Not every driver speaks the DevTools protocol. FirefoxDriver
+            // stopped implementing IDevTools in Selenium 4.49, so this cast is
+            // null there, and dereferencing it threw a NullReferenceException
+            // straight past the catch below, failing every Firefox class at
+            // initialization instead of leaving its network tests
+            // inconclusive.
+            var devTools = driver as IDevTools;
+            if (devTools == null)
+            {
+                return null;
+            }
+
             DevToolsSessionDomains domains;
             try
             {
-                domains = (driver as IDevTools).GetDevToolsSession()
+                domains = devTools.GetDevToolsSession()
                     .GetVersionSpecificDomains<DevToolsSessionDomains>();
             }
             catch (WebDriverException)
