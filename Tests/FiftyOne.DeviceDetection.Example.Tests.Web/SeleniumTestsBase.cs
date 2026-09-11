@@ -27,11 +27,16 @@ using OpenQA.Selenium.DevTools;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using System;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using DevToolsSessionDomains = OpenQA.Selenium.DevTools.DevToolsSessionDomains;
-// Used to map new version features.
-using Enhanced = OpenQA.Selenium.DevTools.V131;
+// Used to map new version features. Must be one of the protocol versions
+// the pinned Selenium ships, and match the browser major on the CI runners,
+// or GetNetwork below returns null and the tests that need it go
+// inconclusive. Move it when Selenium.WebDriver moves, and when the
+// runners' browser major moves past it.
+using Enhanced = OpenQA.Selenium.DevTools.V152;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
@@ -165,6 +170,15 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
             edgeOptions.AddArgument("--headless=new");
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == true)
+            {
+                // Ubuntu 24.04 confines unprivileged user namespaces with
+                // AppArmor, and the Edge package ships no profile of its own,
+                // so the sandbox cannot start and the browser exits during
+                // session creation. Chrome ships a profile, which is why only
+                // Edge needs this.
+                edgeOptions.AddArgument("--no-sandbox");
+            }
             edgeOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try
             {
