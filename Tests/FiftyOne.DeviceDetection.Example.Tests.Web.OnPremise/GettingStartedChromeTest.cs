@@ -27,8 +27,13 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
     [TestClass]
     public class GettingStartedChromeTest : GettingStartedSeleniumTest
     {
-        [TestInitialize]
-        public void InitializeDriver()
+        // A static [ClassInitialize] is required, not a [TestInitialize]. The
+        // CI environment cannot start more than one driver in the same session,
+        // so the driver must be created once per class rather than once per
+        // test. MSTest also requires class level fixture methods to be static.
+        // Do NOT change this to [TestInitialize]; it reintroduces the CI failure.
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context)
         {
             InitializeChromeDriver();
         }

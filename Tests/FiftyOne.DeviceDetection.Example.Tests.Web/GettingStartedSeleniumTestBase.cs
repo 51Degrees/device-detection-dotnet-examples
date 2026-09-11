@@ -63,20 +63,40 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             // Act
             Driver.Navigate().GoToUrl(url + STATIC_HTML_PATH);
 
-            // Wait for the page to load
+            // The page sets 'ghe' asynchronously from
+            // navigator.userAgentData.getHighEntropyValues, so waiting for the
+            // document to load is not enough; we must wait for that promise to
+            // resolve. Browsers without userAgentData (Firefox) never set it,
+            // so the value stays null and the wait times out.
+            Dictionary<string, object> ghe = null;
             try
             {
-                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver => true);
+                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver =>
+                {
+                    ghe = (Dictionary<string, object>)
+                        ((IJavaScriptExecutor)driver).ExecuteScript(
+                            "return ghe");
+                    return ghe != null;
+                });
             }
-            catch (WebDriverTimeoutException e)
+            catch (WebDriverTimeoutException)
             {
-                Assert.Inconclusive(e.ToString());
+                // ghe is still null here. This is expected on browsers with no
+                // navigator.userAgentData, for which high entropy values, and
+                // therefore this test, do not apply.
             }
 
-            // Get the high entropy values.
-            var js = (IJavaScriptExecutor)Driver;
-            var ghe = (Dictionary<string, object>)js.ExecuteScript(
-                "return ghe");
+            // Guard before the loop below. Without this a null ghe dereferences
+            // and throws a NullReferenceException instead of reporting the real
+            // reason the values are missing.
+            if (ghe == null)
+            {
+                Assert.Inconclusive(
+                    "Browser did not provide high entropy values " +
+                    "(navigator.userAgentData is not supported), so there is " +
+                    "no 51D_GetHighEntropyValues cookie to verify.");
+            }
+
             foreach (var key in new[] {
                 "brands",
                 "fullVersionList",
@@ -89,17 +109,35 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 Assert.IsNotNull(ghe[key]);
             }
 
-            var cookies = Network.GetAllCookies().Result;
+            // The 51D_GetHighEntropyValues cookie is written by
+            // 51Degrees.core.js after its own asynchronous round trip, so it
+            // may not exist the instant the page reports high entropy values.
+            // Poll for it rather than reading once, otherwise the cookie is
+            // missing and Single() below throws "Sequence contains no
+            // elements".
+            IReadOnlyList<BiDiCookie> cookies = null;
+            BiDiCookie fod_cookie = null;
+            try
+            {
+                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver =>
+                {
+                    cookies = Network.GetAllCookiesAsync().Result;
+                    fod_cookie = cookies.FirstOrDefault(c =>
+                        c.Name == "51D_GetHighEntropyValues");
+                    return fod_cookie != null;
+                });
+            }
+            catch (WebDriverTimeoutException e)
+            {
+                Assert.Inconclusive(e.ToString());
+            }
 
             Console.WriteLine("Enumerating cookie names:");
-            foreach (var nextName in cookies.Cookies.Select(c => c.Name))
+            foreach (var nextName in cookies.Select(c => c.Name))
             {
                 Console.WriteLine($"- Next cookie name: '{nextName}'");
             }
             Console.WriteLine("Finished numerating cookie names!");
-
-            var fod_cookie = cookies.Cookies.Where(c =>
-                c.Name == "51D_GetHighEntropyValues").Single();
 
             // Assert
 
@@ -139,21 +177,22 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var jsonRecieved = false;
 
             // Get Response Headers if the URL relates to a JSON response.
-            Network.ResponseReceived += (sender, e) =>
+            // Awaited so the subscription is active before navigation begins,
+            // otherwise the response could arrive before we are listening.
+            Network.OnResponseCompletedAsync(response =>
             {
-                var headers = e.Response.Headers;
-                var responseUrl = e.Response.Url;
-                var mimeType = e.Response.MimeType;
+                var responseUrl = response.Url;
+                var mimeType = response.MimeType;
                 if ("application/json".Equals(mimeType) &&
                     responseUrl.EndsWith("json"))
                 {
-                    foreach (var header in headers)
+                    foreach (var header in response.Headers)
                     {
-                        headerValuePairs.Add(header.Key.ToLower(), header.Value);
+                        headerValuePairs[header.Key] = header.Value;
                     }
                     jsonRecieved = true;
                 }
-            };
+            }).Wait();
 
             // Act
             // Do a cross origin request
@@ -178,6 +217,96 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Assert.IsTrue(
                 headerValuePairs[KEY].Equals(url) ||
                 headerValuePairs[KEY].Equals("*"));
+        }
+
+        /// <summary>
+        /// Bounds the call below. The driver default is 30 seconds, longer
+        /// than TEST_TIMEOUT, which a diagnostic must not be able to spend.
+        /// </summary>
+        private static readonly TimeSpan HIGH_ENTROPY_TIMEOUT =
+            TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Reads the high entropy evidence the engine is given, which the
+        /// user agent on its own does not identify.
+        /// </summary>
+        /// <returns>
+        /// The decoded 51D_GetHighEntropyValues cookie, or a message saying
+        /// why there is none.
+        /// </returns>
+        private string ReadHighEntropyEvidence()
+        {
+            try
+            {
+                var cookie = Driver.Manage().Cookies.GetCookieNamed(
+                    "51D_GetHighEntropyValues");
+                if (cookie == null)
+                {
+                    return "no 51D_GetHighEntropyValues cookie";
+                }
+                // The payload is UTF-8 JSON, and model, platform and brand
+                // values are not all ASCII. Decoding as ASCII would replace
+                // exactly the characters worth seeing with question marks.
+                return Encoding.UTF8.GetString(
+                    Convert.FromBase64String(cookie.Value));
+            }
+            catch (Exception exception)
+            {
+                // A diagnostic must not decide the result: throwing here
+                // would replace whatever the test actually found.
+                return $"unavailable: {exception.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Reads the high entropy values the browser offers, which tells a
+        /// missing cookie apart from a browser that has nothing to put in
+        /// one. Firefox has no navigator.userAgentData at all.
+        /// </summary>
+        /// <returns>
+        /// The values as JSON, or a message saying why there are none.
+        /// </returns>
+        private string ReadBrowserHighEntropyValues()
+        {
+            const string script = @"
+                var callback = arguments[arguments.length - 1];
+                if (!navigator.userAgentData) {
+                    callback('navigator.userAgentData is not supported');
+                    return;
+                }
+                navigator.userAgentData.getHighEntropyValues([
+                    'architecture', 'bitness', 'brands', 'fullVersionList',
+                    'mobile', 'model', 'platform', 'platformVersion'])
+                    .then(function (values) {
+                        callback(JSON.stringify(values));
+                    })
+                    .catch(function (error) {
+                        callback('rejected: ' + error);
+                    });";
+            try
+            {
+                // Reading the timeout is itself a call to the driver, so it
+                // belongs inside the catch along with everything else here.
+                var timeouts = Driver.Manage().Timeouts();
+                var originalTimeout = timeouts.AsynchronousJavaScript;
+                try
+                {
+                    timeouts.AsynchronousJavaScript = HIGH_ENTROPY_TIMEOUT;
+                    var js = (IJavaScriptExecutor)Driver;
+                    return (string)js.ExecuteAsyncScript(script);
+                }
+                finally
+                {
+                    // Driver wide, so later tests inherit whatever is left
+                    // here.
+                    timeouts.AsynchronousJavaScript = originalTimeout;
+                }
+            }
+            catch (Exception exception)
+            {
+                // As above: diagnostics report, they do not decide.
+                return $"unavailable: {exception.Message}";
+            }
         }
 
         [DataTestMethod]
@@ -246,6 +375,25 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 }
             }
 
+            // Record what device detection was actually given and what it made
+            // of it. Without the user agent in the log a mismatch below cannot be
+            // diagnosed from a CI run: the assertion message alone does not say
+            // which evidence produced the wrong answer, and the browser is not
+            // available afterwards to ask again. Logged on success as well as
+            // failure so a passing leg can be compared against a failing one.
+            Console.WriteLine($"[detection] userAgent = '{userAgent}'");
+            Console.WriteLine(
+                $"[detection] evidence = {ReadHighEntropyEvidence()}");
+            Console.WriteLine(
+                "[browser] highEntropyValues = " +
+                ReadBrowserHighEntropyValues());
+            Console.WriteLine(
+                $"[detection] browserName = '{detectedBrowserName}', " +
+                $"browserVersion = '{detectedBrowserVersion}'");
+            Console.WriteLine(
+                $"[driver] browserName = '{BrowserName}', " +
+                $"browserVersion = '{BrowserVersion}'");
+
             // Assert
             Assert.IsTrue(result);
             Assert.IsNotNull(detectedBrowserName);
@@ -255,7 +403,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Assert.IsTrue(detectedBrowserName.Contains(
                 BrowserName,
                 StringComparison.InvariantCultureIgnoreCase),
-                $"Expected '{BrowserName}' to be present in '{detectedBrowserName}'");
+                $"Expected '{BrowserName}' to be present in '{detectedBrowserName}' " +
+                $"for user agent '{userAgent}'");
 
             // Check the major browser information is the same. Some profiles
             // carry no browser version, so there is nothing to compare against.
