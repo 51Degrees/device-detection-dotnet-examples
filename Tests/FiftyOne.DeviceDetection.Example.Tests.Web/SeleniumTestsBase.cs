@@ -54,23 +54,33 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// <see cref="InitializeChromeDriver"/>,
         /// <see cref="InitializeEdgeDriver"/>,
         /// <see cref="InitializeFirefoxDriver"/>.
+        ///
+        /// IMPORTANT: The driver and the browser state below are static and are
+        /// created once per test class from a static [ClassInitialize] method,
+        /// then disposed from a static [ClassCleanup] method. This is
+        /// deliberate. The CI environment cannot start more than one driver in
+        /// the same session, so a per-test [TestInitialize] driver fails the
+        /// build. MSTest also requires class level fixture methods to be static,
+        /// which is why these members must be static for [ClassInitialize] to
+        /// reach them. Do NOT change these back to instance members driven from
+        /// [TestInitialize]; doing so reintroduces the CI failure.
         /// </summary>
-        protected WebDriver Driver { get; private set; }
+        protected static WebDriver Driver { get; private set; }
 
         /// <summary>
         /// Expected name of the browser reported by device detection.
         /// </summary>
-        protected string BrowserName;
+        protected static string BrowserName;
 
         /// <summary>
         /// Expected browser version reported by device detection.
         /// </summary>
-        protected Version BrowserVersion;
+        protected static Version BrowserVersion;
 
         /// <summary>
         /// Network adapter if supported by the driver.
         /// </summary>
-        protected Enhanced.Network.NetworkAdapter Network { get; private set; }
+        protected static Enhanced.Network.NetworkAdapter Network { get; private set; }
 
         /// <summary>
         /// Used to create new network adapters.
@@ -108,26 +118,38 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         }
 
         /// <summary>
-        /// Cleans up after the test. The driver is disposed here rather than in
-        /// a [ClassCleanup] method because MSTest requires class level fixture
-        /// methods to be static, which cannot reach the instance
-        /// <see cref="Driver"/>. A class that declared a non-static
-        /// [ClassInitialize] or [ClassCleanup] method was silently dropped at
-        /// discovery, so none of its tests ran at all.
+        /// Stops the per-test web server. The server is started once per test
+        /// in <see cref="TestServerInitialize"/>, so it is stopped here. The
+        /// driver is not touched here; it lives for the whole class and is
+        /// disposed in <see cref="ClassCleanup"/>.
         /// </summary>
         [TestCleanup]
         public void TestCleanup()
+        {
+            if (ServerTask != null)
+            {
+                StopSource.Cancel(true);
+                ServerTask.Wait();
+            }
+        }
+
+        /// <summary>
+        /// Disposes the driver created once for the class. This must be a static
+        /// [ClassCleanup] method because MSTest requires class level fixture
+        /// methods to be static, and because the CI environment cannot start
+        /// more than one driver in the same session, so the driver is created
+        /// once per class rather than once per test. Do NOT move this teardown
+        /// into [TestCleanup]; it pairs with the static [ClassInitialize] on
+        /// each browser test class.
+        /// </summary>
+        [ClassCleanup]
+        public static void ClassCleanup()
         {
             if (Driver != null)
             {
                 Driver.Quit();
                 Driver.Dispose();
                 Driver = null;
-            }
-            if (ServerTask != null)
-            {
-                StopSource.Cancel(true);
-                ServerTask.Wait();
             }
         }
 
@@ -136,7 +158,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// Sets the <see cref="Driver"/> property for Chrome tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeChromeDriver()
+        protected static void InitializeChromeDriver()
         {
             // If the driver and chrome versions are different it may cause
             // unexpected behaviour. 
@@ -165,7 +187,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// Sets the <see cref="Driver"/> property for Edge tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeEdgeDriver()
+        protected static void InitializeEdgeDriver()
         {
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
@@ -198,7 +220,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// Sets the <see cref="Driver"/> property for Firefox tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeFirefoxDriver()
+        protected static void InitializeFirefoxDriver()
         {
             var firefoxOptions = new FirefoxOptions();
             firefoxOptions.AcceptInsecureCertificates = true;
