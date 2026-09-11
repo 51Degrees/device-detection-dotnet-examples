@@ -22,21 +22,14 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium;
+using OpenQA.Selenium.BiDi;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.DevTools;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using DevToolsSessionDomains = OpenQA.Selenium.DevTools.DevToolsSessionDomains;
-// Used to map new version features. Must be one of the protocol versions
-// the pinned Selenium ships, and match the browser major on the CI runners,
-// or GetNetwork below returns null and the tests that need it go
-// inconclusive. Move it when Selenium.WebDriver moves, and when the
-// runners' browser major moves past it.
-using Enhanced = OpenQA.Selenium.DevTools.V152;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
@@ -78,16 +71,12 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         protected static Version BrowserVersion;
 
         /// <summary>
-        /// Network adapter if supported by the driver.
+        /// Cross browser network adapter, built on the WebDriver BiDi protocol
+        /// so Chrome, Edge and Firefox all get real network inspection. Null
+        /// only if a BiDi session could not be established, in which case the
+        /// tests that need it report themselves inconclusive.
         /// </summary>
-        protected static Enhanced.Network.NetworkAdapter Network { get; private set; }
-
-        /// <summary>
-        /// Used to create new network adapters.
-        /// </summary>
-        private static readonly Enhanced.Network.EnableCommandSettings 
-            NetworkSettings = 
-            new Enhanced.Network.EnableCommandSettings();
+        protected static BiDiNetworkAdapter Network { get; private set; }
 
         /// <summary>
         /// Used to stop the server when the test is finished.
@@ -166,6 +155,10 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             // https://github.com/rosolko/WebDriverManager.Net
             var chromeOptions = new ChromeOptions();
             chromeOptions.AcceptInsecureCertificates = true;
+            // Ask the driver for the BiDi WebSocket URL so the cross browser
+            // network adapter can attach. Without this AsBiDiAsync has no
+            // endpoint to connect to.
+            chromeOptions.UseWebSocketUrl = true;
             chromeOptions.AddArgument("--headless=new");
             chromeOptions.AddArgument("--ignore-certificate-errors");
             chromeOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
@@ -191,6 +184,8 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         {
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
+            // See the Chrome initializer: enables the BiDi WebSocket endpoint.
+            edgeOptions.UseWebSocketUrl = true;
             edgeOptions.AddArgument("--headless=new");
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == true)
             {
@@ -225,7 +220,10 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var firefoxOptions = new FirefoxOptions();
             firefoxOptions.AcceptInsecureCertificates = true;
             firefoxOptions.AddArgument("--headless");
-            firefoxOptions.EnableDevToolsProtocol = true;
+            // Firefox does not implement the Chrome DevTools Protocol, so the
+            // network adapter uses the W3C BiDi protocol instead. Ask for the
+            // BiDi WebSocket URL so AsBiDiAsync can attach.
+            firefoxOptions.UseWebSocketUrl = true;
             firefoxOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try
             {
@@ -274,35 +272,39 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Assert.Inconclusive(message);
         }
 
-        private static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
+        /// <summary>
+        /// Attaches a cross browser network adapter to the driver using the
+        /// W3C WebDriver BiDi protocol. This replaces the old Chrome DevTools
+        /// Protocol path, which only Chromium browsers implemented and which
+        /// threw for Firefox because it does not implement <c>IDevTools</c>.
+        /// BiDi is supported by Chrome, Edge and Firefox alike, so every
+        /// browser now gets real network inspection.
+        /// </summary>
+        /// <param name="driver">
+        /// The driver, which must have been created with
+        /// <c>UseWebSocketUrl = true</c> so a BiDi session can be established.
+        /// </param>
+        /// <returns>
+        /// The adapter, or null if a BiDi session could not be established, in
+        /// which case the tests that need it report themselves inconclusive
+        /// rather than failing every test in the class.
+        /// </returns>
+        private static async Task<BiDiNetworkAdapter> GetNetwork(
             IWebDriver driver)
         {
-            DevToolsSessionDomains domains;
             try
             {
-                domains = (driver as IDevTools).GetDevToolsSession()
-                    .GetVersionSpecificDomains<DevToolsSessionDomains>();
+                var bidi = await driver.AsBiDiAsync();
+                return new BiDiNetworkAdapter(bidi);
             }
-            catch (WebDriverException)
+            catch (Exception)
             {
-                // The installed browser is newer than the DevTools protocol
-                // versions this Selenium build knows about, so no session can be
-                // started. Returning null leaves the tests that need the network
-                // adapter to report themselves inconclusive rather than failing
-                // every test in the class at driver creation.
+                // The driver could not expose a BiDi session, for example
+                // because it was created without UseWebSocketUrl. Returning
+                // null leaves the network dependent tests inconclusive rather
+                // than failing the whole class at driver creation.
                 return null;
             }
-
-            // If the dev tools support session network inspection then
-            // initialize the network interface and add a reference to the
-            // adapter.
-            var modern = domains as Enhanced.DevToolsSessionDomains;
-            if (modern != null)
-            {
-                await modern.Network.Enable(NetworkSettings);
-                return modern.Network;
-            }
-            return null;
         }
     }
 }
