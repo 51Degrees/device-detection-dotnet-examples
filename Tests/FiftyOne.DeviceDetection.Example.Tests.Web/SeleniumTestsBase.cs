@@ -73,6 +73,14 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         protected Enhanced.Network.NetworkAdapter Network { get; private set; }
 
         /// <summary>
+        /// True where the browser was started without a visible window. Device
+        /// detection reports a headless browser as a crawler, and crawlers are
+        /// not given the JavaScript that gathers high entropy values, so a
+        /// test that needs that JavaScript cannot be run by this driver.
+        /// </summary>
+        protected bool Headless { get; private set; }
+
+        /// <summary>
         /// Used to create new network adapters.
         /// </summary>
         private static readonly Enhanced.Network.EnableCommandSettings 
@@ -145,6 +153,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var chromeOptions = new ChromeOptions();
             chromeOptions.AcceptInsecureCertificates = true;
             chromeOptions.AddArgument("--headless=new");
+            Headless = true;
             chromeOptions.AddArgument("--ignore-certificate-errors");
             chromeOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try
@@ -172,6 +181,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
             edgeOptions.AddArgument("--headless=new");
+            Headless = true;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == true)
             {
                 // Ubuntu 24.04 confines unprivileged user namespaces with
@@ -207,6 +217,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var firefoxOptions = new FirefoxOptions();
             firefoxOptions.AcceptInsecureCertificates = true;
             firefoxOptions.AddArgument("--headless");
+            Headless = true;
             firefoxOptions.EnableDevToolsProtocol = true;
             firefoxOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try

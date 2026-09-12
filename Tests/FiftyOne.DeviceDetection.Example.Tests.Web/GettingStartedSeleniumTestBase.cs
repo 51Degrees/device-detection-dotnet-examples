@@ -59,6 +59,23 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 Assert.Inconclusive(
                     "Test session does not support cookie verification");
             }
+            if (Headless == true)
+            {
+                // The cookie is written by the JavaScript that device
+                // detection returns for gathering high entropy values, and
+                // that JavaScript is withheld from crawlers. Every headless
+                // browser is reported as a crawler, so there is nothing to
+                // write the cookie and nothing for this test to check.
+                // Measured against both the Lite and Enterprise files:
+                // headless Chrome, headless Edge and Googlebot all give
+                // IsCrawler true and no JavascriptGetHighEntropyValues, where
+                // ordinary Chrome gives a 329 character script that writes it.
+                Assert.Inconclusive(
+                    "A headless browser is reported as a crawler, so it is " +
+                    "not served the JavaScript that writes the " +
+                    "51D_GetHighEntropyValues cookie. Run this test with a " +
+                    "browser that has a window to exercise it.");
+            }
 
             // Act
             Driver.Navigate().GoToUrl(url + STATIC_HTML_PATH);
