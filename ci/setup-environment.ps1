@@ -34,3 +34,5 @@ $env:ACCEPTCH_BROWSER_KEY = $Keys.AcceptCHBrowserKey
 $env:ACCEPTCH_HARDWARE_KEY = $Keys.AcceptCHHardwareKey
 $env:ACCEPTCH_PLATFORM_KEY = $Keys.AcceptCHPlatformKey
 $env:ACCEPTCH_NONE_KEY = $Keys.AcceptCHNoneKey
+
+$env:SE_SKIP_DRIVER_IN_PATH = "true"
