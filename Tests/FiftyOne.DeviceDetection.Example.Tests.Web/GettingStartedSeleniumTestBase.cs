@@ -407,6 +407,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                     {
                         "Edge", [
                             "Chrome Headless",
+                            "Chrome", // detected as non-headless on Mac
                         ]
                     },
                 };
