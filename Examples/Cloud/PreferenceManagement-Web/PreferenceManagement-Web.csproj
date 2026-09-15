@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>FiftyOne.Examples.Cloud.PreferenceManagementWeb</AssemblyName>
+    <RootNamespace>FiftyOne.Examples.Cloud.PreferenceManagementWeb</RootNamespace>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
+    <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- The pages are read from the build output, so the demo serves the
+       same files whichever directory it is started from. -->
+  <ItemGroup>
+    <Content Update="wwwroot\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>
