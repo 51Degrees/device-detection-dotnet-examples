@@ -42,7 +42,7 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
     public sealed class Settings
     {
         /// <summary>
-        /// The resource key the pages are filled with. Read first.
+        /// The resource key the pages and the pipeline use. Read first.
         /// </summary>
         public const string RESOURCE_KEY_ENV_VAR = "51DEGREES_RESOURCE_KEY";
 
@@ -55,7 +55,8 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
             "_51DEGREES_RESOURCE_KEY_51DID";
 
         /// <summary>
-        /// The cloud the pages load the platform and the client script from.
+        /// The cloud the pages load the platform and the client script from,
+        /// and the pipeline asks.
         /// </summary>
         public const string CLOUD_ENDPOINT_ENV_VAR = "51DEGREES_CLOUD_ENDPOINT";
 
@@ -149,6 +150,42 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
                 ["CLIENT_SCRIPT_URL"] =
                     $"{CloudEndpoint}{API_PATH}/" +
                     $"{Uri.EscapeDataString(ResourceKey)}.js"
+            };
+
+        /// <summary>
+        /// The path the pipeline pages load the client script from, which
+        /// the 51Degrees web integration answers on this demo's own origin.
+        /// </summary>
+        public const string PIPELINE_CLIENT_SCRIPT_PATH = "/51Degrees.core.js";
+
+        /// <summary>
+        /// The placeholders a page under /pipeline/ is filled with. The
+        /// platform still comes from the cloud, and only the client script
+        /// changes, being the one this demo's pipeline serves.
+        /// </summary>
+        public IReadOnlyDictionary<string, string> PipelinePlaceholders() =>
+            new Dictionary<string, string>
+            {
+                ["RESOURCE_KEY"] = ResourceKey,
+                ["CLOUD_ENDPOINT"] = CloudEndpoint,
+                ["CLIENT_SCRIPT_URL"] = PIPELINE_CLIENT_SCRIPT_PATH
+            };
+
+        /// <summary>
+        /// The two values the pipeline's cloud request engine is built
+        /// with, as configuration keys under the element list in
+        /// appsettings.json, so the pipeline reads the same environment
+        /// variables as the pages and neither value is written to a file.
+        /// The cloud request engine is the first element in that list.
+        /// </summary>
+        public IEnumerable<KeyValuePair<string, string?>>
+            PipelineConfiguration() =>
+            new Dictionary<string, string?>
+            {
+                ["PipelineOptions:Elements:0:BuildParameters:ResourceKey"] =
+                    ResourceKey,
+                ["PipelineOptions:Elements:0:BuildParameters:EndPoint"] =
+                    $"{CloudEndpoint}{API_PATH}/"
             };
 
         /// <summary>

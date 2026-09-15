@@ -20,6 +20,10 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
+using FiftyOne.DeviceDetection.Cloud.FlowElements;
+using FiftyOne.Did.Cloud.FlowElements;
+using FiftyOne.Pipeline.CloudRequestEngine.FlowElements;
+
 namespace FiftyOne.Examples.Cloud.PmpWeb
 {
     /// <summary>
@@ -29,11 +33,13 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
     /// <para>
     /// Everything the tests rely on is in plain files under wwwroot, being
     /// three scripts in wwwroot/js and one HTML template per page in
-    /// wwwroot/templates. This program does only two things, which are
-    /// serving wwwroot as it is and answering /cloud/{page} with
-    /// wwwroot/templates/cloud/{page}.html once its placeholders are
-    /// filled. Another language's copy of this demo copies wwwroot and does
-    /// the same two things. See README.md for the rules.
+    /// wwwroot/templates. This program serves wwwroot as it is, answers
+    /// /cloud/{page} and /pipeline/{page} with
+    /// wwwroot/templates/{mode}/{page}.html once its placeholders are
+    /// filled, and runs the 51Degrees Pipeline for the pipeline pages, so
+    /// that the pipeline serves their client script. Another language's
+    /// copy of this demo copies wwwroot and does the same. See README.md
+    /// for the rules.
     /// </para>
     /// </summary>
     public class Program
@@ -67,8 +73,29 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
                     Args = args,
                     ContentRootPath = AppContext.BaseDirectory
                 });
+
+            // The 51Degrees Pipeline for the pipeline pages. The elements
+            // are listed under PipelineOptions in appsettings.json, and the
+            // resource key and the cloud come from the same environment
+            // variables the pages are filled from. The web integration adds
+            // the JSON and JavaScript builders that serve the client script.
+            builder.Configuration.AddInMemoryCollection(
+                settings.PipelineConfiguration());
+            builder.Services.AddSingleton<CloudRequestEngineBuilder>();
+            builder.Services.AddSingleton<DeviceDetectionCloudEngineBuilder>();
+            builder.Services.AddSingleton<DidCloudEngineBuilder>();
+            builder.Services.AddFiftyOne(builder.Configuration);
+
             var app = builder.Build();
             var files = app.Environment.WebRootFileProvider;
+
+            // The pipeline runs only for the pipeline pages and the two
+            // requests their client script makes, being the script itself
+            // and the JSON it posts evidence to, so a page under /cloud/
+            // never makes this server call the cloud as well.
+            app.UseWhen(
+                context => IsForThePipeline(context.Request.Path),
+                pipeline => pipeline.UseFiftyOne());
 
             // Every host name is answered, because the tests open the same
             // page as two different sites on one port. AllowedHosts in
@@ -88,6 +115,16 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
                 (HttpContext context, string page) =>
                     Pages.Serve(context, files, "cloud", page, cloud));
 
+            // The same pages with the client script served by this demo's
+            // own pipeline rather than by the cloud. The platform still
+            // loads from the cloud.
+            var pipelinePages = settings.PipelinePlaceholders();
+            app.MapGet(
+                "/pipeline/{**page}",
+                (HttpContext context, string page) =>
+                    Pages.Serve(
+                        context, files, "pipeline", page, pipelinePages));
+
             // Names only, never the values.
             Console.WriteLine(
                 $"The resource key is read from " +
@@ -96,5 +133,19 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
 
             return app.RunAsync(stopToken);
         }
+
+        /// <summary>
+        /// Whether a request is one the 51Degrees Pipeline handles, being
+        /// a pipeline page, the client script those pages load, or the
+        /// JSON that script posts its evidence to.
+        /// </summary>
+        private static bool IsForThePipeline(PathString path) =>
+            path.StartsWithSegments("/pipeline") ||
+            path.Equals(
+                Settings.PIPELINE_CLIENT_SCRIPT_PATH,
+                StringComparison.OrdinalIgnoreCase) ||
+            path.Equals(
+                FiftyOne.Pipeline.Engines.Constants.DEFAULT_JSON_ENDPOINT,
+                StringComparison.OrdinalIgnoreCase);
     }
 }
