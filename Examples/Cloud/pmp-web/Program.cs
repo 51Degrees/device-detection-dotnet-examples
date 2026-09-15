@@ -20,7 +20,7 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
+namespace FiftyOne.Examples.Cloud.PmpWeb
 {
     /// <summary>
     /// A website whose pages carry the 51Degrees Preference Management

@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Two pages, the first</title>
+<title>Common path, client script first</title>
 <script src="/js/recorder.js"></script>
 </head>
 <body>
-<h1>Two pages, the first</h1>
-<p>The first of two pages on one site carrying the same tags, so an answer
-changed on this page can be seen carried to the second.</p>
-<p><a href="two">Go to the second page</a></p>
+<h1>Common path, client script first</h1>
+<p>The same two tags as the common path the other way round, because the order
+a publisher writes them in must make no difference.</p>
+<script async src="{{CLIENT_SCRIPT_URL}}"></script>
 <script src="{{CLOUD_ENDPOINT}}/api/v4/pmp"
   data-resource-key="{{RESOURCE_KEY}}"
   data-action-url="javascript:window.__51dTest.actions.push('{preference}')"
@@ -20,13 +20,11 @@ changed on this page can be seen carried to the second.</p>
   data-alt-url="javascript:window.__51dTest.altFired = true"
   data-show-standard="true"
   data-network-name="Fifty One Network"></script>
-<script async src="{{CLIENT_SCRIPT_URL}}"></script>
-<script src="/js/change-watcher.js"></script>
 <hr>
 <h2>Find out more</h2>
 <ul>
-<li><a href="https://51degrees.com/documentation/_identifiers__index.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-preferencemanagement-web-wwwroot-templates-cloud-two-one.html&amp;utm_term=find-out-more">The 51Did and the Preference Management Platform</a></li>
-<li><a href="https://51degrees.com/contact-us?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-preferencemanagement-web-wwwroot-templates-cloud-two-one.html&amp;utm_term=find-out-more">Talk to 51Degrees about using them</a></li>
+<li><a href="https://51degrees.com/documentation/_identifiers__index.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-templates-cloud-common-script-first.html&amp;utm_term=find-out-more">The 51Did and the Preference Management Platform</a></li>
+<li><a href="https://51degrees.com/contact-us?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-templates-cloud-common-script-first.html&amp;utm_term=find-out-more">Talk to 51Degrees about using them</a></li>
 </ul>
 <p>The source code for this demo and what it uses.</p>
 <ul>

@@ -65,7 +65,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FiftyOne.DeviceDetection.Ex
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GettingStarted-Web-ClientOnly", "Examples\Cloud\GettingStarted-Web-ClientOnly\GettingStarted-Web-ClientOnly.csproj", "{35BA7AA6-C5D3-4839-B84D-97C77682EA6B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PreferenceManagement-Web", "Examples\Cloud\PreferenceManagement-Web\PreferenceManagement-Web.csproj", "{7C1E5A0B-51D5-4F4E-9B7A-3C2D1E0F5A61}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "pmp-web", "Examples\Cloud\pmp-web\pmp-web.csproj", "{7C1E5A0B-51D5-4F4E-9B7A-3C2D1E0F5A61}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FiftyOne.DeviceDetection.Example.Tests.Web.Cloud.ClientOnly", "Tests\FiftyOne.DeviceDetection.Example.Tests.Web.Cloud.ClientOnly\FiftyOne.DeviceDetection.Example.Tests.Web.Cloud.ClientOnly.csproj", "{922D8D0B-27D0-4CA5-AE21-3E650B958B1A}"
 EndProject

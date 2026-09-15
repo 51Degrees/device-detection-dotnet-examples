@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Platform with a named object</title>
+<title>Change of answer</title>
 <script src="/js/recorder.js"></script>
 </head>
 <body>
-<h1>Platform with a named object</h1>
-<p>The preference platform alone, with no client script tag, told by
-<code>data-object-name</code> to call the client script's object
-<code>fiftyOneData</code> rather than <code>fod</code>.</p>
+<h1>Change of answer</h1>
+<p>The preference platform and the client script, with a handler on the client
+script's change event, so a visitor changing their answer can be seen
+reaching page code.</p>
 <script src="{{CLOUD_ENDPOINT}}/api/v4/pmp"
   data-resource-key="{{RESOURCE_KEY}}"
   data-action-url="javascript:window.__51dTest.actions.push('{preference}')"
@@ -19,13 +19,14 @@
   data-alt-name="Subscribe"
   data-alt-url="javascript:window.__51dTest.altFired = true"
   data-show-standard="true"
-  data-network-name="Fifty One Network"
-  data-object-name="fiftyOneData"></script>
+  data-network-name="Fifty One Network"></script>
+<script async src="{{CLIENT_SCRIPT_URL}}"></script>
+<script src="/js/change-watcher.js"></script>
 <hr>
 <h2>Find out more</h2>
 <ul>
-<li><a href="https://51degrees.com/documentation/_identifiers__index.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-preferencemanagement-web-wwwroot-templates-cloud-named-object.html&amp;utm_term=find-out-more">The 51Did and the Preference Management Platform</a></li>
-<li><a href="https://51degrees.com/contact-us?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-preferencemanagement-web-wwwroot-templates-cloud-named-object.html&amp;utm_term=find-out-more">Talk to 51Degrees about using them</a></li>
+<li><a href="https://51degrees.com/documentation/_identifiers__index.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-templates-cloud-change.html&amp;utm_term=find-out-more">The 51Did and the Preference Management Platform</a></li>
+<li><a href="https://51degrees.com/contact-us?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-templates-cloud-change.html&amp;utm_term=find-out-more">Talk to 51Degrees about using them</a></li>
 </ul>
 <p>The source code for this demo and what it uses.</p>
 <ul>

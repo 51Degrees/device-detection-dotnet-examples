@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <AssemblyName>FiftyOne.Examples.Cloud.PreferenceManagementWeb</AssemblyName>
-    <RootNamespace>FiftyOne.Examples.Cloud.PreferenceManagementWeb</RootNamespace>
+    <AssemblyName>FiftyOne.Examples.Cloud.PmpWeb</AssemblyName>
+    <RootNamespace>FiftyOne.Examples.Cloud.PmpWeb</RootNamespace>
     <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
     <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

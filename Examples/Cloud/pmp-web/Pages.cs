@@ -24,7 +24,7 @@ using Microsoft.Extensions.FileProviders;
 using System.Net;
 using System.Text.RegularExpressions;
 
-namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
+namespace FiftyOne.Examples.Cloud.PmpWeb
 {
     /// <summary>
     /// Fills a page template's placeholders and serves the result.

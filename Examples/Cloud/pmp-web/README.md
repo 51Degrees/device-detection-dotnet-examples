@@ -1,4 +1,4 @@
-# Preference management web demo
+# pmp-web, the Preference Management Platform (PMP) web demo
 
 A website whose pages carry the 51Degrees Preference Management Platform
 and the 51Degrees client script in every arrangement a publisher could
@@ -16,17 +16,23 @@ every language in the same way.
 The demo reads two environment variables, which are the names every
 language's copy of it reads.
 
-| Variable | What it holds | Also read, in this order, when it is not set |
+| Variable | What it holds | Also read when it is not set |
 | --- | --- | --- |
-| `51DEGREES_RESOURCE_KEY` | A resource key that includes the 51Did properties. Required. | `_51DEGREES_RESOURCE_KEY`, `SUPER_RESOURCE_KEY` |
-| `51DEGREES_CLOUD_ENDPOINT` | The cloud the pages load from, given with or without the `/api/v4/` path, for example `https://cloud.51degrees.com/api/v4/`. The default is `https://cloud.51degrees.com`. | `51D_CLOUD_ENDPOINT`, `FIFTYONE_CLOUD_ENDPOINT` |
+| `51DEGREES_RESOURCE_KEY` | A resource key that includes the 51Did properties. Required. | `_51DEGREES_RESOURCE_KEY_51DID` |
+| `51DEGREES_CLOUD_ENDPOINT` | The cloud the pages load from, given with or without the `/api/v4/` path, for example `https://cloud.51degrees.com/api/v4/`. The default is `https://cloud.51degrees.com`. | nothing |
+
+The first column holds the names a developer sets. The resource key's second
+name is the one continuous integration sets. It starts with an underscore
+because a shell cannot export a name that starts with a digit, and it ends
+with the product the demo needs, being the 51Did. No licence key is read,
+because the resource key has to carry the 51Did product itself.
 
 The address the demo listens on comes from `ASPNETCORE_URLS`, which is how
 any ASP.NET Core application is started. Without it the demo listens on
 `http://localhost:5000`.
 
 A resource key can be created at
-https://configure.51degrees.com?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-preferencemanagement-web-readme.md&utm_term=running-it.
+https://configure.51degrees.com?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-pmp-web-readme.md&utm_term=running-it.
 The demo never writes either value to the console.
 
 On Linux and macOS the variable names that start with a digit have to be
@@ -123,7 +129,7 @@ are written into the templates and a filler has nothing to supply.
 A copy in another language follows these rules, which are all that
 `Program.cs`, `Settings.cs` and `Pages.cs` do here.
 
-1. Read the two environment variables above, with the same fallbacks, and
+1. Read the two environment variables above, with the same fallback, and
    take `/api/v4` and any trailing slash off the endpoint.
 2. Serve `wwwroot` as static files, with `index.html` at `/`.
 3. Answer `/cloud/<route>` with `wwwroot/templates/cloud/<route>.html`,
@@ -144,9 +150,9 @@ as their `utm_campaign`, which a copy changes to its own repository's name.
 ## Find out more
 
 - The 51Did and the Preference Management Platform,
-  https://51degrees.com/documentation/_identifiers__index.html?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-preferencemanagement-web-readme.md&utm_term=find-out-more
+  https://51degrees.com/documentation/_identifiers__index.html?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-pmp-web-readme.md&utm_term=find-out-more
 - Talk to 51Degrees about using them,
-  https://51degrees.com/contact-us?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-preferencemanagement-web-readme.md&utm_term=find-out-more
+  https://51degrees.com/contact-us?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-pmp-web-readme.md&utm_term=find-out-more
 - The source code for this demo and what it uses.
   - https://github.com/51Degrees/device-detection-dotnet-examples
   - https://github.com/51Degrees/pipeline-dotnet

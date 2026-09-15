@@ -20,11 +20,19 @@
  * such notice(s) shall fulfill the requirements of that article.
  * ********************************************************************* */
 
-namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
+namespace FiftyOne.Examples.Cloud.PmpWeb
 {
     /// <summary>
     /// The input data, read from the environment variable names every
     /// language's copy of this demo reads.
+    /// <para>
+    /// Each value is read from its runtime name first, being the name a
+    /// developer sets in their own shell. Only the resource key has a
+    /// second name, the one continuous integration sets. That name starts
+    /// with an underscore, because a shell cannot export a name that starts
+    /// with a digit, and ends with the product this demo needs, being the
+    /// 51Did.
+    /// </para>
     /// <para>
     /// Neither value is ever written to the console or a log, because a
     /// resource key is not for publishing and an endpoint can name a host
@@ -39,24 +47,17 @@ namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
         public const string RESOURCE_KEY_ENV_VAR = "51DEGREES_RESOURCE_KEY";
 
         /// <summary>
-        /// The names this repository's other examples read the resource key
-        /// from, read in this order when the aligned name is not set.
+        /// The name continuous integration sets a resource key carrying the
+        /// 51Did product in, read only when
+        /// <see cref="RESOURCE_KEY_ENV_VAR"/> is not set.
         /// </summary>
-        public static readonly string[] LEGACY_RESOURCE_KEY_ENV_VARS =
-            { "_51DEGREES_RESOURCE_KEY", "SUPER_RESOURCE_KEY" };
+        public const string CI_RESOURCE_KEY_ENV_VAR =
+            "_51DEGREES_RESOURCE_KEY_51DID";
 
         /// <summary>
         /// The cloud the pages load the platform and the client script from.
-        /// Read first.
         /// </summary>
         public const string CLOUD_ENDPOINT_ENV_VAR = "51DEGREES_CLOUD_ENDPOINT";
-
-        /// <summary>
-        /// The names this repository's other examples read a cloud endpoint
-        /// from, read in this order when the aligned name is not set.
-        /// </summary>
-        public static readonly string[] LEGACY_CLOUD_ENDPOINT_ENV_VARS =
-            { "51D_CLOUD_ENDPOINT", "FIFTYONE_CLOUD_ENDPOINT" };
 
         /// <summary>
         /// The cloud used when no endpoint variable is set.
@@ -111,20 +112,19 @@ namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
         public static Settings FromEnvironment()
         {
             var (keyVariable, key) = First(
-                RESOURCE_KEY_ENV_VAR, LEGACY_RESOURCE_KEY_ENV_VARS);
+                RESOURCE_KEY_ENV_VAR, CI_RESOURCE_KEY_ENV_VAR);
             if (key == null)
             {
                 throw new InvalidOperationException(
                     $"No resource key is set. Set the environment variable " +
                     $"'{RESOURCE_KEY_ENV_VAR}' to a 51Degrees resource key " +
-                    "that includes the 51Did properties. The names " +
-                    $"'{string.Join("' and '", LEGACY_RESOURCE_KEY_ENV_VARS)}' " +
-                    "are read when it is not set. A resource key can be " +
-                    "created at https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-preferencemanagement-web-settings.cs&utm_term=resource-key-required");
+                    "that includes the 51Did properties. The name " +
+                    $"'{CI_RESOURCE_KEY_ENV_VAR}' is read when it is not " +
+                    "set. A resource key can be " +
+                    "created at https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-pmp-web-settings.cs&utm_term=resource-key-required");
             }
 
-            var (endpointVariable, endpoint) = First(
-                CLOUD_ENDPOINT_ENV_VAR, LEGACY_CLOUD_ENDPOINT_ENV_VARS);
+            var (endpointVariable, endpoint) = First(CLOUD_ENDPOINT_ENV_VAR);
             return new Settings(
                 key,
                 keyVariable!,
@@ -152,14 +152,13 @@ namespace FiftyOne.Examples.Cloud.PreferenceManagementWeb
             };
 
         /// <summary>
-        /// The first variable that holds a value that is not blank, with
-        /// its name, or two nulls where none does.
+        /// The first variable, in the order given, that holds a value that
+        /// is not blank, with its name, or two nulls where none does.
         /// </summary>
         private static (string? Name, string? Value) First(
-            string aligned,
-            IEnumerable<string> legacy)
+            params string[] names)
         {
-            foreach (var name in legacy.Prepend(aligned))
+            foreach (var name in names)
             {
                 var value = Environment.GetEnvironmentVariable(name);
                 if (string.IsNullOrWhiteSpace(value) == false)
