@@ -405,7 +405,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 // See https://github.com/51Degrees/Pearl/issues/1617
                 Dictionary<string, IEnumerable<string>> knownMismatches = new() {
                     {
-                        "Edge", [
+                        "Edge", [ // only affects headless mode*
                             "Chrome Headless",
                             "Chrome", // detected as non-headless on Mac
                         ]
