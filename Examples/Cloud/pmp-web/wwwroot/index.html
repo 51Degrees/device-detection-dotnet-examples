@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PMP web demo</title>
+</head>
+<body>
+<h1>PMP web demo</h1>
+<p>Each page below carries the 51Degrees Preference Management Platform
+(PMP)
+and the 51Degrees client script in one of the arrangements a publisher
+could write, and nothing else apart from the small scripts the browser
+tests read. The platform asks the visitor how their data may be used, and
+the client script sends that answer to the cloud with everything else it
+has gathered, so the 51Did the cloud creates carries the answer. Open the
+browser console to see what each page says.</p>
+<p>The same pages answer on any host name, so opening one page on two
+different names shows an answer being shared between two sites.</p>
+
+<h2>Pages that load everything from the cloud</h2>
+<ul>
+<li><a href="/cloud/common">Common path</a>, the platform then the client
+script.</li>
+<li><a href="/cloud/common-script-first">Common path, client script
+first</a>, the same two tags the other way round.</li>
+<li><a href="/cloud/change">Change of answer</a>, with a handler on the
+client script's change event.</li>
+<li><a href="/cloud/two/one">Two pages</a>, an answer carried from one page
+to the next.</li>
+<li><a href="/cloud/consent">Consent platform only</a>, a stand-in consent
+management platform and the client script.</li>
+<li><a href="/cloud/no-platform">No platform</a>, the client script
+alone.</li>
+<li><a href="/cloud/platform-only">Platform with no client script</a>, the
+platform alone.</li>
+<li><a href="/cloud/named-object">Platform with a named object</a>, the
+platform alone using another name for the client script's object.</li>
+</ul>
+
+<h2>The same pages with the client script from this demo's pipeline</h2>
+<p>The platform still loads from the cloud, and the client script comes
+from the 51Degrees Pipeline running in this demo, which asks the cloud on
+the page's behalf.</p>
+<ul>
+<li><a href="/pipeline/common">Common path</a></li>
+<li><a href="/pipeline/common-script-first">Common path, client script
+first</a></li>
+<li><a href="/pipeline/change">Change of answer</a></li>
+<li><a href="/pipeline/two/one">Two pages</a></li>
+<li><a href="/pipeline/consent">Consent platform only</a></li>
+<li><a href="/pipeline/no-platform">No platform</a></li>
+<li><a href="/pipeline/platform-only">Platform with no client script</a></li>
+<li><a href="/pipeline/named-object">Platform with a named object</a></li>
+</ul>
+
+<hr>
+<h2>Find out more</h2>
+<ul>
+<li><a href="https://51degrees.com/documentation/_identifiers__index.html?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-index.html&amp;utm_term=find-out-more">The 51Did and the Preference Management Platform</a></li>
+<li><a href="https://51degrees.com/contact-us?utm_source=code&amp;utm_medium=example&amp;utm_campaign=device-detection-dotnet-examples&amp;utm_content=examples-cloud-pmp-web-wwwroot-index.html&amp;utm_term=find-out-more">Talk to 51Degrees about using them</a></li>
+</ul>
+<p>The source code for this demo and what it uses.</p>
+<ul>
+<li><a href="https://github.com/51Degrees/device-detection-dotnet-examples">https://github.com/51Degrees/device-detection-dotnet-examples</a></li>
+<li><a href="https://github.com/51Degrees/pipeline-dotnet">https://github.com/51Degrees/pipeline-dotnet</a></li>
+<li><a href="https://github.com/51Degrees/javascript-templates">https://github.com/51Degrees/javascript-templates</a></li>
+<li><a href="https://github.com/51Degrees/specifications">https://github.com/51Degrees/specifications</a></li>
+<li><a href="https://github.com/51Degrees/selenium-api-tests">https://github.com/51Degrees/selenium-api-tests</a></li>
+</ul>
+</body>
+</html>

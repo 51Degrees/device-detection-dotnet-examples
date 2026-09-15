@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>FiftyOne.Examples.Cloud.PmpWeb</AssemblyName>
+    <RootNamespace>FiftyOne.Examples.Cloud.PmpWeb</RootNamespace>
+    <Platforms>AnyCPU;x64;x86;ARM64</Platforms>
+    <Configurations>Debug;Release;CoreRelease;CoreDebug</Configurations>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- The pipeline pages have the 51Degrees Pipeline serve the client
+       script. FiftyOne.Pipeline.Web brings the web integration and the
+       JavaScript builder, and the two cloud engines turn the cloud's answer
+       into the device and 51Did data that script carries. -->
+  <ItemGroup>
+    <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.104" />
+    <PackageReference Include="FiftyOne.DeviceDetection.Cloud" Version="4.5.151" />
+    <PackageReference Include="FiftyOne.Did.Cloud" Version="4.5.104" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.31" />
+  </ItemGroup>
+
+  <!-- The pages are read from the build output, so the demo serves the
+       same files whichever directory it is started from. -->
+  <ItemGroup>
+    <Content Update="wwwroot\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

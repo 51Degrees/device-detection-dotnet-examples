@@ -9,6 +9,7 @@
       "Examples\\Cloud\\GettingStarted-Web\\GettingStarted-Web.csproj",
       "Examples\\Cloud\\Metadata-Console\\Metadata-Console.csproj",
       "Examples\\Cloud\\NativeModel-Console\\NativeModelLookup-Console.csproj",
+      "Examples\\Cloud\\pmp-web\\pmp-web.csproj",
       "Examples\\Cloud\\TAC-Console\\TacLookup-Console.csproj",
       "Examples\\ExampleBase\\FiftyOne.DeviceDetection.Examples.csproj",
       "Examples\\OnPremise\\GettingStarted-Console\\GettingStarted-Console.csproj",
