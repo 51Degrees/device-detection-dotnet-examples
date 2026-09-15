@@ -408,6 +408,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                         "Edge", [ // only affects headless mode*
                             "Chrome Headless",
                             "Chrome", // detected as non-headless on Mac
+                            "Unknown Mac OS X App - WebKit Engine",
                         ]
                     },
                 };
