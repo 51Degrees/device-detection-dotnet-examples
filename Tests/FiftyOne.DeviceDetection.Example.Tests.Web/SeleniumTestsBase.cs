@@ -22,21 +22,14 @@
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OpenQA.Selenium;
+using OpenQA.Selenium.BiDi;
 using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.DevTools;
 using OpenQA.Selenium.Edge;
 using OpenQA.Selenium.Firefox;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using DevToolsSessionDomains = OpenQA.Selenium.DevTools.DevToolsSessionDomains;
-// Used to map new version features. Must be one of the protocol versions
-// the pinned Selenium ships, and match the browser major on the CI runners,
-// or GetNetwork below returns null and the tests that need it go
-// inconclusive. Move it when Selenium.WebDriver moves, and when the
-// runners' browser major moves past it.
-using Enhanced = OpenQA.Selenium.DevTools.V152;
 
 namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
@@ -54,38 +47,36 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// <see cref="InitializeChromeDriver"/>,
         /// <see cref="InitializeEdgeDriver"/>,
         /// <see cref="InitializeFirefoxDriver"/>.
+        ///
+        /// IMPORTANT: The driver and the browser state below are static and are
+        /// created once per test class from a static [ClassInitialize] method,
+        /// then disposed from a static [ClassCleanup] method. This is
+        /// deliberate. The CI environment cannot start more than one driver in
+        /// the same session, so a per-test [TestInitialize] driver fails the
+        /// build. MSTest also requires class level fixture methods to be static,
+        /// which is why these members must be static for [ClassInitialize] to
+        /// reach them. Do NOT change these back to instance members driven from
+        /// [TestInitialize]; doing so reintroduces the CI failure.
         /// </summary>
-        protected WebDriver Driver { get; private set; }
+        protected static WebDriver Driver { get; private set; }
 
         /// <summary>
         /// Expected name of the browser reported by device detection.
         /// </summary>
-        protected string BrowserName;
+        protected static string BrowserName;
 
         /// <summary>
         /// Expected browser version reported by device detection.
         /// </summary>
-        protected Version BrowserVersion;
+        protected static Version BrowserVersion;
 
         /// <summary>
-        /// Network adapter if supported by the driver.
+        /// Cross browser network adapter, built on the WebDriver BiDi protocol
+        /// so Chrome, Edge and Firefox all get real network inspection. Null
+        /// only if a BiDi session could not be established, in which case the
+        /// tests that need it report themselves inconclusive.
         /// </summary>
-        protected Enhanced.Network.NetworkAdapter Network { get; private set; }
-
-        /// <summary>
-        /// True where the browser was started without a visible window. Device
-        /// detection reports a headless browser as a crawler, and crawlers are
-        /// not given the JavaScript that gathers high entropy values, so a
-        /// test that needs that JavaScript cannot be run by this driver.
-        /// </summary>
-        protected bool Headless { get; private set; }
-
-        /// <summary>
-        /// Used to create new network adapters.
-        /// </summary>
-        private static readonly Enhanced.Network.EnableCommandSettings 
-            NetworkSettings = 
-            new Enhanced.Network.EnableCommandSettings();
+        protected static BiDiNetworkAdapter Network { get; private set; }
 
         /// <summary>
         /// Used to stop the server when the test is finished.
@@ -116,22 +107,14 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         }
 
         /// <summary>
-        /// Cleans up after the test. The driver is disposed here rather than in
-        /// a [ClassCleanup] method because MSTest requires class level fixture
-        /// methods to be static, which cannot reach the instance
-        /// <see cref="Driver"/>. A class that declared a non-static
-        /// [ClassInitialize] or [ClassCleanup] method was silently dropped at
-        /// discovery, so none of its tests ran at all.
+        /// Stops the per-test web server. The server is started once per test
+        /// in <see cref="TestServerInitialize"/>, so it is stopped here. The
+        /// driver is not touched here; it lives for the whole class and is
+        /// disposed in <see cref="ClassCleanup"/>.
         /// </summary>
         [TestCleanup]
         public void TestCleanup()
         {
-            if (Driver != null)
-            {
-                Driver.Quit();
-                Driver.Dispose();
-                Driver = null;
-            }
             if (ServerTask != null)
             {
                 StopSource.Cancel(true);
@@ -139,32 +122,80 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             }
         }
 
+        /// <summary>
+        /// Disposes the driver created once for the class. This must be a static
+        /// [ClassCleanup] method because MSTest requires class level fixture
+        /// methods to be static, and because the CI environment cannot start
+        /// more than one driver in the same session, so the driver is created
+        /// once per class rather than once per test. Do NOT move this teardown
+        /// into [TestCleanup]; it pairs with the static [ClassInitialize] on
+        /// each browser test class.
+        /// </summary>
+        // MSTest runs a [ClassCleanup] declared on a base class for its
+        // derived test classes only when asked to. Without the arguments this
+        // never ran, every class left its driver and browser running, and on
+        // Windows those processes kept 'dotnet test' from exiting until the
+        // job timed out.
+        [ClassCleanup(
+            InheritanceBehavior.BeforeEachDerivedClass,
+            ClassCleanupBehavior.EndOfClass)]
+        public static void ClassCleanup()
+        {
+            QuitDriver();
+        }
+
+        /// <summary>
+        /// Quits and disposes the driver, if there is one, so that at most one
+        /// driver and browser are ever running.
+        /// </summary>
+        private static void QuitDriver()
+        {
+            if (Driver == null)
+            {
+                return;
+            }
+            try
+            {
+                Driver.Quit();
+            }
+            catch (WebDriverException)
+            {
+                // The browser has already gone. Disposing below still stops
+                // the driver process.
+            }
+            Driver.Dispose();
+            Driver = null;
+            Network = null;
+        }
+
 
         /// <summary>
         /// Sets the <see cref="Driver"/> property for Chrome tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeChromeDriver()
+        protected static void InitializeChromeDriver()
         {
+            QuitDriver();
             // If the driver and chrome versions are different it may cause
             // unexpected behaviour. 
             // See: https://sites.google.com/chromium.org/driver/downloads and
             // https://github.com/rosolko/WebDriverManager.Net
             var chromeOptions = new ChromeOptions();
             chromeOptions.AcceptInsecureCertificates = true;
+            // Ask the driver for the BiDi WebSocket URL so the cross browser
+            // network adapter can attach. Without this AsBiDiAsync has no
+            // endpoint to connect to.
+            chromeOptions.UseWebSocketUrl = true;
             chromeOptions.AddArgument("--headless=new");
-            Headless = true;
             chromeOptions.AddArgument("--ignore-certificate-errors");
             chromeOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try
             {
                 Driver = new ChromeDriver(chromeOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create a ChromeDriver, check " +
-                    "that the Chromium driver is installed");
+                SkipBecauseBrowserUnavailable("Chrome", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Chrome";
@@ -176,12 +207,14 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// Sets the <see cref="Driver"/> property for Edge tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeEdgeDriver()
+        protected static void InitializeEdgeDriver()
         {
+            QuitDriver();
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
+            // See the Chrome initializer: enables the BiDi WebSocket endpoint.
+            edgeOptions.UseWebSocketUrl = true;
             edgeOptions.AddArgument("--headless=new");
-            Headless = true;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) == true)
             {
                 // Ubuntu 24.04 confines unprivileged user namespaces with
@@ -196,11 +229,9 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             {
                 Driver = new EdgeDriver(edgeOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create an EdgeDriver, check " +
-                    "that the Edge driver is installed");
+                SkipBecauseBrowserUnavailable("Edge", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Edge";
@@ -212,23 +243,24 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// Sets the <see cref="Driver"/> property for Firefox tests. If the 
         /// initilaization fails the test is flagged as inconclusive.
         /// </summary>
-        protected void InitializeFirefoxDriver()
+        protected static void InitializeFirefoxDriver()
         {
+            QuitDriver();
             var firefoxOptions = new FirefoxOptions();
             firefoxOptions.AcceptInsecureCertificates = true;
             firefoxOptions.AddArgument("--headless");
-            Headless = true;
-            firefoxOptions.EnableDevToolsProtocol = true;
+            // Firefox does not implement the Chrome DevTools Protocol, so the
+            // network adapter uses the W3C BiDi protocol instead. Ask for the
+            // BiDi WebSocket URL so AsBiDiAsync can attach.
+            firefoxOptions.UseWebSocketUrl = true;
             firefoxOptions.SetLoggingPreference(LogType.Browser, LogLevel.All);
             try
             {
                 Driver = new FirefoxDriver(firefoxOptions);
             }
-            catch (WebDriverException)
+            catch (WebDriverException exception)
             {
-                Assert.Inconclusive(
-                    "Could not create a FirefoxDriver, check " +
-                    "that the Firefox driver is installed");
+                SkipBecauseBrowserUnavailable("Firefox", exception);
             }
             Network = GetNetwork(Driver).Result;
             BrowserName = "Firefox";
@@ -236,35 +268,72 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 (string)Driver.Capabilities["browserVersion"]);
         }
 
-        private static async Task<Enhanced.Network.NetworkAdapter> GetNetwork(
+        /// <summary>
+        /// Skips the test because the browser it needs could not be
+        /// started, saying which browser it was and what the driver
+        /// reported. The old messages named the wrong browser, so somebody
+        /// reading a skipped Firefox test was told to install the Edge
+        /// driver, and the reason the driver refused was thrown away
+        /// entirely. A skip nobody can act on is no better than a test that
+        /// never ran.
+        /// </summary>
+        /// <param name="browserName">
+        /// The browser the test needs, for example "Chrome".
+        /// </param>
+        /// <param name="exception">
+        /// What the driver threw.
+        /// </param>
+        protected static void SkipBecauseBrowserUnavailable(
+            string browserName,
+            WebDriverException exception)
+        {
+            var message =
+                $"Skipped because a {browserName} driver could not be " +
+                $"started, so this test did not run. Install {browserName} " +
+                "and let Selenium Manager fetch the matching driver, or " +
+                "put the driver on the PATH. The driver reported: " +
+                exception.Message;
+
+            // Written to the console as well as carried on the result,
+            // because the console logger shows only the word "Skipped" and
+            // a person looking at a build needs the reason.
+            Console.WriteLine(message);
+            Assert.Inconclusive(message);
+        }
+
+        /// <summary>
+        /// Attaches a cross browser network adapter to the driver using the
+        /// W3C WebDriver BiDi protocol. This replaces the old Chrome DevTools
+        /// Protocol path, which only Chromium browsers implemented and which
+        /// threw for Firefox because it does not implement <c>IDevTools</c>.
+        /// BiDi is supported by Chrome, Edge and Firefox alike, so every
+        /// browser now gets real network inspection.
+        /// </summary>
+        /// <param name="driver">
+        /// The driver, which must have been created with
+        /// <c>UseWebSocketUrl = true</c> so a BiDi session can be established.
+        /// </param>
+        /// <returns>
+        /// The adapter, or null if a BiDi session could not be established, in
+        /// which case the tests that need it report themselves inconclusive
+        /// rather than failing every test in the class.
+        /// </returns>
+        private static async Task<BiDiNetworkAdapter> GetNetwork(
             IWebDriver driver)
         {
-            DevToolsSessionDomains domains;
             try
             {
-                domains = (driver as IDevTools).GetDevToolsSession()
-                    .GetVersionSpecificDomains<DevToolsSessionDomains>();
+                var bidi = await driver.AsBiDiAsync();
+                return new BiDiNetworkAdapter(bidi);
             }
-            catch (WebDriverException)
+            catch (Exception)
             {
-                // The installed browser is newer than the DevTools protocol
-                // versions this Selenium build knows about, so no session can be
-                // started. Returning null leaves the tests that need the network
-                // adapter to report themselves inconclusive rather than failing
-                // every test in the class at driver creation.
+                // The driver could not expose a BiDi session, for example
+                // because it was created without UseWebSocketUrl. Returning
+                // null leaves the network dependent tests inconclusive rather
+                // than failing the whole class at driver creation.
                 return null;
             }
-
-            // If the dev tools support session network inspection then
-            // initialize the network interface and add a reference to the
-            // adapter.
-            var modern = domains as Enhanced.DevToolsSessionDomains;
-            if (modern != null)
-            {
-                await modern.Network.Enable(NetworkSettings);
-                return modern.Network;
-            }
-            return null;
         }
     }
 }

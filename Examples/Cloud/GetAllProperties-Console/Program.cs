@@ -151,20 +151,41 @@ namespace FiftyOne.DeviceDetection.Examples.Cloud.GetAllProperties
 
         static void Main(string[] args)
         {
-            // Obtain a resource key for free at https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=main
-            string resourceKey = "!!YOUR_RESOURCE_KEY!!";
+            // Use the command line args to get the resource key if present.
+            // Otherwise, get it from the environment, following the same
+            // convention as the other cloud examples so that a key set once
+            // works for all of them.
+            string resourceKeySource = null;
+            string resourceKey = args.Length > 0 ? args[0] :
+                ExampleUtils.GetResourceKeyFromEnv(out resourceKeySource);
 
-            if (resourceKey.StartsWith("!!"))
+            if (string.IsNullOrWhiteSpace(resourceKey))
             {
-                Console.WriteLine("You need to create a resource key at " +
-                    "https://configure.51degrees.com?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=resource-key-required and paste it into the code, " +
-                    "replacing !!YOUR_RESOURCE_KEY!!.");
-                Console.WriteLine("Make sure to include all the properties " +
-                    "that you want to see displayed by this example.");
-
+                Console.WriteLine(
+                    "No resource key was supplied. Pass one as the first " +
+                    "command line argument, or set one of these " +
+                    "environment variables: " +
+                    ExampleUtils.CLOUD_RESOURCE_KEY_ENV_VAR_DESCRIPTION +
+                    ".");
+                Console.WriteLine(
+                    "The 51Degrees cloud service is accessed with a " +
+                    "resource key. A free key can be created at " +
+                    "https://configure.51degrees.com/Wkqxf3Bs?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=resource-key-required " +
+                    "and gives the free properties. With a paid " +
+                    "subscription, a key created at " +
+                    "https://configure.51degrees.com/hYzn3TV3?utm_source=code&utm_medium=example&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-getallproperties-console-program.cs&utm_term=resource-key-required " +
+                    "includes every property this example displays. Make " +
+                    "sure the key includes all the properties you want to " +
+                    "see.");
             }
             else
             {
+                if (args.Length == 0)
+                {
+                    Console.WriteLine(
+                        $"Using the resource key from " +
+                        $"'{resourceKeySource}'.");
+                }
                 new Example().Run(resourceKey);
             }
 #if (DEBUG)

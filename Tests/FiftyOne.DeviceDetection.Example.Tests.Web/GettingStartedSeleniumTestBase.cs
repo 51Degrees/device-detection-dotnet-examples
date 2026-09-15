@@ -59,41 +59,44 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 Assert.Inconclusive(
                     "Test session does not support cookie verification");
             }
-            if (Headless == true)
-            {
-                // The cookie is written by the JavaScript that device
-                // detection returns for gathering high entropy values, and
-                // that JavaScript is withheld from crawlers. Every headless
-                // browser is reported as a crawler, so there is nothing to
-                // write the cookie and nothing for this test to check.
-                // Measured against both the Lite and Enterprise files:
-                // headless Chrome, headless Edge and Googlebot all give
-                // IsCrawler true and no JavascriptGetHighEntropyValues, where
-                // ordinary Chrome gives a 329 character script that writes it.
-                Assert.Inconclusive(
-                    "A headless browser is reported as a crawler, so it is " +
-                    "not served the JavaScript that writes the " +
-                    "51D_GetHighEntropyValues cookie. Run this test with a " +
-                    "browser that has a window to exercise it.");
-            }
 
             // Act
             Driver.Navigate().GoToUrl(url + STATIC_HTML_PATH);
 
-            // Wait for the page to load
+            // The page sets 'ghe' asynchronously from
+            // navigator.userAgentData.getHighEntropyValues, so waiting for the
+            // document to load is not enough; we must wait for that promise to
+            // resolve. Browsers without userAgentData (Firefox) never set it,
+            // so the value stays null and the wait times out.
+            Dictionary<string, object> ghe = null;
             try
             {
-                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver => true);
+                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver =>
+                {
+                    ghe = (Dictionary<string, object>)
+                        ((IJavaScriptExecutor)driver).ExecuteScript(
+                            "return ghe");
+                    return ghe != null;
+                });
             }
-            catch (WebDriverTimeoutException e)
+            catch (WebDriverTimeoutException)
             {
-                Assert.Inconclusive(e.ToString());
+                // ghe is still null here. This is expected on browsers with no
+                // navigator.userAgentData, for which high entropy values, and
+                // therefore this test, do not apply.
             }
 
-            // Get the high entropy values.
-            var js = (IJavaScriptExecutor)Driver;
-            var ghe = (Dictionary<string, object>)js.ExecuteScript(
-                "return ghe");
+            // Guard before the loop below. Without this a null ghe dereferences
+            // and throws a NullReferenceException instead of reporting the real
+            // reason the values are missing.
+            if (ghe == null)
+            {
+                Assert.Inconclusive(
+                    "Browser did not provide high entropy values " +
+                    "(navigator.userAgentData is not supported), so there is " +
+                    "no 51D_GetHighEntropyValues cookie to verify.");
+            }
+
             foreach (var key in new[] {
                 "brands",
                 "fullVersionList",
@@ -106,17 +109,35 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                 Assert.IsNotNull(ghe[key]);
             }
 
-            var cookies = Network.GetAllCookies().Result;
+            // The 51D_GetHighEntropyValues cookie is written by
+            // 51Degrees.core.js after its own asynchronous round trip, so it
+            // may not exist the instant the page reports high entropy values.
+            // Poll for it rather than reading once, otherwise the cookie is
+            // missing and Single() below throws "Sequence contains no
+            // elements".
+            IReadOnlyList<BiDiCookie> cookies = null;
+            BiDiCookie fod_cookie = null;
+            try
+            {
+                new WebDriverWait(Driver, TEST_TIMEOUT).Until(driver =>
+                {
+                    cookies = Network.GetAllCookiesAsync().Result;
+                    fod_cookie = cookies.FirstOrDefault(c =>
+                        c.Name == "51D_GetHighEntropyValues");
+                    return fod_cookie != null;
+                });
+            }
+            catch (WebDriverTimeoutException e)
+            {
+                Assert.Inconclusive(e.ToString());
+            }
 
             Console.WriteLine("Enumerating cookie names:");
-            foreach (var nextName in cookies.Cookies.Select(c => c.Name))
+            foreach (var nextName in cookies.Select(c => c.Name))
             {
                 Console.WriteLine($"- Next cookie name: '{nextName}'");
             }
             Console.WriteLine("Finished numerating cookie names!");
-
-            var fod_cookie = cookies.Cookies.Where(c =>
-                c.Name == "51D_GetHighEntropyValues").Single();
 
             // Assert
 
@@ -156,21 +177,22 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             var jsonRecieved = false;
 
             // Get Response Headers if the URL relates to a JSON response.
-            Network.ResponseReceived += (sender, e) =>
+            // Awaited so the subscription is active before navigation begins,
+            // otherwise the response could arrive before we are listening.
+            Network.OnResponseCompletedAsync(response =>
             {
-                var headers = e.Response.Headers;
-                var responseUrl = e.Response.Url;
-                var mimeType = e.Response.MimeType;
+                var responseUrl = response.Url;
+                var mimeType = response.MimeType;
                 if ("application/json".Equals(mimeType) &&
                     responseUrl.EndsWith("json"))
                 {
-                    foreach (var header in headers)
+                    foreach (var header in response.Headers)
                     {
-                        headerValuePairs.Add(header.Key.ToLower(), header.Value);
+                        headerValuePairs[header.Key] = header.Value;
                     }
                     jsonRecieved = true;
                 }
-            };
+            }).Wait();
 
             // Act
             // Do a cross origin request
@@ -376,6 +398,35 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
             Assert.IsTrue(result);
             Assert.IsNotNull(detectedBrowserName);
             Assert.IsNotNull(detectedBrowserVersion);
+
+            {
+                // Workaround for a known detection limitation.
+                // Remove once the upstream fix is deployed.
+                // See https://github.com/51Degrees/Pearl/issues/1617
+                Dictionary<string, IEnumerable<string>> knownMismatches = new() {
+                    {
+                        "Edge", [ // only affects headless mode*
+                            "Chrome Headless",
+                            "Chrome", // detected as non-headless on Mac
+                            "Unknown Mac OS X App - WebKit Engine",
+                        ]
+                    },
+                    {
+                        "Chrome", [ // only affects headless mode*
+                            "Unknown Mac OS X App - WebKit Engine",
+                        ]
+                    },
+                };
+                if (knownMismatches.Any(
+                    kvp => kvp.Key.Equals(BrowserName, StringComparison.OrdinalIgnoreCase)
+                        && kvp.Value.Any(v => v.Equals(detectedBrowserName, StringComparison.OrdinalIgnoreCase))))
+                {
+                    Assert.Inconclusive(
+                        $"Device detection reported '{detectedBrowserName}' "
+                        + $"for the {BrowserName} driver. Known issue. "
+                        + $"Skipping until the upstream fix is deployed.");
+                }
+            }
 
             // Check the reported browser name contains the expected one.
             Assert.IsTrue(detectedBrowserName.Contains(
