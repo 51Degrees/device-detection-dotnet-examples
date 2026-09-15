@@ -113,12 +113,13 @@ Two things differ under `/pipeline/`, and both are deliberate.
    served the platform, so `/pipeline/platform-only` and
    `/pipeline/named-object` behave exactly as their `/cloud/` copies.
 
-The platform tag carries these attributes on every page, in this order.
+The PMP tag carries the resource key as the file name in its `src`, which
+is where the PMP reads it from, and these attributes on every page, in this
+order.
 
 | Attribute | Value |
 | --- | --- |
-| `src` | the cloud, then `/api/v4/pmp` |
-| `data-resource-key` | the resource key |
+| `src` | the cloud, then `/api/v4/pmp/`, the resource key and `.js` |
 | `data-action-url` | `javascript:window.__51dTest.actions.push('{preference}')` |
 | `data-tcf-vendor` | `CPYBSvoPYBSvoO3AAAENAwCAAAAAAAAAAAAAAAAAAAAA` |
 | `data-brand-name` | `Fifty One Times` |
