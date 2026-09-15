@@ -38,7 +38,14 @@ any ASP.NET Core application is started. Without it the demo listens on
 
 A resource key can be created at
 https://configure.51degrees.com?utm_source=github&utm_medium=readme&utm_campaign=device-detection-dotnet-examples&utm_content=examples-cloud-pmp-web-readme.md&utm_term=running-it.
-The demo never writes either value to the console.
+It has to carry the 51Did properties, which is what makes the cloud include
+the part of the client script that asks the visitor how their data may be
+used, and the pages and the browser tests read `fodid.idprobglobal` from
+the answer. It has to carry `ThirdPartyCookiesEnabled` and
+`ThirdPartyCookiesEnabledJavaScript` as well, because without them the
+platform never tests the third party cookie and the second card never
+appears. The demo never writes the resource key or the cloud address to
+the console.
 
 On Linux and macOS the variable names that start with a digit have to be
 set with the env command, because POSIX shells do not accept them in a
