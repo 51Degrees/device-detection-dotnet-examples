@@ -131,15 +131,41 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// into [TestCleanup]; it pairs with the static [ClassInitialize] on
         /// each browser test class.
         /// </summary>
-        [ClassCleanup]
+        // MSTest runs a [ClassCleanup] declared on a base class for its
+        // derived test classes only when asked to. Without the arguments this
+        // never ran, every class left its driver and browser running, and on
+        // Windows those processes kept 'dotnet test' from exiting until the
+        // job timed out.
+        [ClassCleanup(
+            InheritanceBehavior.BeforeEachDerivedClass,
+            ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
-            if (Driver != null)
+            QuitDriver();
+        }
+
+        /// <summary>
+        /// Quits and disposes the driver, if there is one, so that at most one
+        /// driver and browser are ever running.
+        /// </summary>
+        private static void QuitDriver()
+        {
+            if (Driver == null)
+            {
+                return;
+            }
+            try
             {
                 Driver.Quit();
-                Driver.Dispose();
-                Driver = null;
             }
+            catch (WebDriverException)
+            {
+                // The browser has already gone. Disposing below still stops
+                // the driver process.
+            }
+            Driver.Dispose();
+            Driver = null;
+            Network = null;
         }
 
 
@@ -149,6 +175,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// </summary>
         protected static void InitializeChromeDriver()
         {
+            QuitDriver();
             // If the driver and chrome versions are different it may cause
             // unexpected behaviour. 
             // See: https://sites.google.com/chromium.org/driver/downloads and
@@ -182,6 +209,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// </summary>
         protected static void InitializeEdgeDriver()
         {
+            QuitDriver();
             var edgeOptions = new EdgeOptions();
             edgeOptions.AcceptInsecureCertificates = true;
             // See the Chrome initializer: enables the BiDi WebSocket endpoint.
@@ -217,6 +245,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
         /// </summary>
         protected static void InitializeFirefoxDriver()
         {
+            QuitDriver();
             var firefoxOptions = new FirefoxOptions();
             firefoxOptions.AcceptInsecureCertificates = true;
             firefoxOptions.AddArgument("--headless");

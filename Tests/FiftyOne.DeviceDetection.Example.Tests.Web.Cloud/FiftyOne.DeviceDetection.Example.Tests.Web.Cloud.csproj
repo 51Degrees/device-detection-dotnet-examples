@@ -45,6 +45,8 @@
   <ItemGroup>
     <Compile Include="..\Shared\TestDiscoveryGuard.cs"
              Link="TestDiscoveryGuard.cs" />
+    <Compile Include="..\Shared\SeleniumProcessCleanup.cs"
+             Link="SeleniumProcessCleanup.cs" />
   </ItemGroup>
 
 </Project>
