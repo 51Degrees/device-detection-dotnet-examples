@@ -17,9 +17,18 @@
        into the device and 51Did data that script carries. -->
   <ItemGroup>
     <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.104" />
-    <PackageReference Include="FiftyOne.DeviceDetection.Cloud" Version="4.5.151" />
     <PackageReference Include="FiftyOne.Did.Cloud" Version="4.5.104" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.31" />
+  </ItemGroup>
+
+  <!-- The device detection cloud engine comes from the shared example base,
+       as for the other examples, so the package tests in
+       device-detection-dotnet can move every example to the version under
+       test in one place. A direct reference pinned here was seen by NuGet
+       as a downgrade of FiftyOne.DeviceDetection.Cloud and failed the
+       build. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\ExampleBase\FiftyOne.DeviceDetection.Examples.csproj" />
   </ItemGroup>
 
   <!-- The pages are read from the build output, so the demo serves the
