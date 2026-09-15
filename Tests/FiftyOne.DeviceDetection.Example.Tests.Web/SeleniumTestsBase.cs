@@ -35,8 +35,26 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
 {
     public class SeleniumTestsBase
     {
+        static SeleniumTestsBase()
+        {
+            // A driver found on PATH is used even when it no longer matches
+            // the installed browser, and CI images ship ones that lag behind
+            // (msedgedriver 151 against Edge 153 on macOS x64). Skipping PATH
+            // makes Selenium Manager fetch a matching driver. Set here rather
+            // than only in ci/setup-environment.ps1 because other pipelines,
+            // such as device-detection-dotnet's package tests, run these
+            // tests without that script. The Selenium Manager process
+            // inherits it from this one.
+            if (Environment.GetEnvironmentVariable("SE_SKIP_DRIVER_IN_PATH")
+                == null)
+            {
+                Environment.SetEnvironmentVariable(
+                    "SE_SKIP_DRIVER_IN_PATH", "true");
+            }
+        }
+
         /// <summary>
-        /// Number of seconds to wait for a response that might satisfy the 
+        /// Number of seconds to wait for a response that might satisfy the
         /// test.
         /// </summary>
         protected static readonly TimeSpan TEST_TIMEOUT = 
