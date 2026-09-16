@@ -114,11 +114,12 @@ Two things differ under `/pipeline/`, and both are deliberate.
 
 The PMP tag carries the resource key as the file name in its `src`, which
 is where the PMP reads it from, and these attributes on every page, in this
-order.
+order. The demo builds the whole `src` and the template carries it as one
+placeholder, so the key is escaped for a URL path in one place.
 
 | Attribute | Value |
 | --- | --- |
-| `src` | the cloud, then `/api/v4/pmp/`, the resource key and `.js` |
+| `src` | `{{PMP_SCRIPT_URL}}`, the cloud, then `/api/v4/pmp/`, the resource key escaped for a path and `.js` |
 | `data-action-url` | `javascript:window.__51dTest.actions.push('{preference}')` |
 | `data-tcf-vendor` | `CPYBSvoPYBSvoO3AAAENAwCAAAAAAAAAAAAAAAAAAAAA` |
 | `data-brand-name` | `Fifty One Times` |
@@ -153,14 +154,22 @@ program does as little as possible, so that another language copies
    from.
 3. `wwwroot/index.html` lists the pages.
 
-The placeholders are these three, and every template uses exactly these
-names.
+The templates use these two placeholders, and both are finished addresses.
+A template never joins an address together out of parts, because the
+resource key sits in the path of both of them and a placeholder is only
+ever encoded for HTML, which leaves `/`, `?`, `#` and `%` as they were. The
+demo escapes the key for a path where it builds each address, in
+`Settings.cs`.
 
 | Placeholder | Filled with | Example |
 | --- | --- | --- |
-| `{{RESOURCE_KEY}}` | the resource key | `<your resource key>` |
-| `{{CLOUD_ENDPOINT}}` | the cloud's address with no trailing slash and without `/api/v4` | `https://cloud.51degrees.com` |
-| `{{CLIENT_SCRIPT_URL}}` | the address of the client script, which under `/cloud/` is the cloud's address, then `/api/v4/`, then the resource key, then `.js`, and under `/pipeline/` is `/51Degrees.core.js` | `https://cloud.51degrees.com/api/v4/<your resource key>.js` |
+| `{{PMP_SCRIPT_URL}}` | the address of the PMP, being the cloud's address, then `/api/v4/pmp/`, then the resource key escaped for a path, then `.js`, under both `/cloud/` and `/pipeline/` | `https://cloud.51degrees.com/api/v4/pmp/<your resource key>.js` |
+| `{{CLIENT_SCRIPT_URL}}` | the address of the client script, which under `/cloud/` is the cloud's address, then `/api/v4/`, then the resource key escaped for a path, then `.js`, and under `/pipeline/` is `/51Degrees.core.js` | `https://cloud.51degrees.com/api/v4/<your resource key>.js` |
+
+`{{RESOURCE_KEY}}` and `{{CLOUD_ENDPOINT}}` are still filled, holding the
+key and the cloud's address on their own, because the set of names is
+shared with the other languages' copies of this demo. No template here uses
+them, and dropping them is a change to make in all the copies at once.
 
 The client script's object name is not a placeholder. The only page that
 names an object, `/cloud/named-object`, names `fiftyOneData`, which the
@@ -170,15 +179,19 @@ are written into the templates and a filler has nothing to supply.
 A copy in another language follows these rules, which are all that
 `Program.cs`, `Settings.cs` and `Pages.cs` do here.
 
-1. Read the two environment variables above, with the same fallback, and
-   take `/api/v4` and any trailing slash off the endpoint.
+1. Read the two environment variables above, with the same fallback, take
+   `/api/v4` and any trailing slash off the endpoint, and build the two
+   addresses in the placeholder table from it, escaping the resource key
+   for a URL path segment in each.
 2. Serve `wwwroot` as static files, with `index.html` at `/`.
 3. Answer `/cloud/<route>` with `wwwroot/templates/cloud/<route>.html`, and
    `/pipeline/<route>` with `wwwroot/templates/pipeline/<route>.html`,
    replacing each placeholder with its value encoded for an HTML
-   attribute. A route is lower case letters, digits and hyphens, with a
-   slash between parts. Anything else, or a route with no template,
-   answers 404.
+   attribute. That encoding is the last step and not the only one: an
+   address holding the resource key is escaped for a URL path where it is
+   built, in step 1, because HTML encoding does not do that job. A route is
+   lower case letters, digits and hyphens, with a slash between parts.
+   Anything else, or a route with no template, answers 404.
 4. Refuse to serve a page that still holds `{{` once it is filled, so a
    misspelt placeholder fails where it is rather than in a test.
 5. Send `Cache-Control: no-store, no-cache, must-revalidate` with every

@@ -138,18 +138,50 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
         }
 
         /// <summary>
+        /// The address the PMP tag loads from, being the cloud, the API
+        /// path, "pmp", and the resource key as the file name, because the
+        /// PMP reads its key from the name of the script it was served as.
+        /// </summary>
+        /// <remarks>
+        /// The key is escaped for a URL path segment here, and not written
+        /// into the templates as a placeholder beside the rest of the
+        /// address. A template placeholder is only ever encoded for HTML,
+        /// which is not the same thing: a key holding '/', '?', '#' or '%'
+        /// would still address the cloud, but a different part of it. The
+        /// tag loads as a script, so the refusal that follows reaches no
+        /// page code and the demo shows nothing at all.
+        /// </remarks>
+        private string PmpScriptUrl =>
+            $"{CloudEndpoint}{API_PATH}/pmp/" +
+            $"{Uri.EscapeDataString(ResourceKey)}.js";
+
+        /// <summary>
+        /// The address the cloud serves the client script from, which is
+        /// <see cref="PmpScriptUrl"/> without the "pmp" segment, and is
+        /// escaped for the same reason.
+        /// </summary>
+        private string CloudClientScriptUrl =>
+            $"{CloudEndpoint}{API_PATH}/" +
+            $"{Uri.EscapeDataString(ResourceKey)}.js";
+
+        /// <summary>
         /// The placeholders a page under /cloud/ is filled with. The names
         /// are the ones in wwwroot/templates and README.md, and every
         /// language's copy of this demo fills the same ones.
         /// </summary>
+        /// <remarks>
+        /// RESOURCE_KEY and CLOUD_ENDPOINT are still filled although no
+        /// template here uses them any longer, because the set of names is
+        /// shared with the other languages' copies of this demo. Dropping
+        /// them is a change to make in all of them at once.
+        /// </remarks>
         public IReadOnlyDictionary<string, string> CloudPlaceholders() =>
             new Dictionary<string, string>
             {
                 ["RESOURCE_KEY"] = ResourceKey,
                 ["CLOUD_ENDPOINT"] = CloudEndpoint,
-                ["CLIENT_SCRIPT_URL"] =
-                    $"{CloudEndpoint}{API_PATH}/" +
-                    $"{Uri.EscapeDataString(ResourceKey)}.js"
+                ["PMP_SCRIPT_URL"] = PmpScriptUrl,
+                ["CLIENT_SCRIPT_URL"] = CloudClientScriptUrl
             };
 
         /// <summary>
@@ -168,6 +200,7 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
             {
                 ["RESOURCE_KEY"] = ResourceKey,
                 ["CLOUD_ENDPOINT"] = CloudEndpoint,
+                ["PMP_SCRIPT_URL"] = PmpScriptUrl,
                 ["CLIENT_SCRIPT_URL"] = PIPELINE_CLIENT_SCRIPT_PATH
             };
 
