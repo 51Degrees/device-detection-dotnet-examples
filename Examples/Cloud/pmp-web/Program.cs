@@ -107,7 +107,7 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
                     Pages.NoStore(context.Context.Response)
             });
 
-            // The pages that load both the platform and the client script
+            // The pages that load both the PMP and the client script
             // straight from the cloud.
             var cloud = settings.CloudPlaceholders();
             app.MapGet(
@@ -116,8 +116,8 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
                     Pages.Serve(context, files, "cloud", page, cloud));
 
             // The same pages with the client script served by this demo's
-            // own pipeline rather than by the cloud. The platform still
-            // loads from the cloud.
+            // own pipeline rather than by the cloud. The PMP still loads
+            // from the cloud.
             var pipelinePages = settings.PipelinePlaceholders();
             app.MapGet(
                 "/pipeline/{**page}",

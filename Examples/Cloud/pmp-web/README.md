@@ -2,7 +2,7 @@
 
 A website whose pages carry the 51Degrees Preference Management Platform
 and the 51Degrees client script in every arrangement a publisher could
-write them in. The platform asks a visitor how their data may be used, and
+write them in. The PMP asks a visitor how their data may be used, and
 the client script sends that answer to the cloud with everything else it
 has gathered, so the 51Did the cloud creates carries the answer.
 
@@ -43,7 +43,7 @@ The key has to carry the 51Did properties, which is what makes the cloud
 include the part of the client script that asks the visitor how their data
 may be used, and the pages and the browser tests read `fodid.idprobglobal`
 from the answer. The key also has to carry `ThirdPartyCookiesEnabled` and
-`ThirdPartyCookiesEnabledJavaScript`, because without them the platform
+`ThirdPartyCookiesEnabledJavaScript`, because without them the PMP
 never tests the third party cookie and the second card never appears. The
 demo never writes the resource key or the cloud address to the console.
 
@@ -76,20 +76,20 @@ answer shared between two sites can be checked.
 
 | Route, under `/cloud/` and `/pipeline/` | Carries, after the recorder and in this order |
 | --- | --- |
-| `common` | the platform, then the client script |
-| `common-script-first` | the client script, then the platform |
-| `change` | the platform, the client script, then the change watcher |
-| `two/one` and `two/two` | the platform, the client script, then the change watcher, on two paths of one site |
+| `common` | the PMP, then the client script |
+| `common-script-first` | the client script, then the PMP |
+| `change` | the PMP, the client script, then the change watcher |
+| `two/one` and `two/two` | the PMP, the client script, then the change watcher, on two paths of one site |
 | `consent` | the stand-in consent management platform, then the client script |
 | `no-platform` | the client script alone |
-| `platform-only` | the platform alone, with no client script tag |
-| `named-object` | the platform alone with `data-object-name="fiftyOneData"`, with no client script tag |
+| `platform-only` | the PMP alone, with no client script tag |
+| `named-object` | the PMP alone with `data-object-name="fiftyOneData"`, with no client script tag |
 
-Under `/cloud/` both the platform and the client script load straight from
+Under `/cloud/` both the PMP and the client script load straight from
 the cloud, so the cloud is a third party to the page, and the client script
 posts what it gathers to the cloud's `/api/v4/json`.
 
-Under `/pipeline/` the platform still loads from the cloud, and the client
+Under `/pipeline/` the PMP still loads from the cloud, and the client
 script is `/51Degrees.core.js` on the page's own site, served by the
 51Degrees Pipeline in this demo. That script posts what it gathers to
 `/51dpipeline/json` on the same site, and the pipeline asks the cloud with
@@ -100,17 +100,16 @@ and those two requests.
 
 Two things differ under `/pipeline/`, and both are deliberate.
 
-1. **The client script tag is not `async`.** The platform recognises a client
-   script tag already on the page only by the cloud's address,
-   `/api/v4/<resource key>.js`. It does not recognise `/51Degrees.core.js`,
-   so where an asynchronous pipeline script has not run by the time the
-   document is parsed, the platform adds the cloud's client script as well,
-   and the page then has two. A tag that is not `async` has always run by
-   then, so the platform finds its object. This goes back to `async` once
-   the platform recognises the web integration's script.
+1. **The client script tag is not `async`.** The PMP looks for the client
+   script's page object, `fod` or the name `data-object-name` gives, and
+   waits for it until the page has loaded before adding a client script of
+   its own, so a script served by the pipeline at `/51Degrees.core.js` is
+   found like any other. The tag was made synchronous while the PMP
+   recognised a client script tag only by the cloud's address, and it can
+   go back to `async` once the browser tests have been run against that.
 2. **The pages with no client script tag get the cloud's client script.** The
-   platform builds the address of the script it adds from the cloud that
-   served the platform, so `/pipeline/platform-only` and
+   PMP builds the address of the script it adds from the cloud that
+   served the PMP, so `/pipeline/platform-only` and
    `/pipeline/named-object` behave exactly as their `/cloud/` copies.
 
 The PMP tag carries the resource key as the file name in its `src`, which

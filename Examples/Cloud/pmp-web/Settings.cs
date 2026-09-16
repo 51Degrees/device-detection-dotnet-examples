@@ -55,7 +55,7 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
             "_51DEGREES_RESOURCE_KEY_51DID";
 
         /// <summary>
-        /// The cloud the pages load the platform and the client script from,
+        /// The cloud the pages load the PMP and the client script from,
         /// and the pipeline asks.
         /// </summary>
         public const string CLOUD_ENDPOINT_ENV_VAR = "51DEGREES_CLOUD_ENDPOINT";
@@ -160,7 +160,7 @@ namespace FiftyOne.Examples.Cloud.PmpWeb
 
         /// <summary>
         /// The placeholders a page under /pipeline/ is filled with. The
-        /// platform still comes from the cloud, and only the client script
+        /// PMP still comes from the cloud, and only the client script
         /// changes, being the one this demo's pipeline serves.
         /// </summary>
         public IReadOnlyDictionary<string, string> PipelinePlaceholders() =>
