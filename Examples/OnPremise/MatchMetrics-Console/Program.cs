@@ -264,7 +264,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.MatchMetrics
                 if (dataFile == null)
                 {
                     Logger.LogWarning($"No filename specified. Checking the " +
-                        $"'{Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR}' environment " +
+                        $"'{Constants.DD_PATH_ENV_VAR}' environment " +
                         $"variable, then searching for the default " +
                         $"'{Constants.LITE_HASH_DATA_FILE_NAME}'");
                     dataFile = ExampleUtils.FindDataFile(Constants.LITE_HASH_DATA_FILE_NAME);

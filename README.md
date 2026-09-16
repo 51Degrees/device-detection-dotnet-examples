@@ -50,10 +50,10 @@ page](https://51degrees.com/pricing?utm_source=github&utm_medium=readme&utm_camp
 The on-premise examples need a device detection data file. The examples locate
 the file in the following order:
 
-1. The "_51DEGREES_DD_PATH" environment variable, which can be set to an
-   explicit path to the data file. The legacy "DEVICEDETECTIONDATAFILE"
-   environment variable is also still supported, and is checked after
-   "_51DEGREES_DD_PATH".
+1. The "51DEGREES_DD_PATH" environment variable, which can be set to an
+   explicit path to the data file. The earlier "_51DEGREES_DD_PATH" and the
+   legacy "DEVICEDETECTIONDATAFILE" environment variables are also still
+   supported, and are checked in that order after "51DEGREES_DD_PATH".
 2. A search of the folder hierarchy, walking up from the working directory,
    for the expected data file name.
 3. The free 'Lite' data file in its expected location, which is the
@@ -61,7 +61,7 @@ the file in the following order:
 
 Note that the aligned variable names start with a digit, which POSIX shells
 do not accept in plain assignments. On Linux and macOS set them with the env
-command, for example `env _51DEGREES_RESOURCE_KEY=AAA dotnet run`.
+command, for example `env 51DEGREES_DD_PATH=/data/TAC-HashV41.hash dotnet run`.
 
 ## Running examples with changes to Pipeline packages
 
