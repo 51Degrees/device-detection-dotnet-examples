@@ -22,7 +22,8 @@
 
 // A stand-in consent management platform. It is the stub the Transparency
 // and Consent Framework's own specification tells every publisher to put
-// in the page, and a pretend platform behind it that answers only what the
+// in the page, and a pretend consent management platform behind it that
+// answers only what the
 // specification requires, which is ping, addEventListener and a callback
 // carrying tcString and eventStatus.
 //
@@ -35,7 +36,7 @@
 // Served unchanged by every language's copy of this demo.
 (function () {
   // The stub from the framework's specification, in shape. It queues calls
-  // until the platform itself is ready.
+  // until the consent management platform itself is ready.
   var queue = [];
   window.__tcfapi = function () { queue.push(arguments); };
   var listeners = [];
@@ -83,7 +84,8 @@
     },
     listeners: function () { return listeners.length; }
   };
-  // The platform takes over from the stub and drains what queued.
+  // The consent management platform takes over from the stub and drains
+  // what queued.
   window.__tcfapi = api;
   for (var i = 0; i < queue.length; i++) {
     api.apply(null, queue[i]);

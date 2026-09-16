@@ -35,6 +35,17 @@
     <ProjectReference Include="..\..\Examples\Cloud\Metadata-Console\Metadata-Console.csproj" />
     <ProjectReference Include="..\..\Examples\Cloud\NativeModel-Console\NativeModelLookup-Console.csproj" />
     <ProjectReference Include="..\..\Examples\Cloud\TAC-Console\TacLookup-Console.csproj" />
+    <ProjectReference Include="..\..\Examples\Cloud\pmp-web\pmp-web.csproj" />
+  </ItemGroup>
+
+  <!-- PmpWebTemplateTests fills the demo's real templates, so the test
+       reads the same files the demo serves rather than a copy that can
+       drift away from them. -->
+  <ItemGroup>
+    <Content Include="..\..\Examples\Cloud\pmp-web\wwwroot\templates\**\*.html">
+      <Link>templates\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <!--

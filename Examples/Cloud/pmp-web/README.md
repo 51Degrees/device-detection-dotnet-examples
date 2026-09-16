@@ -2,7 +2,7 @@
 
 A website whose pages carry the 51Degrees Preference Management Platform
 and the 51Degrees client script in every arrangement a publisher could
-write them in. The platform asks a visitor how their data may be used, and
+write them in. The PMP asks a visitor how their data may be used, and
 the client script sends that answer to the cloud with everything else it
 has gathered, so the 51Did the cloud creates carries the answer.
 
@@ -43,7 +43,7 @@ The key has to carry the 51Did properties, which is what makes the cloud
 include the part of the client script that asks the visitor how their data
 may be used, and the pages and the browser tests read `fodid.idprobglobal`
 from the answer. The key also has to carry `ThirdPartyCookiesEnabled` and
-`ThirdPartyCookiesEnabledJavaScript`, because without them the platform
+`ThirdPartyCookiesEnabledJavaScript`, because without them the PMP
 never tests the third party cookie and the second card never appears. The
 demo never writes the resource key or the cloud address to the console.
 
@@ -76,20 +76,20 @@ answer shared between two sites can be checked.
 
 | Route, under `/cloud/` and `/pipeline/` | Carries, after the recorder and in this order |
 | --- | --- |
-| `common` | the platform, then the client script |
-| `common-script-first` | the client script, then the platform |
-| `change` | the platform, the client script, then the change watcher |
-| `two/one` and `two/two` | the platform, the client script, then the change watcher, on two paths of one site |
+| `common` | the PMP, then the client script |
+| `common-script-first` | the client script, then the PMP |
+| `change` | the PMP, the client script, then the change watcher |
+| `two/one` and `two/two` | the PMP, the client script, then the change watcher, on two paths of one site |
 | `consent` | the stand-in consent management platform, then the client script |
 | `no-platform` | the client script alone |
-| `platform-only` | the platform alone, with no client script tag |
-| `named-object` | the platform alone with `data-object-name="fiftyOneData"`, with no client script tag |
+| `platform-only` | the PMP alone, with no client script tag |
+| `named-object` | the PMP alone with `data-object-name="fiftyOneData"`, with no client script tag |
 
-Under `/cloud/` both the platform and the client script load straight from
+Under `/cloud/` both the PMP and the client script load straight from
 the cloud, so the cloud is a third party to the page, and the client script
 posts what it gathers to the cloud's `/api/v4/json`.
 
-Under `/pipeline/` the platform still loads from the cloud, and the client
+Under `/pipeline/` the PMP still loads from the cloud, and the client
 script is `/51Degrees.core.js` on the page's own site, served by the
 51Degrees Pipeline in this demo. That script posts what it gathers to
 `/51dpipeline/json` on the same site, and the pipeline asks the cloud with
@@ -100,25 +100,26 @@ and those two requests.
 
 Two things differ under `/pipeline/`, and both are deliberate.
 
-1. **The client script tag is not `async`.** The platform recognises a client
-   script tag already on the page only by the cloud's address,
-   `/api/v4/<resource key>.js`. It does not recognise `/51Degrees.core.js`,
-   so where an asynchronous pipeline script has not run by the time the
-   document is parsed, the platform adds the cloud's client script as well,
-   and the page then has two. A tag that is not `async` has always run by
-   then, so the platform finds its object. This goes back to `async` once
-   the platform recognises the web integration's script.
+1. **The client script tag is not `async`.** The PMP looks for the client
+   script's page object, `fod` or the name `data-object-name` gives, and
+   waits for it until the page has loaded before adding a client script of
+   its own, so a script served by the pipeline at `/51Degrees.core.js` is
+   found like any other. The tag was made synchronous while the PMP
+   recognised a client script tag only by the cloud's address, and it can
+   go back to `async` once the browser tests have been run against that.
 2. **The pages with no client script tag get the cloud's client script.** The
-   platform builds the address of the script it adds from the cloud that
-   served the platform, so `/pipeline/platform-only` and
+   PMP builds the address of the script it adds from the cloud that
+   served the PMP, so `/pipeline/platform-only` and
    `/pipeline/named-object` behave exactly as their `/cloud/` copies.
 
-The platform tag carries these attributes on every page, in this order.
+The PMP tag carries the resource key as the file name in its `src`, which
+is where the PMP reads it from, and these attributes on every page, in this
+order. The demo builds the whole `src` and the template carries it as one
+placeholder, so the key is escaped for a URL path in one place.
 
 | Attribute | Value |
 | --- | --- |
-| `src` | the cloud, then `/api/v4/pmp` |
-| `data-resource-key` | the resource key |
+| `src` | `{{PMP_SCRIPT_URL}}`, the cloud, then `/api/v4/pmp/`, the resource key escaped for a path and `.js` |
 | `data-action-url` | `javascript:window.__51dTest.actions.push('{preference}')` |
 | `data-tcf-vendor` | `CPYBSvoPYBSvoO3AAAENAwCAAAAAAAAAAAAAAAAAAAAA` |
 | `data-brand-name` | `Fifty One Times` |
@@ -153,14 +154,22 @@ program does as little as possible, so that another language copies
    from.
 3. `wwwroot/index.html` lists the pages.
 
-The placeholders are these three, and every template uses exactly these
-names.
+The templates use these two placeholders, and both are finished addresses.
+A template never joins an address together out of parts, because the
+resource key sits in the path of both of them and a placeholder is only
+ever encoded for HTML, which leaves `/`, `?`, `#` and `%` as they were. The
+demo escapes the key for a path where it builds each address, in
+`Settings.cs`.
 
 | Placeholder | Filled with | Example |
 | --- | --- | --- |
-| `{{RESOURCE_KEY}}` | the resource key | `<your resource key>` |
-| `{{CLOUD_ENDPOINT}}` | the cloud's address with no trailing slash and without `/api/v4` | `https://cloud.51degrees.com` |
-| `{{CLIENT_SCRIPT_URL}}` | the address of the client script, which under `/cloud/` is the cloud's address, then `/api/v4/`, then the resource key, then `.js`, and under `/pipeline/` is `/51Degrees.core.js` | `https://cloud.51degrees.com/api/v4/<your resource key>.js` |
+| `{{PMP_SCRIPT_URL}}` | the address of the PMP, being the cloud's address, then `/api/v4/pmp/`, then the resource key escaped for a path, then `.js`, under both `/cloud/` and `/pipeline/` | `https://cloud.51degrees.com/api/v4/pmp/<your resource key>.js` |
+| `{{CLIENT_SCRIPT_URL}}` | the address of the client script, which under `/cloud/` is the cloud's address, then `/api/v4/`, then the resource key escaped for a path, then `.js`, and under `/pipeline/` is `/51Degrees.core.js` | `https://cloud.51degrees.com/api/v4/<your resource key>.js` |
+
+`{{RESOURCE_KEY}}` and `{{CLOUD_ENDPOINT}}` are still filled, holding the
+key and the cloud's address on their own, because the set of names is
+shared with the other languages' copies of this demo. No template here uses
+them, and dropping them is a change to make in all the copies at once.
 
 The client script's object name is not a placeholder. The only page that
 names an object, `/cloud/named-object`, names `fiftyOneData`, which the
@@ -170,15 +179,19 @@ are written into the templates and a filler has nothing to supply.
 A copy in another language follows these rules, which are all that
 `Program.cs`, `Settings.cs` and `Pages.cs` do here.
 
-1. Read the two environment variables above, with the same fallback, and
-   take `/api/v4` and any trailing slash off the endpoint.
+1. Read the two environment variables above, with the same fallback, take
+   `/api/v4` and any trailing slash off the endpoint, and build the two
+   addresses in the placeholder table from it, escaping the resource key
+   for a URL path segment in each.
 2. Serve `wwwroot` as static files, with `index.html` at `/`.
 3. Answer `/cloud/<route>` with `wwwroot/templates/cloud/<route>.html`, and
    `/pipeline/<route>` with `wwwroot/templates/pipeline/<route>.html`,
    replacing each placeholder with its value encoded for an HTML
-   attribute. A route is lower case letters, digits and hyphens, with a
-   slash between parts. Anything else, or a route with no template,
-   answers 404.
+   attribute. That encoding is the last step and not the only one: an
+   address holding the resource key is escaped for a URL path where it is
+   built, in step 1, because HTML encoding does not do that job. A route is
+   lower case letters, digits and hyphens, with a slash between parts.
+   Anything else, or a route with no template, answers 404.
 4. Refuse to serve a page that still holds `{{` once it is filled, so a
    misspelt placeholder fails where it is rather than in a test.
 5. Send `Cache-Control: no-store, no-cache, must-revalidate` with every
