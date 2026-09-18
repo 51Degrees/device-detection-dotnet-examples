@@ -51,15 +51,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
         [TestInitialize]
         public void Init()
         {
-            ExampleUtils.GetKeyFromEnv(
-                Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR,
-                v => DataFilePath = v);
-            if (string.IsNullOrEmpty(DataFilePath))
-            {
-                ExampleUtils.GetKeyFromEnv(
-                    Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR,
-                    v => DataFilePath = v);
-            }
+            DataFilePath = ExampleUtils.GetDataFilePathFromEnv() ?? string.Empty;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -71,7 +63,7 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web.OnPremise
                     "data file that is included with the source code. " +
                     "A paid-for data file can be obtained from " +
                     "https://51degrees.com/pricing You can then configure " +
-                    "the _51DEGREES_DD_PATH environment variable " +
+                    "the 51DEGREES_DD_PATH environment variable " +
                     "with the full path to the file.");
             }
 

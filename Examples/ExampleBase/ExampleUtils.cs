@@ -254,13 +254,34 @@ namespace FiftyOne.DeviceDetection.Examples
         }
 
         /// <summary>
+        /// Get an explicit device detection data file path from the
+        /// environment. The variables named in
+        /// <see cref="Constants.DATA_FILE_ENV_VARS"/> are checked in order and
+        /// the first one with a value wins.
+        /// </summary>
+        /// <returns>
+        /// The path from the environment, or null if none of the variables
+        /// is set.
+        /// </returns>
+        public static string GetDataFilePathFromEnv()
+        {
+            foreach (var name in Constants.DATA_FILE_ENV_VARS)
+            {
+                var path = Environment.GetEnvironmentVariable(name);
+                if (string.IsNullOrWhiteSpace(path) == false)
+                {
+                    return path;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Get the path to a device detection data file. The environment
-        /// variables are checked first for an explicit path. The aligned
-        /// variable named by <see cref="Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>
-        /// takes precedence over the legacy variable named by
-        /// <see cref="Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR"/>.
-        /// If neither is set, the folder hierarchy is searched for the
-        /// supplied file name using <see cref="FindFile(string, DirectoryInfo)"/>.
+        /// variables are checked first for an explicit path, using
+        /// <see cref="GetDataFilePathFromEnv"/>. If none is set, the folder
+        /// hierarchy is searched for the supplied file name using
+        /// <see cref="FindFile(string, DirectoryInfo)"/>.
         /// </summary>
         /// <param name="filename">
         /// The data file name to search for when no environment variable
@@ -277,18 +298,7 @@ namespace FiftyOne.DeviceDetection.Examples
             string filename,
             DirectoryInfo dir = null)
         {
-            var path = Environment.GetEnvironmentVariable(
-                Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                path = Environment.GetEnvironmentVariable(
-                    Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
-            }
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                path = FindFile(filename, dir);
-            }
-            return path;
+            return GetDataFilePathFromEnv() ?? FindFile(filename, dir);
         }
 
 

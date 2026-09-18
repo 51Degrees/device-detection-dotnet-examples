@@ -368,13 +368,7 @@ namespace FiftyOne.DeviceDetection.Examples.OnPremise.UpdateDataFile
                 // path before falling back to the default file name.
                 if (dataFile == null)
                 {
-                    dataFile = Environment.GetEnvironmentVariable(
-                        Constants.DEVICE_DETECTION_DATA_FILE_ENV_VAR);
-                    if (string.IsNullOrWhiteSpace(dataFile))
-                    {
-                        dataFile = Environment.GetEnvironmentVariable(
-                            Constants.LEGACY_DEVICE_DETECTION_DATA_FILE_ENV_VAR);
-                    }
+                    dataFile = ExampleUtils.GetDataFilePathFromEnv();
                     if (string.IsNullOrWhiteSpace(dataFile))
                     {
                         dataFile = Constants.ENTERPRISE_HASH_DATA_FILE_NAME;
