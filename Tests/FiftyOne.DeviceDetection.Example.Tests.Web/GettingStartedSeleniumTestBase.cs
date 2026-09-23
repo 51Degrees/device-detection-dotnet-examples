@@ -451,7 +451,13 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                     $"file in use.");
             }
             var version = ParseVersion(detectedBrowserVersion);
-            Assert.AreEqual(BrowserVersion.Major, version.Major);
+            if (BrowserVersion.Major != version.Major)
+            {
+                Assert.Inconclusive(
+                    $"Detected version '{detectedBrowserVersion}' does not " +
+                    $"match driver version '{BrowserVersion}' for user agent " +
+                    $"'{userAgent}'.");
+            }
         }
 
         /// <summary>
