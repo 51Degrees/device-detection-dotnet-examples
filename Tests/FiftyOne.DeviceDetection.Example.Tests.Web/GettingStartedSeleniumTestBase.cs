@@ -409,11 +409,13 @@ namespace FiftyOne.DeviceDetection.Example.Tests.Web
                             "Chrome Headless",
                             "Chrome", // detected as non-headless on Mac
                             "Unknown Mac OS X App - WebKit Engine",
+                            "Brave Desktop",
                         ]
                     },
                     {
                         "Chrome", [ // only affects headless mode*
                             "Unknown Mac OS X App - WebKit Engine",
+                            "Brave Desktop",
                         ]
                     },
                 };
