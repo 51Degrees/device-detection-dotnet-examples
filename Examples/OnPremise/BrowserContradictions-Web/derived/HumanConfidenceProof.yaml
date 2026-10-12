@@ -1,0 +1,50 @@
+# HumanConfidenceProof
+#
+# Proof only. A cut-down HumanConfidence that runs without IP
+# intelligence, so it can be exercised with a hash data file alone. It
+# keeps the three decisive checks and the Unknown rule of HumanConfidence
+# 0.7.0 and adds the one decisive check HumanConfidence 0.8.0 is planned to
+# add: a browser that contradicts what it reports about itself is Low.
+# browser.HasContradictions is read as a string so that Unknown can be
+# seen, the same way 0.7.0 reads device.HasWebDriver.
+
+Format: 1
+Name: HumanConfidenceProof
+Version: 0.1.0
+Output:
+  Name: HumanConfidenceProof
+  Description: Proof only. HumanConfidence without the IP checks, plus the browser contradiction check.
+  ValueType: string
+  IsList: false
+  IsMandatory: false
+  IsObsolete: false
+  Category: Human Detection
+  IsPopular: false
+  ExportValues: true
+  Values:
+    - Name: Medium
+      Description: Nothing points to automation, and without IP intelligence nothing can lift the answer higher.
+    - Name: Low
+      Description: Almost certainly no human is directly involved in viewing the page content.
+    - Name: Unknown
+      Description: The 51Degrees JavaScript has not run on this request.
+Checks:
+  IsCrawler:       { Property: device.IsCrawler,          Eq: true }
+  HasWebDriver:    { Property: device.HasWebDriver,       Eq: "True" }
+  IsHeadless:      { Property: device.IsHeadless,         Eq: true }
+  Contradicts:     { Property: browser.HasContradictions, Eq: "True" }
+  TestsNotRun:     { Property: browser.HasContradictions, Eq: "Unknown" }
+  WebDriverNotAsked: { Property: device.HasWebDriver,     Eq: "Unknown" }
+Rules:
+  - When: { Check: IsCrawler }
+    Then: Low
+  - When: { Check: HasWebDriver }
+    Then: Low
+  - When: { Check: IsHeadless }
+    Then: Low
+  - When: { Check: Contradicts }
+    Then: Low
+  - When:
+      Any: [ { Check: TestsNotRun }, { Check: WebDriverNotAsked } ]
+    Then: Unknown
+  - Else: Medium
