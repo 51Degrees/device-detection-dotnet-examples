@@ -208,8 +208,10 @@
     });
     s("c_heap", function () { var m = performance.memory; return m ? str(m.jsHeapSizeLimit) : "na"; });
     s("c_timer", function () {
-        var seen = {}; var last = performance.now(); var n = 0;
-        while (n < 400) { var t = performance.now(); if (t !== last) { seen[(t - last).toFixed(4)] = 1; last = t; n++; } }
+        // Bounded by spins as well as by distinct values, because a coarse
+        // or frozen timer would otherwise never let the loop end.
+        var seen = {}; var last = performance.now(); var n = 0; var spins = 0;
+        while (n < 400 && spins++ < 200000) { var t = performance.now(); if (t !== last) { seen[(t - last).toFixed(4)] = 1; last = t; n++; } }
         var ks = Object.keys(seen).map(Number).sort(function (x, y) { return x - y; }); return ks.slice(0, 3).join(",") + "|" + ks.length;
     });
     s("c_codecs", function () {
