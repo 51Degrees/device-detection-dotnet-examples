@@ -14,3 +14,8 @@ from genuine Windows Chrome.
   platform differences.
 - `analyse.py`: USE means stable per browser across repeat headed runs and a
   real differing value from the Linux build claiming Windows.
+- `cloak-run.js <label> <windows|macos|auto> <lab|site>`: runs CloakBrowser
+  (npm `cloakbrowser`, needs Node 20 or newer, binary in `~/.cloakbrowser`)
+  with a persona against the lab or the proof site. The free tier allows
+  one session at a time. The proof site must listen on all interfaces for
+  WSL to reach it.
