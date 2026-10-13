@@ -87,8 +87,11 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             return;
         }
 
+        // Only the tests the lab classified as stable across genuine runs
+        // and structural to the platform decide the verdict. The rest are
+        // gathered for the baseline but never count against a browser.
         var failed = measurements
-            .Where(i => baseline.Contains($"{claim}|{i.Key}|{i.Value}") == false)
+            .Where(i => VerdictTests.Contains(i.Key) && baseline.Contains($"{claim}|{i.Key}|{i.Value}") == false)
             .Select(i => i.Key)
             .ToList();
         result["HasContradictions"] = failed.Count > 0 ? "True" : "False";
@@ -120,6 +123,24 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
     private Baseline _baseline;
     private DateTime _baselineFrom;
 
+    internal static readonly HashSet<string> VerdictTests = new(StringComparer.Ordinal)
+    {
+        // maths library
+        "m_tanh", "m_atanh",
+        // OS font stack
+        "f_kw_menu", "f_kw_smallcaption", "f_kw_statusbar", "f_core", "f_systemui", "f_emoji", "f_metrics",
+        // graphics backend
+        "g_renderer", "g_extensions", "g_limits", "g_precision", "g_samples", "g_canvasdeterminism", "a_webgpu", "a_webgpu_fallback",
+        // OS services and media stack
+        "a_voices", "c_syscolors", "c_heap", "c_codecs", "a_widevine", "a_keyboard",
+        // platform API surface
+        "p_apis",
+        // engine version against the claim
+        "e_features", "a_uachigh", "c_uach",
+        // naive spoofs and automation
+        "c_platform", "p_webdriver", "c_timezone",
+    };
+
     private static string Read(IDeviceData device, string name)
     {
         try
@@ -136,7 +157,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
     {
         var text = Uri.UnescapeDataString(raw);
         var bar = text.IndexOf('|');
-        if (bar < 0 || text[..bar] != "1") return [];
+        if (bar < 0 || (text[..bar] != "1" && text[..bar] != "2")) return [];
         return text[(bar + 1)..]
             .Split('&', StringSplitOptions.RemoveEmptyEntries)
             .Select(i => i.Split('=', 2))
