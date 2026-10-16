@@ -9,8 +9,9 @@ namespace BrowserContradictions.Web;
 /// Prototype of the browser element. Reads the raw measurements the
 /// gatherer JavaScript sends as 51D_BrowserTests, works out the platform
 /// the browser claims from device detection, and checks each measurement
-/// against the hashed baseline carried in device.BrowserBaseline. Publishes
-/// its answers under the element data key "browser".
+/// against the hashed baseline the data file carries in the values of the
+/// BrowserBaseline properties, by the element rule of PHASE2-FORMATS.
+/// Publishes its answers under the element data key "browser".
 /// </summary>
 public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropertyMetaData>
 {
@@ -65,35 +66,36 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             raw = c; source = "cookie";
         }
         result["EvidenceSource"] = source;
+        result["Contradictions"] = "";
+        result["Measurements"] = "";
 
         if (raw == null)
         {
             result["HasContradictions"] = "Unknown";
-            result["Contradictions"] = "";
-            result["Measurements"] = "";
             return;
         }
 
         var measurements = Parse(raw);
-        result["Measurements"] = string.Join("; ", measurements.Select(i => $"{i.Key}={i.Value}"));
+        result["Measurements"] = string.Join("; ", measurements.Select(i => $"{i.Test}={i.Value}"));
 
+        // The element rule of PHASE2-FORMATS. A test counts only where the
+        // baseline covers it for this claim, and the claim is Unknown when
+        // the baseline covers none of the tests the browser sent. No test
+        // is named here, the baseline alone decides which ones count.
         var baseline = GetBaseline(data.Pipeline);
-        if (baseline.Contains($"{claim}|_|covered") == false)
+        var evaluated = 0;
+        var failed = new List<string>();
+        foreach (var (test, value) in measurements)
         {
-            // The baseline has no genuine answers for this claim, so nothing
-            // can be said either way.
+            if (baseline.Contains($"{claim}|{test}") == false) continue;
+            evaluated++;
+            if (baseline.Contains($"{claim}|{test}|{value}") == false) failed.Add(test);
+        }
+        if (evaluated == 0)
+        {
             result["HasContradictions"] = "Unknown";
-            result["Contradictions"] = $"no baseline for {claim}";
             return;
         }
-
-        // Only the tests the lab classified as stable across genuine runs
-        // and structural to the platform decide the verdict. The rest are
-        // gathered for the baseline but never count against a browser.
-        var failed = measurements
-            .Where(i => VerdictTests.Contains(i.Key) && baseline.Contains($"{claim}|{i.Key}|{i.Value}") == false)
-            .Select(i => i.Key)
-            .ToList();
         result["HasContradictions"] = failed.Count > 0 ? "True" : "False";
         result["Contradictions"] = string.Join(",", failed);
     }
@@ -102,44 +104,36 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
     /// Reads the baseline out of the engine's property metadata rather than
     /// from the per request device data. The baseline is then never part
     /// of the device results, so the JSON and JavaScript builders cannot
-    /// send it to the browser, and BrowserBaseline can be left out of the
-    /// engine's required properties. The table is the longest value of the
-    /// property, the other being the default Unknown.
+    /// send it to the browser, and the BrowserBaseline properties can be
+    /// left out of the engine's required properties. The name and the
+    /// description of every value of every property whose name starts with
+    /// BrowserBaseline are read, and the rows of every payload among them
+    /// are unioned, so the reader works whether a payload is a value's name
+    /// (one shared value) or its description (one list value per claim,
+    /// named by the claim), however the rows are split across properties
+    /// and profiles. Texts that are not a payload, such as the Unknown
+    /// default or a claim key, are ignored.
     /// </summary>
     private Baseline GetBaseline(IPipeline pipeline)
     {
         var engine = pipeline.GetElement<FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements.DeviceDetectionHashEngine>();
-        var dataFile = engine.DataFiles[0].DataPublishedDateTime;
-        if (_baseline == null || _baselineFrom != dataFile)
+        var published = engine.DataFiles[0].DataPublishedDateTime;
+        var current = _baseline;
+        if (current == null || current.From != published)
         {
-            var property = engine.Properties.FirstOrDefault(i => i.Name == "BrowserBaseline");
-            var text = property?.Values?.Select(i => i.Name).OrderByDescending(i => i.Length).FirstOrDefault();
-            _baseline = Baseline.Parse(text);
-            _baselineFrom = dataFile;
+            var texts = engine.Properties
+                .Where(i => i.Name.StartsWith(BaselinePrefix, StringComparison.Ordinal))
+                .SelectMany(i => i.GetValues() ?? [])
+                .SelectMany(i => new[] { i.Name, i.Description });
+            current = new Baseline(texts, published);
+            _baseline = current;
         }
-        return _baseline;
+        return current;
     }
 
-    private Baseline _baseline;
-    private DateTime _baselineFrom;
+    private const string BaselinePrefix = "BrowserBaseline";
 
-    internal static readonly HashSet<string> VerdictTests = new(StringComparer.Ordinal)
-    {
-        // maths library
-        "m_tanh", "m_atanh",
-        // OS font stack
-        "f_kw_menu", "f_kw_smallcaption", "f_kw_statusbar", "f_core", "f_systemui", "f_emoji", "f_metrics",
-        // graphics backend
-        "g_renderer", "g_extensions", "g_limits", "g_precision", "g_samples", "g_canvasdeterminism", "a_webgpu", "a_webgpu_fallback",
-        // OS services and media stack
-        "a_voices", "c_syscolors", "c_heap", "c_codecs", "a_widevine", "a_keyboard",
-        // platform API surface
-        "p_apis",
-        // engine version against the claim
-        "e_features", "a_uachigh", "c_uach",
-        // naive spoofs and automation
-        "c_platform", "p_webdriver", "c_timezone",
-    };
+    private Baseline _baseline;
 
     private static string Read(IDeviceData device, string name)
     {
@@ -153,18 +147,30 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         }
     }
 
-    internal static List<KeyValuePair<string, string>> Parse(string raw)
+    /// <summary>
+    /// Reads a version 2 or 3 payload, "3|id=value&amp;id=value", URI
+    /// encoded, into (test, value) pairs. Each wire key is first looked up
+    /// in keyMap, where a script obfuscated per seed sends renamed keys and
+    /// the map gives the real versioned id for each (entries such as
+    /// "$global" and "$cookie" never match a key). Then an id with no
+    /// version is version 1, so a version 2 payload's "f_emoji" is looked up
+    /// as "f_emoji.1".
+    /// </summary>
+    internal static List<(string Test, string Value)> Parse(string raw, IReadOnlyDictionary<string, string> keyMap = null)
     {
+        string Id(string key) => NormaliseId(keyMap != null && keyMap.TryGetValue(key, out var real) ? real : key);
         var text = Uri.UnescapeDataString(raw);
         var bar = text.IndexOf('|');
-        if (bar < 0 || (text[..bar] != "1" && text[..bar] != "2")) return [];
+        if (bar < 0 || (text[..bar] != "2" && text[..bar] != "3")) return [];
         return text[(bar + 1)..]
             .Split('&', StringSplitOptions.RemoveEmptyEntries)
             .Select(i => i.Split('=', 2))
-            .Where(i => i.Length == 2)
-            .Select(i => new KeyValuePair<string, string>(i[0], Uri.UnescapeDataString(i[1])))
+            .Where(i => i.Length == 2 && i[0].Length > 0)
+            .Select(i => (Id(Uri.UnescapeDataString(i[0])), Uri.UnescapeDataString(i[1])))
             .ToList();
     }
+
+    internal static string NormaliseId(string id) => id.Contains('.') ? id : id + ".1";
 
     protected override void ManagedResourcesCleanup() { }
 
@@ -172,28 +178,41 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
 }
 
 /// <summary>
-/// The hashed baseline. The value text is the IsVerifiedModel h64 shape:
-/// a schema line, a factor order line, then one FNV-1a 64 hash per row.
-/// Parsed tables are cached by the text's reference, which is stable for
-/// the life of a loaded data file.
+/// The hashed baseline, payload version 2 of PHASE2-FORMATS: a "2|h64"
+/// line, a factor order line, then one FNV-1a 64 hash per row, where a row
+/// is either a value row "browser|major|platform|test|value" or a coverage
+/// row "browser|major|platform|test". Rows from several payloads are
+/// unioned. A legacy "1|h64" payload is read the same way; its rows use
+/// unversioned ids, so under the element rule they cover nothing.
 /// </summary>
 internal sealed class Baseline
 {
-    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<string, Baseline> Cache = new();
-
     private readonly HashSet<ulong> _rows = [];
 
-    public static Baseline Parse(string text) => Cache.GetValue(text ?? "", t => new Baseline(t));
+    public DateTime From { get; }
 
-    private Baseline(string text)
+    public int Payloads { get; }
+
+    public Baseline(IEnumerable<string> texts, DateTime from)
     {
-        var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2 || lines[0] != "1|h64") return;
-        foreach (var line in lines.Skip(2))
+        From = from;
+        foreach (var text in texts)
         {
-            _rows.Add(Convert.ToUInt64(line, 16));
+            var lines = (text ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            var schema = lines.Length < 2 ? "" : lines[0].TrimEnd('\r');
+            if (schema != "2|h64" && schema != "1|h64") continue;
+            Payloads++;
+            foreach (var line in lines.Skip(2))
+            {
+                if (ulong.TryParse(line.Trim(), System.Globalization.NumberStyles.HexNumber, null, out var row))
+                {
+                    _rows.Add(row);
+                }
+            }
         }
     }
+
+    public int Count => _rows.Count;
 
     public bool Contains(string row) => _rows.Contains(Fnv1a64(row));
 
