@@ -1,0 +1,461 @@
+{
+  "catalogue": 1,
+  "tests": [
+    {
+      "id": "a_devices.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "a_keyboard.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "a_rtc.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "a_uachigh.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "a_voices.1",
+      "family": "media",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "a_webgpu.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "a_webgpu_fallback.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "a_widevine.1",
+      "family": "media",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "a_worker.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_codecs.1",
+      "family": "media",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "c_geometry.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_heap.1",
+      "family": "identity",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "c_lang.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_media.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_platform.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "c_plugins.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_scrollbar.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_syscolors.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_timer.1",
+      "family": "environment",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "c_timezone.1",
+      "family": "identity",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "c_uach.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "e_errortext.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "e_features.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "e_icucurrency.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "e_icutz.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "e_intlfmt.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-16",
+      "retired": null,
+      "note": "ICU and CLDR data version through fixed formats in fixed locales and UTC. Added by gatherer v3 to prove a collecting test changes no verdict."
+    },
+    {
+      "id": "e_stackshape.1",
+      "family": "identity",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": "Kept function names from the stack, so renaming the script changed it. Replaced by e_stackshape.2."
+    },
+    {
+      "id": "e_stackshape.2",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-16",
+      "retired": null,
+      "note": "Stack line shape with identifiers taken out, so it survives an obfuscated script."
+    },
+    {
+      "id": "f_core.1",
+      "family": "fonts",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_emoji.1",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": "Emoji advance widths, DirectWrite against FreeType."
+    },
+    {
+      "id": "f_grid.1",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-16",
+      "retired": null,
+      "note": "Text widths on the 1/4096 pixel grid. Off-grid means seeded canvas noise."
+    },
+    {
+      "id": "f_kw_caption.1",
+      "family": "fonts",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_kw_icon.1",
+      "family": "fonts",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_kw_menu.1",
+      "family": "fonts",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_kw_messagebox.1",
+      "family": "fonts",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_kw_smallcaption.1",
+      "family": "fonts",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_kw_statusbar.1",
+      "family": "fonts",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_metrics.1",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "f_systemui.1",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "g_canvasdeterminism.1",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": "Rendered canvas text hash and double-read noise check."
+    },
+    {
+      "id": "g_extensions.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "g_limits.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "g_precision.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "g_renderer.1",
+      "family": "identity",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "g_samples.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "g_viewportclamp.1",
+      "family": "graphics",
+      "status": "deprecated",
+      "introduced": "2026-10-13",
+      "retired": "2026-10-16",
+      "note": ""
+    },
+    {
+      "id": "m_atanh.1",
+      "family": "maths",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": "OS libm last digit in Chrome. Per engine."
+    },
+    {
+      "id": "m_cbrt.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_csshypot.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_expm1.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_log1p.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_pow.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_sinh.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "m_tanh.1",
+      "family": "maths",
+      "status": "active",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": "OS libm last digit in Chrome. Per engine."
+    },
+    {
+      "id": "p_apis.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "p_nativefn.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    },
+    {
+      "id": "p_webdriver.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-13",
+      "retired": null,
+      "note": ""
+    }
+  ]
+}

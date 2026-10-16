@@ -5,15 +5,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
 RUNS = os.path.join(HERE, "runs")
 os.makedirs(RUNS, exist_ok=True)
-GATHERER = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, "browser-tests-v2.js")
+GATHERER = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, "..", "browser-tests-v3.js")
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>51Degrees browser tests lab</title></head>
 <body><pre id="out">running</pre>
-<script src="/browser-tests-v2.js"></script>
+<script src="/gatherer.js"></script>
 <script>
-var label = new URLSearchParams(location.search).get("label") || "unlabelled";
-window.__51dBrowserTests.run(4000).then(function (r) {
-  r.label = label; r.gen = 2; r.ua = navigator.userAgent; r.when = new Date().toISOString();
+var q = new URLSearchParams(location.search);
+var label = q.get("label") || "unlabelled";
+// ?params=<json> runs the gatherer with chosen inputs instead of its defaults.
+var params = q.get("params") ? JSON.parse(q.get("params")) : undefined;
+window.__51dBrowserTests.run(4000, params).then(function (r) {
+  r.label = label; r.gen = Number(r.version || 2); r.params = params || null; r.ua = navigator.userAgent; r.when = new Date().toISOString();
   return fetch("/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r) })
     .then(function () { document.getElementById("out").textContent = "done " + label + " " + r.done.length + " tests " + r.elapsed + "ms"; document.title = "done"; });
 }).catch(function (e) { document.getElementById("out").textContent = "failed " + e; document.title = "failed"; });
@@ -25,7 +28,7 @@ class H(BaseHTTPRequestHandler):
         pass
 
     def do_GET(self):
-        if self.path.startswith("/browser-tests-v2.js"):
+        if self.path.startswith("/gatherer.js") or self.path.startswith("/browser-tests-v"):
             body = open(GATHERER, "rb").read()
             self.send_response(200); self.send_header("Content-Type", "text/javascript"); self.send_header("Cache-Control", "no-store")
         else:

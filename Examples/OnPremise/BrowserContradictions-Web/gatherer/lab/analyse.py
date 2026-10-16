@@ -16,7 +16,7 @@ headed value, the two known false positive classes.
 import json, glob, os, sys, collections
 
 RUNS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "runs")
-GEN = int(os.environ.get("GEN", "2"))  # only runs from this gatherer generation
+GEN = int(os.environ.get("GEN", "3"))  # only runs from this gatherer generation
 runs = collections.defaultdict(list)
 for f in sorted(glob.glob(os.path.join(RUNS, "*.json"))):
     d = json.load(open(f, encoding="utf-8"))
