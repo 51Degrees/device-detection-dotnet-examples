@@ -35,6 +35,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             new ElementPropertyMetaData(this, "Claim", typeof(string), true, "Bot Detection"),
             new ElementPropertyMetaData(this, "Measurements", typeof(string), true, "Bot Detection"),
             new ElementPropertyMetaData(this, "EvidenceSource", typeof(string), true, "Bot Detection"),
+            new ElementPropertyMetaData(this, "ClaimScope", typeof(string), true, "Bot Detection"),
         ];
     }
 
@@ -55,6 +56,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         var platform = Read(device, "PlatformName");
         var claim = $"{browser}|{major}|{platform}";
         result["Claim"] = claim;
+        result["ClaimScope"] = "";
 
         string raw = null, source = "none";
         if (data.TryGetEvidence(QueryKey, out string q) && string.IsNullOrEmpty(q) == false)
@@ -82,15 +84,24 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         // baseline covers it for this claim, and the claim is Unknown when
         // the baseline covers none of the tests the browser sent. No test
         // is named here, the baseline alone decides which ones count.
+        // A test the exact claim does not cover falls back to the version
+        // independent rows of the browser and platform, when the claimed
+        // major is inside their range.
         var baseline = GetBaseline(data.Pipeline);
+        var any = baseline.AnyVersionClaim(browser, major, platform);
         var evaluated = 0;
+        var viaAny = 0;
         var failed = new List<string>();
         foreach (var (test, value) in measurements)
         {
-            if (baseline.Contains($"{claim}|{test}") == false) continue;
+            string scope;
+            if (baseline.Contains($"{claim}|{test}")) scope = claim;
+            else if (any != null && baseline.Contains($"{any}|{test}")) { scope = any; viaAny++; }
+            else continue;
             evaluated++;
-            if (baseline.Contains($"{claim}|{test}|{value}") == false) failed.Add(test);
+            if (baseline.Contains($"{scope}|{test}|{value}") == false) failed.Add(test);
         }
+        result["ClaimScope"] = viaAny == 0 ? "exact" : viaAny == evaluated ? "any version" : "mixed";
         if (evaluated == 0)
         {
             result["HasContradictions"] = "Unknown";
@@ -184,10 +195,18 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
 /// row "browser|major|platform|test". Rows from several payloads are
 /// unioned. A legacy "1|h64" payload is read the same way; its rows use
 /// unversioned ids, so under the element rule they cover nothing.
+/// A value named "browser|from-to|platform" (version independent rows,
+/// see PHASE2-FORMATS) also declares that rows with the major "*" apply to
+/// that browser and platform for majors from..to.
 /// </summary>
 internal sealed class Baseline
 {
     private readonly HashSet<ulong> _rows = [];
+
+    private static readonly System.Text.RegularExpressions.Regex RangeName =
+        new(@"^(?<b>[^|\n]+)\|(?<from>\d+)-(?<to>\d+)\|(?<p>[^|\n]+)$");
+
+    private readonly Dictionary<string, List<(int From, int To)>> _ranges = [];
 
     public DateTime From { get; }
 
@@ -198,6 +217,14 @@ internal sealed class Baseline
         From = from;
         foreach (var text in texts)
         {
+            var range = RangeName.Match(text ?? "");
+            if (range.Success)
+            {
+                var key = range.Groups["b"].Value + "|" + range.Groups["p"].Value;
+                if (_ranges.TryGetValue(key, out var list) == false) _ranges[key] = list = [];
+                list.Add((int.Parse(range.Groups["from"].Value), int.Parse(range.Groups["to"].Value)));
+                continue;
+            }
             var lines = (text ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
             var schema = lines.Length < 2 ? "" : lines[0].TrimEnd('\r');
             if (schema != "2|h64" && schema != "1|h64") continue;
@@ -213,6 +240,17 @@ internal sealed class Baseline
     }
 
     public int Count => _rows.Count;
+
+    /// <summary>
+    /// The row claim "browser|*|platform" when a version independent range
+    /// for the browser and platform includes the major, otherwise null.
+    /// </summary>
+    public string AnyVersionClaim(string browser, string major, string platform) =>
+        int.TryParse(major, out var m) &&
+        _ranges.TryGetValue(browser + "|" + platform, out var list) &&
+        list.Any(i => m >= i.From && m <= i.To)
+            ? $"{browser}|*|{platform}"
+            : null;
 
     public bool Contains(string row) => _rows.Contains(Fnv1a64(row));
 
