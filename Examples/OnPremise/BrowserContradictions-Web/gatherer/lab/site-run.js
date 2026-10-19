@@ -7,7 +7,7 @@
 //             The optional last argument is a user agent to claim. One that
 //             claims Windows or macOS also gets matching client hints, as a
 //             careful forger would send.
-//   cloak     CloakBrowser with a persona: windows, macos or auto.
+//   cloak     CloakBrowser with a persona: windows, macos, linux or auto.
 // localhost is mapped to the Windows host so the page stays a secure
 // context, otherwise the secure-context-only APIs vanish and look like
 // platform differences. The proof site page posts its answer to /report and
@@ -18,7 +18,8 @@
   let browser, page;
   if (engine === 'cloak') {
     const { launch } = require('cloakbrowser');
-    args.push('--fingerprint=12345');
+    // CLOAK_SEED picks the fingerprint seed, so personas can be compared across seeds.
+    args.push('--fingerprint=' + (process.env.CLOAK_SEED || '12345'));
     if (extra && extra !== 'auto') args.push('--fingerprint-platform=' + extra);
     browser = await launch({ headless: true, args });
     page = await browser.newPage();

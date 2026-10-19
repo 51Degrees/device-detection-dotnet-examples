@@ -3,44 +3,62 @@
   py rows.py <runs dir> <tests.json> <out prefix> [--deprecate id,id]
 
 Writes <out prefix>.rows.txt, one plain row per line for a harness that
-hashes each line, and <out prefix>.payload.txt, the finished payload
-("2|h64", the factor line, then the sorted FNV-1a 64 hashes).
+hashes each line, <out prefix>.payload.txt, the finished payload ("2|h64",
+the factor line, then the sorted FNV-1a 64 hashes), and
+<out prefix>.ranges.txt, the version independent value names
+(browser|from-to|platform) the element reads the range from.
 
 Rows are written for active tests only. --deprecate treats the listed ids as
 deprecated, which is what Pearl does when the catalogue retires a test: no
 rows, so the elements stop counting it.
 
 Runs from the version 2 gatherer carry unversioned ids, which are version 1.
-Their values are what gatherer v3 sends for the same ids with its default
-inputs, so they become ".1" rows unchanged. f_grid.1 is new in v3; for a v2
-run it is worked out from the widths f_metrics and f_emoji captured, which
-are exactly the widths f_grid.1 measures with the default inputs.
+
+Genuine runs: GENUINE maps each claim to the label prefixes of its genuine
+runs. Chrome for Testing is a genuine engine but not the browser people run:
+it has no Google voices, no Widevine and, on the lab VM, no WebGL. Its runs
+therefore give rows for every test except the build flavour tests
+(FLAVOUR), which come from branded Chrome only.
 
 Noise filter: where runs of one claim from one exact browser build (same
 user agent and same a_uachigh answer) disagree on a test, the test is noise
 for that claim, not a genuine alternative, and gets no rows for it. Values
 that differ between builds of one major version are all kept, as several
 genuine answers.
+
+Version independent rows (branch feature/bc-version-rows): where at least
+two captured majors of one browser and platform give rows for a test and
+all of them give the same values, the test also gets rows with the major
+written as "*". The range is 12 majors below the oldest capture to the
+newest capture.
+
+Inferred rows: f_grid.2 answers "grid" in every Chromium captured, on
+Windows (Chrome 148, 150, 155, 156, Edge 155) and on Linux (Chromium 141),
+because the grid is HarfBuzz's, not the OS's. So it gets "*" rows for
+Chrome on macOS and on Linux too, where the lab has no or one capture.
 """
-import glob, json, os, struct, sys
+import glob
+import json
+import os
+import struct
+import sys
 
 # claim as device detection names it -> lab label prefixes of genuine runs
 GENUINE = {
-    "Chrome|155|Windows": ["win-chrome-headed", "v3-win-chrome-headed"],
-    "Edge (Chromium) for Windows|155|Windows": ["win-edge-headed", "v3-win-edge-headed"],
-    "Firefox|157|Windows": ["win-firefox-headless", "v3-win-firefox-headless"],
-    "Chrome|141|Linux": ["wsl-chromium", "v3-wsl-chromium"],
+    "Chrome|148|Windows": ["fin-win-cft148-headed", "vr-chrome148"],
+    "Chrome|150|Windows": ["fin-win-cft150-headed", "vr-chrome150"],
+    "Chrome|155|Windows": ["fin-win-chrome155-headed", "vr-chrome155"],
+    "Chrome|156|Windows": ["fin-win-chrome156-headed", "vr-chrome156"],
+    "Edge (Chromium) for Windows|155|Windows": ["fin-win-edge155-headed"],
+    # Headed only: headless Firefox measures text differently.
+    "Firefox|158|Windows": ["fin-win-firefox158-headed"],
+    "Chrome|141|Linux": ["fin-wsl-chromium141"],
 }
-# Inferred claims, for browsers the lab has no genuine capture of.
-# Chrome 146 on Windows: the Windows Chrome 155 rows, less c_timezone,
-# whose zone name text changes with the browser build.
-# Chrome 146 on macOS: f_grid only. Every genuine Chromium captured, on
-# Windows and on Linux, measures on the 1/4096 grid, because the grid comes
-# from Chromium's own text stack, not from the OS.
-INFERRED = [
-    ("Chrome|155|Windows", "Chrome|146|Windows", lambda t: t != "c_timezone.1"),
-    ("Chrome|155|Windows", "Chrome|146|macOS", lambda t: t == "f_grid.1"),
-]
+# Label prefixes of Chrome for Testing runs, and the tests they give no rows for.
+FOR_TESTING = ("fin-win-cft", "vr-chrome148", "vr-chrome150")
+FLAVOUR = {"a_voices.2", "a_widevine.1", "g_renderer.2", "p_apis.1"}
+INFERRED_ANY = [("Chrome", "macOS", "f_grid.2", "grid"), ("Chrome", "Linux", "f_grid.2", "grid")]
+RANGE_BELOW = 12
 
 
 def fnv32(text):
@@ -69,6 +87,7 @@ def norm(test):
 
 
 def grid(results):
+    """f_grid.1 worked out from a version 2 run's widths (default inputs)."""
     ws = []
     for k in ("f_metrics.1", "f_emoji.1"):
         v = results.get(k, "")
@@ -87,12 +106,70 @@ def load(runs, label):
     for f in sorted(glob.glob(os.path.join(runs, label + "-[0-9]*.json"))):
         d = json.load(open(f, encoding="utf-8"))
         r = {norm(k): v for k, v in d["results"].items()}
-        if "f_grid.1" not in r:
+        if "f_grid.1" not in r and "f_grid.2" not in r:
             g = grid(r)
             if g:
                 r["f_grid.1"] = g
+        if os.path.basename(f).startswith(FOR_TESTING):
+            r = {k: v for k, v in r.items() if k not in FLAVOUR}
         out.append((d.get("ua", "") + "|" + r.get("a_uachigh.1", ""), r))
     return out
+
+
+def build(runs, catalogue, deprecate=()):
+    """Returns (rows, ranges, report, values, active) for the active tests."""
+    tests = json.load(open(catalogue, encoding="utf-8"))["tests"]
+    active = {t["id"] for t in tests if t["status"] == "active"} - set(deprecate)
+    values, report = {}, []
+    for claim, labels in GENUINE.items():
+        rs = [x for label in labels for x in load(runs, label)]
+        seen = {}
+        for build_, r in rs:
+            for test, value in r.items():
+                if test in active:
+                    seen.setdefault(test, {}).setdefault(build_, set()).add(pack(value))
+        noise = sorted(t for t, builds in seen.items() if any(len(v) > 1 for v in builds.values()))
+        values[claim] = {t: set().union(*builds.values()) for t, builds in seen.items() if t not in noise}
+        report.append((claim, f"{len(rs)} runs", noise))
+
+    # Version independent rows.
+    ranges = {}
+    groups = {}
+    for claim in list(values):
+        browser, major, platform = claim.split("|")
+        groups.setdefault((browser, platform), []).append(int(major))
+    for (browser, platform), majors in groups.items():
+        majors.sort()
+        name = f"{browser}|{max(majors[0] - RANGE_BELOW, 0)}-{majors[-1]}|{platform}"
+        star = f"{browser}|*|{platform}"
+        stable, dependent = [], []
+        for test in sorted(active):
+            vs = [frozenset(values[f"{browser}|{m}|{platform}"][test]) for m in majors
+                  if test in values[f"{browser}|{m}|{platform}"]]
+            if len(vs) >= 2 and len(set(vs)) == 1:
+                values.setdefault(star, {})[test] = set(vs[0])
+                stable.append(test)
+            elif len(vs) >= 2:
+                dependent.append(test)
+        if stable:
+            ranges[name] = (majors, stable, dependent)
+    for browser, platform, test, value in INFERRED_ANY:
+        if test not in active:
+            continue
+        star = f"{browser}|*|{platform}"
+        values.setdefault(star, {}).setdefault(test, set()).add(value)
+        if not any(n.startswith(browser + "|") and n.endswith("|" + platform) for n in ranges):
+            span = next(n for n in ranges if n.startswith(browser + "|")).split("|")[1]
+            ranges[f"{browser}|{span}|{platform}"] = ([], [test], [])
+        report.append((star, "inferred", []))
+
+    rows = set()
+    for claim, tv in values.items():
+        for test, vs in tv.items():
+            rows.add(f"{claim}|{test}")
+            for v in vs:
+                rows.add(f"{claim}|{test}|{v}")
+    return sorted(rows), ranges, report, values, active
 
 
 def main():
@@ -100,37 +177,13 @@ def main():
     deprecate = set()
     if "--deprecate" in sys.argv:
         deprecate = set(sys.argv[sys.argv.index("--deprecate") + 1].split(","))
-    tests = json.load(open(catalogue, encoding="utf-8"))["tests"]
-    active = {t["id"] for t in tests if t["status"] == "active"} - deprecate
-    rows = set()
-    values = {}
-    report = []
-
-    for claim, labels in GENUINE.items():
-        rs = [x for label in labels for x in load(runs, label)]
-        seen = {}
-        for build, r in rs:
-            for test, value in r.items():
-                if test in active:
-                    seen.setdefault(test, {}).setdefault(build, set()).add(pack(value))
-        noise = sorted(t for t, builds in seen.items() if any(len(v) > 1 for v in builds.values()))
-        values[claim] = {t: set().union(*builds.values()) for t, builds in seen.items() if t not in noise}
-        report.append((claim, f"{len(rs)} runs", noise))
-    for source, claim, keep in INFERRED:
-        values[claim] = {t: v for t, v in values[source].items() if keep(t)}
-        report.append((claim, "inferred", []))
-
-    for claim, tv in values.items():
-        for test, vs in tv.items():
-            rows.add(f"{claim}|{test}")
-            for v in vs:
-                rows.add(f"{claim}|{test}|{v}")
-
-    lines = sorted(rows)
+    lines, ranges, report, values, active = build(runs, catalogue, deprecate)
     open(prefix + ".rows.txt", "w", encoding="utf-8", newline="\n").write("\n".join(lines) + "\n")
     hashes = sorted({"%016x" % fnv64(r) for r in lines})
     payload = "2|h64\nbrowser|major|platform|test|value\n" + "".join(h + "\n" for h in hashes)
     open(prefix + ".payload.txt", "w", encoding="utf-8", newline="\n").write(payload)
+    open(prefix + ".ranges.txt", "w", encoding="utf-8", newline="\n").write("".join(
+        f"{n}\t{','.join(map(str, m))}\t{','.join(s)}\t{','.join(d)}\n" for n, (m, s, d) in sorted(ranges.items())))
     coverage = [r for r in lines if r.count("|") == 3]
     print(f"{len(active)} active tests, {len(lines)} rows ({len(coverage)} coverage), payload {len(payload)} bytes")
     for claim, source, noise in report:
@@ -138,6 +191,9 @@ def main():
         print(f"  {claim:42} {source:9} covers {len(values[claim]):2}"
               + (f"  noise {','.join(noise)}" if noise else "")
               + (f"  several genuine {','.join(multi)}" if multi else ""))
+    for n, (m, s, d) in sorted(ranges.items()):
+        print(f"  range {n:36} majors {m}  version independent {len(s)}"
+              + (f"  version dependent {','.join(d)}" if d else ""))
     if deprecate:
         print("  deprecated for this build:", ", ".join(sorted(deprecate)))
 

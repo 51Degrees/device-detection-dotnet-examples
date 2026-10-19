@@ -36,10 +36,18 @@
     {
       "id": "a_voices.1",
       "family": "media",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Sent the installed voice list, which depends on OS language packs and load timing. Replaced by a_voices.2."
+    },
+    {
+      "id": "a_voices.2",
+      "family": "media",
+      "status": "active",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": ""
+      "note": "Built in voice families: g<Google network voices>|e<Microsoft online voices>. Branded Chrome 155 and 156 g19|e0 in 16 of 16 gatherer runs, Edge 155 g0|e1, Firefox g0|e0. Chrome for Testing, Linux Chromium and every Puppeteer or Playwright run g0|e0, every CloakBrowser persona g3|e0. Chrome --headless=new with no driver passes. Build flavour, not version: Chrome for Testing captures give no rows for it. Risk: Google voices load asynchronously, one 4 s probe outside the gatherer saw none. Patch cost low: list 19 fake voices."
     },
     {
       "id": "a_webgpu.1",
@@ -63,7 +71,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "EME Widevine access. yes for branded Chrome 155 and 156, Edge 155 and Firefox. no for Chrome for Testing, Linux Chromium, every CloakBrowser persona and every Playwright run (Puppeteer with branded Chrome passes). Build flavour: Chrome for Testing captures give no rows for it. Risk: users who block protected content."
     },
     {
       "id": "a_worker.1",
@@ -76,10 +84,18 @@
     {
       "id": "c_codecs.1",
       "family": "media",
-      "status": "collecting",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Asked for HEVC, which on Windows depends on the GPU and the HEVC Video Extension. Replaced by c_codecs.2."
+    },
+    {
+      "id": "c_codecs.2",
+      "family": "media",
+      "status": "active",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": ""
+      "note": "canPlayType for H.264, AV1, AAC, E-AC-3. Chrome 148 to 156 (branded and for Testing) identical, Edge adds E-AC-3, Firefox own value. Catches open Chromium builds (Playwright Chromium 141 claiming Windows). Every CloakBrowser persona passes. Patch cost: rebuild with proprietary codecs."
     },
     {
       "id": "c_geometry.1",
@@ -95,7 +111,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "performance.memory.jsHeapSizeLimit. Windows Chrome 148 to 156 and Edge 155 all 4395630592. Linux Chromium 141 4294705152, every CloakBrowser persona 4294967296 (spoofed round value), headless shell 3760000000. Risk: V8 sizes the heap from physical memory, so machines under 16 GB answer other values that the crowd must supply. Patch cost trivial."
     },
     {
       "id": "c_lang.1",
@@ -156,10 +172,18 @@
     {
       "id": "c_timezone.1",
       "family": "identity",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Sent the visitor's zone, which is location not browser, and the zone name text, which changed between Edge 155.0.4283.45 and .60 and between Chrome 152 and 155. Replaced by c_timezone.2."
+    },
+    {
+      "id": "c_timezone.2",
+      "family": "environment",
+      "status": "collecting",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": ""
+      "note": "Whether the Intl zone agrees with Date offsets in January and July and with Date.toString. 111 for every genuine run, every forgery and every CloakBrowser persona, so it catches nothing seen yet. Collecting to find timezone spoofing that patches one API only."
     },
     {
       "id": "c_uach.1",
@@ -183,7 +207,7 @@
       "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "JS and CSS feature flags. Same for Chrome 148 to 156, differs for CloakBrowser 146 and Chromium 141. Version dependent by design, so unsafe for version independent rows below the oldest capture."
     },
     {
       "id": "e_icucurrency.1",
@@ -207,7 +231,7 @@
       "status": "collecting",
       "introduced": "2026-10-16",
       "retired": null,
-      "note": "ICU and CLDR data version through fixed formats in fixed locales and UTC. Added by gatherer v3 to prove a collecting test changes no verdict."
+      "note": "Fixed values formatted in fixed locales in UTC. Reflects the ICU and CLDR version."
     },
     {
       "id": "e_stackshape.1",
@@ -215,7 +239,7 @@
       "status": "deprecated",
       "introduced": "2026-10-13",
       "retired": "2026-10-16",
-      "note": "Kept function names from the stack, so renaming the script changed it. Replaced by e_stackshape.2."
+      "note": "Kept the script function names, so obfuscation changed it. Replaced by .2."
     },
     {
       "id": "e_stackshape.2",
@@ -223,15 +247,23 @@
       "status": "collecting",
       "introduced": "2026-10-16",
       "retired": null,
-      "note": "Stack line shape with identifiers taken out, so it survives an obfuscated script."
+      "note": "Stack frame shape with script names removed, URLs as URL and numbers as n. Survives renaming."
     },
     {
       "id": "f_core.1",
       "family": "fonts",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Listed Roboto, Noto Sans, Ubuntu and SF Pro, which Windows users install themselves (Edge 155 in the lab had Roboto). Replaced by f_core.2."
+    },
+    {
+      "id": "f_core.2",
+      "family": "fonts",
+      "status": "active",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": ""
+      "note": "Presence of fonts each OS ships: 7 Windows, 3 macOS, 3 Linux. Genuine Windows Chrome, Edge and Firefox all 1111111000000. Catches Linux Chromium claiming Windows and the CloakBrowser linux persona. The CloakBrowser windows, macos and auto personas pass because Windows fonts are installed in WSL. Patch cost low."
     },
     {
       "id": "f_emoji.1",
@@ -239,15 +271,23 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "Emoji advance widths, DirectWrite against FreeType."
+      "note": "Emoji advance widths, DirectWrite against FreeType. Windows Chromium 148 to 156 and Edge identical. Every CloakBrowser persona differs and varies by seed. Linux Chromium 141 differs. Risk: Segoe UI Emoji differs between Windows releases."
     },
     {
       "id": "f_grid.1",
       "family": "text",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-16",
+      "retired": "2026-10-19",
+      "note": "Tested the 1/4096 grid, which holds at the default sizes only. Replaced by f_grid.2."
+    },
+    {
+      "id": "f_grid.2",
+      "family": "text",
+      "status": "active",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": "Text widths on the 1/4096 pixel grid. Off-grid means seeded canvas noise."
+      "note": "Text widths on HarfBuzz's 1/65536 px grid, fixed fonts and sizes including fractional ones. Lab 19 Oct 2026: genuine headed Windows Chrome for Testing 148 and 150, Chrome 155, Chrome Beta 156, Edge 155, Firefox 157, 3 fresh-profile runs each: every Chromium answers grid, also Linux Chromium 141 and every automation run, Firefox answers f32. Every CloakBrowser 146 run answers off: personas windows, macos, linux and auto, seeds 12345 and 777. OS independent, so it also covers macOS and Linux claims. Patch cost low: quantise the noise to the grid."
     },
     {
       "id": "f_kw_caption.1",
@@ -271,7 +311,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
     },
     {
       "id": "f_kw_messagebox.1",
@@ -287,7 +327,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
     },
     {
       "id": "f_kw_statusbar.1",
@@ -295,7 +335,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
     },
     {
       "id": "f_metrics.1",
@@ -303,7 +343,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "Canvas text widths in Arial, Times New Roman, monospace and sans-serif. Windows Chromium 148 to 156 and Edge identical, Firefox own value. Linux Chromium differs (FreeType), every CloakBrowser persona differs and varies by seed (noise). Risk: font versions of other Windows releases."
     },
     {
       "id": "f_systemui.1",
@@ -311,15 +351,23 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "system-ui width and which named font it equals. Windows Chromium 148 to 156 and Edge identical. Linux Chromium differs, every CloakBrowser persona differs and varies by seed (noise). Risk: localised Windows UI font."
     },
     {
       "id": "g_canvasdeterminism.1",
       "family": "text",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Carried a hash of the rendered pixels, which depends on the GPU and font smoothing and is randomised per session by Firefox. Replaced by g_canvasdeterminism.2."
+    },
+    {
+      "id": "g_canvasdeterminism.2",
+      "family": "graphics",
+      "status": "collecting",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": "Rendered canvas text hash and double-read noise check."
+      "note": "Canvas read back honesty: two reads equal, solid fill exact, two toDataURL equal. 111 everywhere in the lab, including Firefox (its per session canvas key is stable within a page) and CloakBrowser, whose noise is deterministic per seed. Catches nothing seen yet."
     },
     {
       "id": "g_extensions.1",
@@ -348,10 +396,18 @@
     {
       "id": "g_renderer.1",
       "family": "identity",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Sent the GPU model, the visitor's hardware. Replaced by g_renderer.2."
+    },
+    {
+      "id": "g_renderer.2",
+      "family": "graphics",
+      "status": "collecting",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": ""
+      "note": "WebGL backend, not the GPU: angle:d3d11 for branded Chrome, Edge and Firefox on Windows, na for Chrome for Testing 148 and 150 on this GPU-less VM, swiftshader for Linux Chromium and headless shell, metal and opengl for the CloakBrowser macos and linux personas, d3d11 (spoofed) for its windows persona. Collecting: users with hardware acceleration off get SwiftShader, and lab values come from a VM without a GPU."
     },
     {
       "id": "g_samples.1",
@@ -372,10 +428,10 @@
     {
       "id": "m_atanh.1",
       "family": "maths",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
-      "retired": null,
-      "note": "OS libm last digit in Chrome. Per engine."
+      "retired": "2026-10-19",
+      "note": "No input separates Windows from Linux across Chrome 148 to 156: Windows 148 answers what Linux 141 and CloakBrowser 146 answer for every one of 6,603 inputs, and Chrome 150 changed it with the rest of V8's libm (see m_libm.1)."
     },
     {
       "id": "m_cbrt.1",
@@ -400,6 +456,14 @@
       "introduced": "2026-10-13",
       "retired": null,
       "note": ""
+    },
+    {
+      "id": "m_libm.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-19",
+      "retired": null,
+      "note": "exp, expm1 and log1p at inputs where V8 changed: from Chrome 150 they are correctly rounded (100% of 1,500 exp inputs against 91.2% before). Windows 148 equals Linux 141 and CloakBrowser 146, Windows 150 to 156 and Edge 155 agree. An engine generation signal, not an OS one. Collecting until Linux 150 or later is captured, and never fit for version independent rows across 150."
     },
     {
       "id": "m_log1p.1",
@@ -428,10 +492,18 @@
     {
       "id": "m_tanh.1",
       "family": "maths",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-13",
+      "retired": "2026-10-19",
+      "note": "Only one of its eight inputs (0.7) separated Windows from Linux. Replaced by m_tanh.2."
+    },
+    {
+      "id": "m_tanh.2",
+      "family": "maths",
+      "status": "active",
+      "introduced": "2026-10-19",
       "retired": null,
-      "note": "OS libm last digit in Chrome. Per engine."
+      "note": "Math.tanh at 8 inputs, each of which separates on its own (lab/maths-probe.js, 249 of 6,609 inputs separate, all below |x| 1.9). Windows Chrome 148, 150, 155, 156 and Edge 155 identical on all 6,609 inputs. Linux Chromium 141, every CloakBrowser persona and Firefox give V8 fdlibm's answer. Not touched by the Chrome 150 libm change. Patch cost medium: ship the Windows C runtime tanh or a lookup."
     },
     {
       "id": "p_apis.1",
@@ -439,7 +511,7 @@
       "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "Typeof of 19 platform APIs. Changes with version (DeviceOrientationEvent.requestPermission from Chrome 155), so no version independent rows. Linux Chromium and CloakBrowser differ."
     },
     {
       "id": "p_nativefn.1",
@@ -447,15 +519,15 @@
       "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "3/7|1 for every browser in the lab, genuine or not. No signal yet."
     },
     {
       "id": "p_webdriver.1",
       "family": "identity",
-      "status": "collecting",
+      "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": ""
+      "note": "navigator.webdriver and driver globals. false|0|0 for every genuine run and every CloakBrowser persona, true for every Puppeteer and Playwright run with default options (headless, headed, shell). Version independent. Catches plain automation only. Patch cost trivial."
     }
   ]
 }

@@ -3,9 +3,11 @@ import json, os, sys, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-RUNS = os.path.join(HERE, "runs")
+# BC_RUNS moves the runs folder, for example off a nearly full drive.
+RUNS = os.environ.get("BC_RUNS") or os.path.join(HERE, "runs")
 os.makedirs(RUNS, exist_ok=True)
 GATHERER = sys.argv[2] if len(sys.argv) > 2 else os.path.join(HERE, "..", "browser-tests-v3.js")
+PROBE = os.path.join(HERE, "maths-probe.js")
 
 PAGE = """<!doctype html><html><head><meta charset="utf-8"><title>51Degrees browser tests lab</title></head>
 <body><pre id="out">running</pre>
@@ -22,6 +24,31 @@ window.__51dBrowserTests.run(4000, params).then(function (r) {
 }).catch(function (e) { document.getElementById("out").textContent = "failed " + e; document.title = "failed"; });
 </script></body></html>"""
 
+# /maths runs maths-probe.js and stores every result, for finding the inputs
+# that separate one build or OS from another.
+MATHS = """<!doctype html><html><head><meta charset="utf-8"><title>maths probe</title></head>
+<body><pre id="out">running</pre>
+<script src="/maths-probe.js"></script>
+<script>
+var label = new URLSearchParams(location.search).get("label") || "unlabelled";
+var r = { label: label, kind: "maths", ua: navigator.userAgent, when: new Date().toISOString(), maths: window.__mathsProbe() };
+fetch("/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r) })
+  .then(function () { document.getElementById("out").textContent = "done " + label; document.title = "done"; });
+</script></body></html>"""
+
+
+# /voices stores the full speechSynthesis voice list after 4 seconds, to
+# check which voices a_voices counts.
+VOICES = """<!doctype html><html><head><meta charset="utf-8"><title>voices</title></head><body><pre id="out">running</pre><script>
+var label = new URLSearchParams(location.search).get("label") || "unlabelled";
+speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function () { };
+setTimeout(function () {
+  var v = speechSynthesis.getVoices().map(function (x) { return x.name + "/" + x.lang + "/" + (x.localService ? "L" : "R"); });
+  fetch("/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ label: label, kind: "voices", voices: v, ua: navigator.userAgent }) })
+    .then(function () { document.title = "done"; });
+}, 4000);
+</script></body></html>"""
+
 
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
@@ -31,6 +58,13 @@ class H(BaseHTTPRequestHandler):
         if self.path.startswith("/gatherer.js") or self.path.startswith("/browser-tests-v"):
             body = open(GATHERER, "rb").read()
             self.send_response(200); self.send_header("Content-Type", "text/javascript"); self.send_header("Cache-Control", "no-store")
+        elif self.path.startswith("/maths-probe.js"):
+            body = open(PROBE, "rb").read()
+            self.send_response(200); self.send_header("Content-Type", "text/javascript"); self.send_header("Cache-Control", "no-store")
+        elif self.path.startswith("/voices"):
+            body = VOICES.encode(); self.send_response(200); self.send_header("Content-Type", "text/html")
+        elif self.path.startswith("/maths"):
+            body = MATHS.encode(); self.send_response(200); self.send_header("Content-Type", "text/html")
         else:
             body = PAGE.encode(); self.send_response(200); self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
@@ -41,7 +75,7 @@ class H(BaseHTTPRequestHandler):
         name = f"{data.get('label','x')}-{int(time.time()*1000)}.json"
         with open(os.path.join(RUNS, name), "w", encoding="utf-8") as f:
             json.dump(data, f, indent=1)
-        print("stored", name, len(data.get("results", {})), "results", data.get("elapsed"), "ms", flush=True)
+        print("stored", name, len(data.get("results", data.get("maths", {}))), "results", data.get("elapsed"), "ms", flush=True)
         self.send_response(204); self.end_headers()
 
 

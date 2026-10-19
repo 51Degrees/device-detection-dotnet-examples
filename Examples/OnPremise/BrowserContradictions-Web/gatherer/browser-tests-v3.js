@@ -17,6 +17,16 @@
 // script's functions cannot change it, and the inputs of the text and maths
 // tests come from params.
 //
+// Final test review, 19 October 2026 (lab evidence in tests.json notes):
+// c_timezone.2 checks the zone and offsets agree instead of reporting the
+// visitor's zone and the zone name text, f_core.2 drops the fonts users
+// install on Windows, f_grid.2 checks the 1/65536 grid on fixed inputs,
+// g_canvasdeterminism.2 drops the rendered pixel hash, a_voices.2 reports
+// which built in voice families exist instead of the installed voice list,
+// g_renderer.2 reports the graphics backend instead of the GPU, m_tanh.2
+// uses inputs that each separate Windows from Linux, m_atanh.1 is retired
+// m_libm.1 is new and c_codecs.2 leaves out HEVC.
+//
 // Parameterised inputs. params is optional and every field defaults to the
 // value version 2 used:
 //   glyphs  the string f_metrics and f_grid measure
@@ -25,7 +35,6 @@
 //           New Roman and monospace and size * 27 / 32 for sans-serif (a
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
-//   atanh   the inputs of m_atanh
 // A parameterised test's inputs are the array listed in INPUTS below. When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
@@ -44,16 +53,17 @@
         glyphs: "The quick brown fox jumps over 1234567890 lazy dogs",
         emoji: ["\uD83D\uDE00", "\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08", "\uD83E\uDD14", "\u2764\uFE0F"],
         size: 16,
-        tanh: [0.1, 0.7, 1.3, 2.9, 4.1, 0.0123, 7.7, 13.37],
-        atanh: [0.1, 0.5, 0.9, 0.0123, 0.999]
+        // Every one of these separates Windows Chrome 148 to 156 and Edge
+        // from Linux Chromium 141 and CloakBrowser 146 on its own. Found by
+        // lab/maths-probe.js over 6,609 inputs: Windows tanh differs from
+        // V8's fdlibm port only for |x| below about 1.9.
+        tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125]
     };
     // The inputs each parameterised test consumes, in tag order.
     var INPUTS = {
         "f_metrics.1": function (p) { return [p.glyphs, p.size]; },
         "f_emoji.1": function (p) { return [p.emoji, p.size]; },
-        "f_grid.1": function (p) { return [p.glyphs, p.emoji, p.size]; },
-        "m_tanh.1": function (p) { return [p.tanh]; },
-        "m_atanh.1": function (p) { return [p.atanh]; }
+        "m_tanh.2": function (p) { return [p.tanh]; }
     };
     var P = DEFAULTS;
 
@@ -100,12 +110,29 @@
 
     // ---- maths and engine -------------------------------------------------
     var MATHS_IN = [0.1, 0.7, 1.3, 2.9, 4.1, 0.0123, 7.7, 13.37];
-    s("m_tanh.1", function () { return tag("m_tanh.1", P) + vec(Math.tanh, P.tanh); });
+    // Inputs where Chrome 148 and Chrome 150 or later disagree, from the lab
+    // maths probe (132 such exp inputs, 151 expm1, 83 log1p).
+    var MLIBM = {
+        exp: [-14.867524430155754, -14.069742476567626, 1.8342713825404644],
+        expm1: [-1.6784721740987152, 21.062325881794095],
+        log1p: [1.5808633808279411, 4.3243418183876194]
+    };
+    // Windows Chrome takes tanh from the platform's C runtime and Linux
+    // Chrome from V8's own fdlibm port, so the last digit differs. Version
+    // 1 had one separating input of eight.
+    s("m_tanh.2", function () { return tag("m_tanh.2", P) + vec(Math.tanh, P.tanh); });
     s("m_expm1.1", function () { return vec(Math.expm1, [1e-10, 0.3, 2.5, 7.7, 0.0123, 13.37]); });
     s("m_sinh.1", function () { return vec(Math.sinh, MATHS_IN); });
     s("m_cbrt.1", function () { return vec(Math.cbrt, [2, 3, 7.7, 1e-5, 123.456]); });
     s("m_log1p.1", function () { return vec(Math.log1p, [1e-9, 0.3, 2.5, 7.7, 13.37]); });
-    s("m_atanh.1", function () { return tag("m_atanh.1", P) + vec(Math.atanh, P.atanh); });
+    // From Chrome 150 V8's exp, log, expm1 and log1p are correctly rounded,
+    // before that they were fdlibm's. A portable engine change, so this
+    // tells the engine generation, not the OS: Windows 148 answers what
+    // Linux 141 and CloakBrowser 146 answer. The inputs are ones where the
+    // two generations differ.
+    s("m_libm.1", function () {
+        return [vec(Math.exp, MLIBM.exp), vec(Math.expm1, MLIBM.expm1), vec(Math.log1p, MLIBM.log1p)].join(",");
+    });
     s("m_pow.1", function () { return vec(function (x) { return Math.pow(x, 0.37); }, MATHS_IN); });
     s("m_csshypot.1", function () {
         var el = document.createElement("div");
@@ -163,9 +190,13 @@
     ["menu", "caption", "status-bar", "small-caption", "message-box", "icon"].forEach(function (k) {
         s("f_kw_" + k.replace("-", "") + ".1", function () { var c = canvas2d(); c.font = k; return c.font; });
     });
-    s("f_core.1", function () {
+    // Fonts that ship with each OS. Version 1 also listed SF Pro, Noto Sans,
+    // Ubuntu and Roboto, which Windows users install themselves (Edge 155
+    // in the lab reported Roboto), so a genuine Windows answer varied by
+    // what the user had installed.
+    s("f_core.2", function () {
         return ["Segoe UI", "Segoe UI Symbol", "Consolas", "Calibri", "Microsoft Sans Serif", "Sylfaen", "Lucida Console",
-            "Helvetica Neue", "Menlo", "SF Pro", "Geneva", "DejaVu Sans", "Liberation Sans", "Noto Sans", "Ubuntu", "Cantarell", "Roboto"]
+            "Helvetica Neue", "Menlo", "Geneva", "DejaVu Sans", "Liberation Sans", "Cantarell"]
             .map(fontPresent).join("");
     });
     s("f_systemui.1", function () {
@@ -184,43 +215,59 @@
             c.font = f; return round(c.measureText(P.glyphs).width);
         }).join(",");
     });
-    // Whether text widths sit on the grid the text stack produces. Genuine
-    // Chromium widths are whole multiples of 1/4096 px, Firefox widths are
-    // float32 values off that grid, and a browser that scales widths by a
-    // seeded factor to hide its fingerprint lands off both. Answers "grid"
-    // when every width is on the 1/4096 grid, "f32" when every width is a
-    // float32 but some are off the grid, "off" otherwise. The 1/4096 grid
-    // holds for the default sizes only: Chromium's own grid is 1/65536, and
-    // at a size such as 16.875 px its widths use the finer bits, so the
-    // answer depends on the inputs and carries their tag like the others.
-    s("f_grid.1", function () {
+    // Whether text widths sit on the grid the text stack produces. Chromium
+    // shapes with HarfBuzz, whose advances are 16.16 fixed point, so every
+    // genuine Chromium width is a whole multiple of 1/65536 px whatever the
+    // font and size. Firefox widths are float32 values off that grid, and a
+    // browser that scales widths by a seeded factor to hide its fingerprint
+    // lands off both. Answers "grid", "f32" or "off". The inputs are fixed,
+    // including fractional sizes, and never come from params. Version 1
+    // tested 1/4096, which holds at the default sizes only.
+    s("f_grid.2", function () {
         var c = canvas2d(); var ws = [];
-        metricFonts(P.size).forEach(function (f) { c.font = f; ws.push(c.measureText(P.glyphs).width); });
-        c.font = (P.size * 3) + "px sans-serif";
-        P.emoji.forEach(function (e) { ws.push(c.measureText(e).width); });
-        if (!ws.length) return "na";
+        var text = "The quick brown fox jumps over 1234567890 lazy dogs";
+        ["16px Arial", "13.5px sans-serif", "16.875px 'Times New Roman'", "11.3px monospace", "21.7px system-ui"].forEach(function (f) {
+            c.font = f; ws.push(c.measureText(text).width); ws.push(c.measureText("Wj").width);
+        });
+        [36, 48.5].forEach(function (px) {
+            c.font = px + "px sans-serif";
+            DEFAULTS.emoji.forEach(function (e) { ws.push(c.measureText(e).width); });
+        });
         var grid = true, f32 = true;
         ws.forEach(function (w) {
-            if (w * 4096 !== Math.round(w * 4096)) grid = false;
+            if (w * 65536 !== Math.round(w * 65536)) grid = false;
             if (Math.fround(w) !== w) f32 = false;
         });
-        return tag("f_grid.1", P) + (grid ? "grid" : f32 ? "f32" : "off");
+        return grid ? "grid" : f32 ? "f32" : "off";
     });
 
     // ---- graphics ---------------------------------------------------------
     function gl2() { var c = document.createElement("canvas"); return c.getContext("webgl2") || c.getContext("webgl"); }
-    s("g_renderer.1", function () {
+    // The graphics backend behind WebGL, not the GPU: version 1 reported
+    // the GPU model, which is the visitor's hardware. ANGLE names its
+    // backend in the renderer string (Direct3D 11 on Windows, Metal on
+    // macOS, OpenGL or Vulkan on Linux), SwiftShader is the software
+    // fallback.
+    s("g_renderer.2", function () {
         var g = gl2(); if (!g) return "na"; var d = g.getExtension("WEBGL_debug_renderer_info");
-        return d ? g.getParameter(d.UNMASKED_VENDOR_WEBGL) + "|" + g.getParameter(d.UNMASKED_RENDERER_WEBGL) : "noext";
+        if (!d) return "noext";
+        var r = String(g.getParameter(d.UNMASKED_RENDERER_WEBGL));
+        var b = /SwiftShader/i.test(r) ? "swiftshader" : /Direct3D11|D3D11/.test(r) ? "d3d11" : /Direct3D9|D3D9/.test(r) ? "d3d9" : /Metal/.test(r) ? "metal" :
+            /Vulkan/.test(r) ? "vulkan" : /OpenGL/.test(r) ? "opengl" : "other";
+        return (/^ANGLE \(/.test(r) ? "angle:" : "native:") + b;
     });
-    s("g_canvasdeterminism.1", function () {
+    // Whether reading a canvas back is honest: two reads agree, a solid
+    // fill reads back exactly, and two toDataURL calls agree. Version 1 also
+    // sent a hash of the rendered pixels, which depends on the GPU, the
+    // font smoothing settings and, in Firefox, a per session random key.
+    s("g_canvasdeterminism.2", function () {
         var c = document.createElement("canvas"); c.width = 120; c.height = 40; var x = c.getContext("2d");
         x.fillStyle = "#7f7f7f"; x.fillRect(0, 0, 120, 40); x.fillStyle = "#1a2b3c"; x.font = "18px Arial"; x.fillText("51Degrees \u00E9\u00F1 \uD83D\uDE00", 4, 26);
         var d1 = x.getImageData(0, 0, 120, 40).data; var d2 = x.getImageData(0, 0, 120, 40).data; var same = 1;
-        for (var i = 0; i < d1.length; i += 97) { if (d1[i] !== d2[i]) { same = 0; break; } }
+        for (var i = 0; i < d1.length; i++) { if (d1[i] !== d2[i]) { same = 0; break; } }
         var solid = 1; var d3 = x.getImageData(100, 2, 10, 6).data;
-        for (var j = 0; j < d3.length; j += 4) { if (d3[j] !== 127 || d3[j + 1] !== 127 || d3[j + 2] !== 127) { solid = 0; break; } }
-        return same + "" + solid + "|" + fnv(c.toDataURL()) + "|" + fnv(c.toDataURL());
+        for (var j = 0; j < d3.length; j += 4) { if (d3[j] !== 127 || d3[j + 1] !== 127 || d3[j + 2] !== 127 || d3[j + 3] !== 255) { solid = 0; break; } }
+        return same + "" + solid + (c.toDataURL() === c.toDataURL() ? "1" : "0");
     });
 
     // ---- platform APIs ----------------------------------------------------
@@ -251,27 +298,52 @@
     // ---- identity ---------------------------------------------------------
     s("c_uach.1", function () { var u = navigator.userAgentData; return u ? u.platform + "|" + u.mobile + "|" + u.brands.map(function (b) { return b.brand + ":" + b.version; }).join(";") : "na"; });
     s("c_platform.1", function () { return navigator.platform + "|" + navigator.hardwareConcurrency + "|" + str(navigator.deviceMemory) + "|" + navigator.maxTouchPoints; });
-    s("c_timezone.1", function () {
-        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone; var jan = new Date(2026, 0, 15).getTimezoneOffset(); var jul = new Date(2026, 6, 15).getTimezoneOffset();
-        var name = (new Date(2026, 0, 15).toString().match(/\(([^)]+)\)/) || ["", ""])[1];
-        return tz + "|" + jan + "|" + jul + "|" + name;
+    // Whether the zone Intl reports agrees with the offsets Date uses, in
+    // January and July, and with the offset in Date.toString. Answers one
+    // digit per check. Version 1 sent the zone, the offsets and the zone
+    // name text: the zone is where the visitor is, not what the browser is,
+    // and the name text changed within one Edge major and between Chrome
+    // majors.
+    s("c_timezone.2", function () {
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (!tz) return "na";
+        function zoneOffset(d) {
+            var parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" }).formatToParts(d);
+            var n = parts.filter(function (p) { return p.type === "timeZoneName"; })[0];
+            var m = /GMT(?:([+-])(\d\d):(\d\d))?/.exec(n ? n.value : "");
+            return !m ? NaN : !m[1] ? 0 : (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3]));
+        }
+        var jan = new Date(2026, 0, 15, 12), jul = new Date(2026, 6, 15, 12);
+        var t = /GMT([+-])(\d\d)(\d\d)/.exec(jan.toString());
+        var strOff = t ? (t[1] === "-" ? -1 : 1) * (Number(t[2]) * 60 + Number(t[3])) : NaN;
+        return [zoneOffset(jan) === -jan.getTimezoneOffset(), zoneOffset(jul) === -jul.getTimezoneOffset(), strOff === -jan.getTimezoneOffset()]
+            .map(function (b) { return b ? "1" : "0"; }).join("");
     });
     s("c_heap.1", function () { var m = performance.memory; return m ? str(m.jsHeapSizeLimit) : "na"; });
-    s("c_codecs.1", function () {
+    // Proprietary codecs the build carries: open Chromium builds lack H.264
+    // and AAC, Edge adds E-AC-3. Version 1 also asked for HEVC, which on
+    // Windows depends on the GPU and the HEVC Video Extension.
+    s("c_codecs.2", function () {
         var v = document.createElement("video");
-        return ['video/mp4; codecs="avc1.42E01E"', 'video/mp4; codecs="hvc1.1.6.L93.B0"', 'video/webm; codecs="av01.0.05M.08"', 'audio/mp4; codecs="mp4a.40.2"', 'video/mp4; codecs="ec-3"']
+        return ['video/mp4; codecs="avc1.42E01E"', 'video/webm; codecs="av01.0.05M.08"', 'audio/mp4; codecs="mp4a.40.2"', 'video/mp4; codecs="ec-3"']
             .map(function (t) { return v.canPlayType(t) || "-"; }).join(",");
     });
 
     // ---- asynchronous -----------------------------------------------------
-    a("a_voices.1", function () {
+    // The voice families the browser itself brings, not the voices the
+    // user installed: "g" and the number of Google network voices (branded
+    // Chrome), "e" and 1 when Microsoft's online voices are listed (Edge).
+    // Version 1 sent the whole list, which depends on the OS language packs
+    // and on when the local voices finish loading.
+    a("a_voices.2", function () {
         if (!window.speechSynthesis) return Promise.resolve("na");
         return new Promise(function (res) {
             var done = false;
             function finish() {
                 if (done) return; done = true;
-                var vs = speechSynthesis.getVoices().map(function (v) { return v.name + "/" + v.lang + "/" + (v.localService ? "L" : "R"); }).sort();
-                res(vs.length + "|" + fnv(vs.join(";")) + "|" + vs.slice(0, 3).join(";"));
+                var vs = speechSynthesis.getVoices();
+                var google = vs.filter(function (v) { return !v.localService && /^Google[ \u00A0]/.test(v.name); }).length;
+                var edge = vs.some(function (v) { return !v.localService && /^Microsoft .*Online/.test(v.name); }) ? 1 : 0;
+                res("g" + google + "|e" + edge);
             }
             if (speechSynthesis.getVoices().length) finish();
             speechSynthesis.onvoiceschanged = finish; setTimeout(finish, 1500);
