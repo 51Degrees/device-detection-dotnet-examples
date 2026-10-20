@@ -77,6 +77,8 @@ const string ReportJs = """
     function report(data, where) {
       var b = data.browser || {}, d = data.device || {}, x = data.derived || {};
       var text = JSON.stringify(data);
+      var params = new URLSearchParams(location.search);
+      function cell(id) { var e = document.getElementById(id); return e ? e.textContent : null; }
       var out = {
         "where": where,
         "label": new URLSearchParams(location.search).get("label"),
@@ -90,16 +92,63 @@ const string ReportJs = """
         "baseline leaked": text.indexOf("2|h64") >= 0 || Object.keys(d).some(function (k) {
           return k.indexOf("browserbaseline") === 0 && !/nullreason$/.test(k) && d[k] !== null && d[k] !== undefined;
         }),
-        "browser.measurements": b.measurements
+        "browser.measurements": b.measurements,
+        "keymap leaked": text.indexOf("1|keymap") >= 0,
+        "test ids leaked": /[a-z]_[a-z0-9]+\.[0-9]+/.test(text),
+        "ms to verdict": Math.round(performance.now()),
+        "timeline": performance.getEntriesByType("resource").filter(function (e) {
+          return /core\.js|api\/v4|51dpipeline|3pc/.test(e.name);
+        }).map(function (e) {
+          return e.name.replace(/^.*\//, "").slice(0, 20) + "@" + Math.round(e.startTime) + "+" + Math.round(e.duration);
+        }).join(" "),
+        "pass": params.get("pass") || "1",
+        "diag": (window.__diag || []).join(" "),
+        "server.evidencesource": cell("s-browser-EvidenceSource"),
+        "server.hascontradictions": cell("s-browser-HasContradictions"),
+        "server.humanconfidenceproof": cell("s-derived-HumanConfidenceProof")
       };
       document.getElementById("client").textContent = JSON.stringify(out, null, 2);
       if (out.label) {
+        // A labelled run loads the page a second time, so the page request
+        // itself carries the cookie and the server side table shows its
+        // verdict (pass 2). The packed script skips the tests then.
         fetch("/report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(out) })
-          .then(function () { document.title = "reported"; });
+          .then(function () {
+            if (out.pass === "1") { params.set("pass", "2"); location.replace(location.pathname + "?" + params.toString()); }
+            else { document.title = "reported"; }
+          });
       }
     }
     """;
 app.MapGet("/report.js", () => Results.Content(ReportJs, "text/javascript"));
+
+// With ?diag=1 the cloud page records when the packed script inflates,
+// runs, sends and writes its cookie, and when visibility changes, so a slow
+// round in a genuine browser can be read back from the report.
+const string DiagJs = """
+    (function () {
+      var log = window.__diag = [];
+      function L(s) { log.push(s + "@" + Math.round(performance.now()) + (document.hidden ? "h" : "")); }
+      var d = Object.getOwnPropertyDescriptor(Document.prototype, "cookie");
+      Object.defineProperty(document, "cookie", { configurable: true, get: function () { return d.get.call(document); },
+        set: function (v) { L("cookie:" + v.slice(0, 12)); d.set.call(document, v); } });
+      var D = window.DecompressionStream;
+      if (D) window.DecompressionStream = function (f) { L("inflate"); return new D(f); };
+      var F = window.Function;
+      var W = function () {
+        var a = Array.prototype.slice.call(arguments);
+        if (a[0] === "send") {
+          L("run"); var g = F.apply(this, a);
+          return function (r) { return g(function (v) { L("send:" + String(v).length); r(v); }); };
+        }
+        return F.apply(this, a);
+      };
+      W.prototype = F.prototype; window.Function = W;
+      document.addEventListener("visibilitychange", function () { L("vis"); });
+      L("start");
+    })();
+    """;
+app.MapGet("/diag.js", () => Results.Content(DiagJs, "text/javascript"));
 
 var reports = Path.Combine(AppContext.BaseDirectory, "reports.jsonl");
 var reportsLock = new object();
@@ -125,6 +174,7 @@ app.MapGet("/cloud", (HttpRequest request) =>
         </head><body>
         <h1>Cloud browser contradictions proof</h1>
         <pre id="client">waiting for the cloud JavaScript</pre>
+        {{(request.Query.ContainsKey("diag") ? "<script src=\"/diag.js\"></script>" : "")}}
         <script src="/report.js"></script>
         <script>
         function show() { fod.complete(function (data) { report(data, "cloud"); }); }

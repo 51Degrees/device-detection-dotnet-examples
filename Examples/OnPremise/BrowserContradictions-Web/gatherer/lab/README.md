@@ -29,7 +29,13 @@ into baseline rows, and replays or drives browsers against the proof site.
   throttling (`4` for 4x). `BC_URL` points it at another collector.
 - `win-run.js <kind> <exe> <label> <url> <runs dir> [timeout s] [user agent]`: one genuine Windows
   run, headed (`--app=` window off screen, fresh profile) or Firefox, then
-  stops every process using that profile. `auto-run.js` drives the same
+  stops every process using that profile. `<runs dir>` may instead be the
+  proof site's `reports.jsonl`: the run is then done once the page has
+  reported its second pass (the page reloads itself once, so the page
+  request carries the cookie). `BC_VISIBLE=1` adds
+  `--disable-backgrounding-occluded-windows`: Chrome otherwise treats the
+  off screen window as hidden, throttles its timers and the tests take 15
+  to 50 seconds. `auto-run.js` drives the same
   page through Puppeteer or Playwright with their default options
   (`NODE_PATH` pointing at puppeteer-core and playwright-core).
 - `rows.py <runs> <tests.json> <out prefix> [--deprecate ids]`: baseline

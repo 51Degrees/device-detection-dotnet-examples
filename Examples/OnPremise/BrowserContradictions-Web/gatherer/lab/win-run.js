@@ -9,6 +9,8 @@
 //   headless   Chrome or Edge with --headless=new and no driver at all. A
 //              user agent argument swaps the HeadlessChrome one, as
 //              scrapers do.
+// runs is a folder of lab runs, or the proof site's reports.jsonl, where the
+// run is done once the page's second pass has reported under the label.
 // The profile is deleted afterwards and the whole process tree is stopped.
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
@@ -24,14 +26,27 @@ if (kind === 'firefox' || kind === 'firefox-headless') {
   args = ['-no-remote', '-new-instance', '-profile', profile].concat(kind === 'firefox-headless' ? ['-headless'] : ['-width', '1024', '-height', '768']).concat([full]);
 } else {
   args = ['--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'].concat(userAgent ? ['--user-agent=' + userAgent] : []);
+  // Chrome marks a window off screen as occluded and the page as hidden,
+  // which throttles its timers to one a second, so the tests take 15 to 50
+  // seconds instead of one. BC_VISIBLE=1 keeps the page visible, as it is in
+  // front of a person, and changes nothing the tests read.
+  if (process.env.BC_VISIBLE === '1' && kind !== 'headless') args.push('--disable-backgrounding-occluded-windows');
   args = kind === 'headless' ? args.concat(['--headless=new', full]) : args.concat(['--window-position=-2400,-2400', '--window-size=1024,768', '--app=' + full]);
 }
-const before = new Set(fs.readdirSync(runs));
+const isLog = runs.endsWith('.jsonl');
+const before = isLog ? null : new Set(fs.readdirSync(runs));
+function stored() {
+  if (!isLog) return fs.readdirSync(runs).filter(f => !before.has(f) && f.startsWith(label + '-'));
+  if (!fs.existsSync(runs)) return [];
+  return fs.readFileSync(runs, 'utf8').split('\n').filter(l => {
+    try { const o = JSON.parse(l); return o.label === label && o.pass === '2'; } catch (e) { return false; }
+  });
+}
 const started = Date.now();
 const child = spawn(exe, args, { stdio: 'ignore', detached: false });
 const limit = (Number(timeoutS) || 40) * 1000;
 const timer = setInterval(() => {
-  const fresh = fs.readdirSync(runs).filter(f => !before.has(f) && f.startsWith(label + '-'));
+  const fresh = stored();
   const late = Date.now() - started > limit;
   if (fresh.length || late) {
     clearInterval(timer);
@@ -42,7 +57,7 @@ const timer = setInterval(() => {
     try { execSync('powershell.exe -NoProfile -EncodedCommand ' + Buffer.from(ps, 'utf16le').toString('base64'), { stdio: 'ignore' }); } catch (e) { }
     setTimeout(() => {
       try { fs.rmSync(profile, { recursive: true, force: true }); } catch (e) { }
-      console.log((fresh.length ? 'stored ' + fresh[0] : 'TIMEOUT ' + label) + ' in ' + (Date.now() - started) + 'ms');
+      console.log((fresh.length ? 'stored ' + (isLog ? label : fresh[0]) : 'TIMEOUT ' + label) + ' in ' + (Date.now() - started) + 'ms');
       process.exit(fresh.length ? 0 : 1);
     }, 1500);
   }

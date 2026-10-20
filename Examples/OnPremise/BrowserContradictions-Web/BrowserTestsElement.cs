@@ -2,32 +2,50 @@ using FiftyOne.DeviceDetection;
 using FiftyOne.Pipeline.Core.Data;
 using FiftyOne.Pipeline.Core.FlowElements;
 using FiftyOne.Pipeline.Engines.Data;
+using FiftyOne.Pipeline.Engines.FiftyOne.Data;
 
 namespace BrowserContradictions.Web;
 
 /// <summary>
 /// Prototype of the browser element. Reads the raw measurements the
-/// gatherer JavaScript sends as 51D_BrowserTests, works out the platform
-/// the browser claims from device detection, and checks each measurement
+/// gatherer JavaScript sends as a 51D_ cookie, works out the platform the
+/// browser claims from device detection, and checks each measurement
 /// against the hashed baseline the data file carries in the values of the
 /// BrowserBaseline properties, by the element rule of PHASE2-FORMATS.
 /// Publishes its answers under the element data key "browser".
+/// <para>
+/// The gatherer ships obfuscated per seed (PHASE2-FORMATS, packaging and
+/// key map): its wire keys and cookie name change with every data file. The
+/// decode map rides in the description of the BrowserTestsKeyMap value and
+/// is read from engine metadata like the baseline, so it is never part of
+/// the per request results. The cookie the element reads is the unrenamed
+/// 51D_BrowserTests plus every "$cookie" name in the maps.
+/// </para>
+/// <para>
+/// Which tests failed, and the measurements themselves, are logged on the
+/// server and published only when detail is turned on (never in
+/// production): a list of failing tests in a response would tell a forger
+/// exactly which answers to fix.
+/// </para>
 /// </summary>
 public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropertyMetaData>
 {
-    public const string CookieKey = "cookie.51D_BrowserTests";
-    public const string QueryKey = "query.51D_BrowserTests";
+    public const string DefaultCookie = "51D_BrowserTests";
 
-    private readonly IEvidenceKeyFilter _filter =
-        new EvidenceKeyFilterWhitelist([CookieKey, QueryKey]);
+    private readonly IEvidenceKeyFilter _filter;
 
     private readonly IList<IElementPropertyMetaData> _properties;
 
+    private readonly bool _detail;
+
     public BrowserTestsElement(
         ILogger<BrowserTestsElement> logger,
-        Func<IPipeline, FlowElementBase<IElementData, IElementPropertyMetaData>, IElementData> dataFactory)
+        Func<IPipeline, FlowElementBase<IElementData, IElementPropertyMetaData>, IElementData> dataFactory,
+        bool detail = false)
         : base(logger, dataFactory)
     {
+        _detail = detail;
+        _filter = new CookieFilter(this);
         _properties =
         [
             new ElementPropertyMetaData(this, "HasContradictions", typeof(string), true, "Bot Detection"),
@@ -58,14 +76,22 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         result["Claim"] = claim;
         result["ClaimScope"] = "";
 
+        var snapshot = GetSnapshot(data.Pipeline);
+
+        // The renamed cookie first: it is what the shipped script writes.
         string raw = null, source = "none";
-        if (data.TryGetEvidence(QueryKey, out string q) && string.IsNullOrEmpty(q) == false)
+        foreach (var name in snapshot.CookieNames)
         {
-            raw = q; source = "query";
-        }
-        else if (data.TryGetEvidence(CookieKey, out string c) && string.IsNullOrEmpty(c) == false)
-        {
-            raw = c; source = "cookie";
+            if (data.TryGetEvidence("query." + name, out string q) && string.IsNullOrEmpty(q) == false)
+            {
+                raw = q; source = "query";
+                break;
+            }
+            if (data.TryGetEvidence("cookie." + name, out string c) && string.IsNullOrEmpty(c) == false)
+            {
+                raw = c; source = "cookie";
+                break;
+            }
         }
         result["EvidenceSource"] = source;
         result["Contradictions"] = "";
@@ -77,8 +103,11 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             return;
         }
 
-        var measurements = Parse(raw);
-        result["Measurements"] = string.Join("; ", measurements.Select(i => $"{i.Test}={i.Value}"));
+        var measurements = Parse(raw, snapshot.KeyMap);
+        if (_detail)
+        {
+            result["Measurements"] = string.Join("; ", measurements.Select(i => $"{i.Test}={i.Value}"));
+        }
 
         // The element rule of PHASE2-FORMATS. A test counts only where the
         // baseline covers it for this claim, and the claim is Unknown when
@@ -87,7 +116,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         // A test the exact claim does not cover falls back to the version
         // independent rows of the browser and platform, when the claimed
         // major is inside their range.
-        var baseline = GetBaseline(data.Pipeline);
+        var baseline = snapshot.Baseline;
         var any = baseline.AnyVersionClaim(browser, major, platform);
         var evaluated = 0;
         var viaAny = 0;
@@ -102,49 +131,70 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             if (baseline.Contains($"{scope}|{test}|{value}") == false) failed.Add(test);
         }
         result["ClaimScope"] = viaAny == 0 ? "exact" : viaAny == evaluated ? "any version" : "mixed";
+        Logger.LogInformation(
+            "Browser tests claim {Claim} source {Source} measured {Measured} evaluated {Evaluated} failed {Failed}: {Tests}",
+            claim, source, measurements.Count, evaluated, failed.Count, string.Join(",", failed));
         if (evaluated == 0)
         {
             result["HasContradictions"] = "Unknown";
             return;
         }
         result["HasContradictions"] = failed.Count > 0 ? "True" : "False";
-        result["Contradictions"] = string.Join(",", failed);
+        if (_detail)
+        {
+            result["Contradictions"] = string.Join(",", failed);
+        }
     }
 
     /// <summary>
-    /// Reads the baseline out of the engine's property metadata rather than
-    /// from the per request device data. The baseline is then never part
-    /// of the device results, so the JSON and JavaScript builders cannot
-    /// send it to the browser, and the BrowserBaseline properties can be
-    /// left out of the engine's required properties. The name and the
-    /// description of every value of every property whose name starts with
+    /// Reads the baseline and the key maps out of the engine's property
+    /// metadata rather than from the per request device data. They are
+    /// then never part of the device results, so the JSON and JavaScript
+    /// builders cannot send them to the browser, and the BrowserBaseline
+    /// and BrowserTestsKeyMap properties are left out of the engine's
+    /// required properties. For the baseline, the name and the description
+    /// of every value of every property whose name starts with
     /// BrowserBaseline are read, and the rows of every payload among them
     /// are unioned, so the reader works whether a payload is a value's name
     /// (one shared value) or its description (one list value per claim,
     /// named by the claim), however the rows are split across properties
     /// and profiles. Texts that are not a payload, such as the Unknown
-    /// default or a claim key, are ignored.
+    /// default or a claim key, are ignored. The key maps are the
+    /// descriptions of the BrowserTestsKeyMap values that start "1|keymap".
     /// </summary>
-    private Baseline GetBaseline(IPipeline pipeline)
+    private Snapshot GetSnapshot(IPipeline pipeline)
     {
-        var engine = pipeline.GetElement<FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements.DeviceDetectionHashEngine>();
+        var engine = pipeline?.GetElement<FiftyOne.DeviceDetection.Hash.Engine.OnPremise.FlowElements.DeviceDetectionHashEngine>();
+        if (engine == null) return _snapshot ?? Snapshot.Empty;
         var published = engine.DataFiles[0].DataPublishedDateTime;
-        var current = _baseline;
+        var current = _snapshot;
         if (current == null || current.From != published)
         {
-            var texts = engine.Properties
-                .Where(i => i.Name.StartsWith(BaselinePrefix, StringComparison.Ordinal))
-                .SelectMany(i => i.GetValues() ?? [])
-                .SelectMany(i => new[] { i.Name, i.Description });
-            current = new Baseline(texts, published);
-            _baseline = current;
+            IEnumerable<IValueMetaData> Values(Func<string, bool> name) => engine.Properties
+                .Where(i => name(i.Name))
+                .SelectMany(i => i.GetValues() ?? []);
+            var baseline = new Baseline(
+                Values(i => i.StartsWith(BaselinePrefix, StringComparison.Ordinal))
+                    .SelectMany(i => new[] { i.Name, i.Description }),
+                published);
+            var keyMap = KeyMapText.Read(
+                Values(i => i == KeyMapProperty).Select(i => i.Description),
+                out var conflicts);
+            if (conflicts > 0)
+            {
+                Logger.LogWarning("{Conflicts} wire keys mean different tests in different key maps and are ignored", conflicts);
+            }
+            current = new Snapshot(baseline, keyMap, published);
+            _snapshot = current;
         }
         return current;
     }
 
     private const string BaselinePrefix = "BrowserBaseline";
 
-    private Baseline _baseline;
+    private const string KeyMapProperty = "BrowserTestsKeyMap";
+
+    private Snapshot _snapshot;
 
     private static string Read(IDeviceData device, string name)
     {
@@ -186,6 +236,110 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
     protected override void ManagedResourcesCleanup() { }
 
     protected override void UnmanagedResourcesCleanup() { }
+
+    /// <summary>
+    /// The baseline and key map of one data file, swapped whole when the
+    /// data file changes.
+    /// </summary>
+    private sealed class Snapshot
+    {
+        public static readonly Snapshot Empty = new(new Baseline([], default), new Dictionary<string, string>(), default);
+
+        public Snapshot(Baseline baseline, IReadOnlyDictionary<string, string> keyMap, DateTime from)
+        {
+            Baseline = baseline;
+            KeyMap = keyMap;
+            From = from;
+            CookieNames = keyMap
+                .Where(i => i.Key.StartsWith(KeyMapText.CookiePrefix, StringComparison.Ordinal))
+                .Select(i => i.Value)
+                .Append(DefaultCookie)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            EvidenceKeys = new HashSet<string>(
+                CookieNames.SelectMany(i => new[] { "cookie." + i, "query." + i }),
+                StringComparer.OrdinalIgnoreCase);
+        }
+
+        public Baseline Baseline { get; }
+
+        public IReadOnlyDictionary<string, string> KeyMap { get; }
+
+        public DateTime From { get; }
+
+        public string[] CookieNames { get; }
+
+        public HashSet<string> EvidenceKeys { get; }
+    }
+
+    /// <summary>
+    /// Accepts the cookie and query keys of every cookie name the current
+    /// data file's key maps give, which change with the data file, so the
+    /// web integration collects the renamed cookie.
+    /// </summary>
+    private sealed class CookieFilter(BrowserTestsElement element) : IEvidenceKeyFilter
+    {
+        public bool Include(string key)
+        {
+            if (key == null) return false;
+            var snapshot = element._snapshot;
+            if (snapshot == null)
+            {
+                // Before the first request, read the maps through the
+                // pipeline the element is in.
+                snapshot = element.GetSnapshot(element.Pipelines.FirstOrDefault());
+            }
+            return snapshot.EvidenceKeys.Contains(key);
+        }
+
+        public int? Order(string key) => Include(key) ? 0 : null;
+    }
+}
+
+/// <summary>
+/// Key map text (PHASE2-FORMATS): a "1|keymap" line, then one key=value
+/// line per entry. Several maps are unioned. A key two maps give different
+/// values for is dropped, so it is ignored like any unknown test, rather
+/// than counted against the wrong test. "$cookie" entries from every map
+/// are kept, numbered.
+/// </summary>
+internal static class KeyMapText
+{
+    public const string CookiePrefix = "$cookie";
+
+    public static Dictionary<string, string> Read(IEnumerable<string> texts, out int conflicts)
+    {
+        var map = new Dictionary<string, string>(StringComparer.Ordinal);
+        var dropped = new HashSet<string>(StringComparer.Ordinal);
+        var cookies = 0;
+        foreach (var text in texts)
+        {
+            var lines = (text ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            if (lines.Length == 0 || lines[0].TrimEnd('\r') != "1|keymap") continue;
+            foreach (var line in lines.Skip(1))
+            {
+                var at = line.IndexOf('=');
+                if (at <= 0) continue;
+                var key = line[..at];
+                var value = line[(at + 1)..].TrimEnd('\r');
+                if (key == CookiePrefix)
+                {
+                    map[CookiePrefix + (cookies++ == 0 ? "" : cookies.ToString())] = value;
+                    continue;
+                }
+                if (dropped.Contains(key)) continue;
+                if (map.TryGetValue(key, out var existing) && existing != value)
+                {
+                    map.Remove(key);
+                    dropped.Add(key);
+                    continue;
+                }
+                map[key] = value;
+            }
+        }
+        conflicts = dropped.Count;
+        return map;
+    }
 }
 
 /// <summary>
@@ -268,10 +422,24 @@ internal sealed class Baseline
 
 public class BrowserTestsElementBuilder(ILoggerFactory loggerFactory)
 {
+    private bool _detail;
+
+    /// <summary>
+    /// Publish the decoded measurements and the failing test ids in the
+    /// results. For the lab only: in production they would tell a forger
+    /// which answers to fix. Off by default.
+    /// </summary>
+    public BrowserTestsElementBuilder SetDetail(bool detail)
+    {
+        _detail = detail;
+        return this;
+    }
+
     public BrowserTestsElement Build() => new(
         loggerFactory.CreateLogger<BrowserTestsElement>(),
         (pipeline, element) => new BrowserTestsData(
-            loggerFactory.CreateLogger<ElementDataBase>(), pipeline));
+            loggerFactory.CreateLogger<ElementDataBase>(), pipeline),
+        _detail);
 }
 
 internal sealed class BrowserTestsData(ILogger<ElementDataBase> logger, IPipeline pipeline)

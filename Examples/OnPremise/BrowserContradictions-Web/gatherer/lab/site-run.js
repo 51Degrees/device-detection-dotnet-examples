@@ -48,7 +48,13 @@
   }
   const sep = path.includes('?') ? '&' : '?';
   await page.goto('http://localhost' + path + sep + 'label=' + encodeURIComponent(label), { waitUntil: 'load' });
-  await page.waitForFunction(() => document.title === 'reported' || document.title === 'done' || document.title === 'failed', null, { timeout: 30000 }).catch(() => {});
+  // The proof site loads itself a second time (pass 2), which ends a
+  // waitForFunction early, so wait again until the title says done.
+  const until = Date.now() + 40000;
+  while (Date.now() < until) {
+    const ok = await page.waitForFunction(() => document.title === 'reported' || document.title === 'done' || document.title === 'failed', null, { timeout: 5000 }).then(() => true, () => false);
+    if (ok) break;
+  }
   const out = await page.textContent(path.startsWith(':5180') ? '#out' : '#client');
   console.log(out.replace(/\s+/g, ' ').slice(0, 300));
   await browser.close();

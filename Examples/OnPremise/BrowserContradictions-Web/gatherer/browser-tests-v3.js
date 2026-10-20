@@ -53,7 +53,8 @@
 //           New Roman and monospace and size * 27 / 32 for sans-serif (a
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
-// A parameterised test's inputs are the array listed in INPUTS below. When
+// A parameterised test's inputs are the array its inputs function below
+// returns (metricsInputs, emojiInputs, tanhInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -77,12 +78,12 @@
         // V8's fdlibm port only for |x| below about 1.9.
         tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125]
     };
-    // The inputs each parameterised test consumes, in tag order.
-    var INPUTS = {
-        "f_metrics.1": function (p) { return [p.glyphs, p.size]; },
-        "f_emoji.1": function (p) { return [p.emoji, p.size]; },
-        "m_tanh.2": function (p) { return [p.tanh]; }
-    };
+    // The inputs each parameterised test consumes, in tag order. Plain
+    // functions rather than a table keyed by test id, so no test id is an
+    // object key the obfuscator would leave readable.
+    function metricsInputs(p) { return [p.glyphs, p.size]; }
+    function emojiInputs(p) { return [p.emoji, p.size]; }
+    function tanhInputs(p) { return [p.tanh]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -110,9 +111,9 @@
     }
 
     // The input tag for a parameterised test, or "" for the default inputs.
-    function tag(id, p) {
-        var used = JSON.stringify(INPUTS[id](p));
-        return used === JSON.stringify(INPUTS[id](DEFAULTS)) ? "" : "p" + fnv(used) + ":";
+    function tag(inputs, p) {
+        var used = JSON.stringify(inputs(p));
+        return used === JSON.stringify(inputs(DEFAULTS)) ? "" : "p" + fnv(used) + ":";
     }
 
     // Width of a string in a font, or 0 where the font is not present, by
@@ -147,7 +148,7 @@
     // Windows Chrome takes tanh from the platform's C runtime and Linux
     // Chrome from V8's own fdlibm port, so the last digit differs. Version
     // 1 had one separating input of eight.
-    s("m_tanh.2", function () { return tag("m_tanh.2", P) + vec(Math.tanh, P.tanh); });
+    s("m_tanh.2", function () { return tag(tanhInputs, P) + vec(Math.tanh, P.tanh); });
     s("m_expm1.1", function () { return vec(Math.expm1, [1e-10, 0.3, 2.5, 7.7, 0.0123, 13.37]); });
     s("m_sinh.1", function () { return vec(Math.sinh, MATHS_IN); });
     s("m_cbrt.1", function () { return vec(Math.cbrt, [2, 3, 7.7, 1e-5, 123.456]); });
@@ -234,11 +235,11 @@
     });
     s("f_emoji.1", function () {
         var c = canvas2d(); c.font = (P.size * 3) + "px sans-serif";
-        return tag("f_emoji.1", P) + P.emoji.map(function (e) { return round(c.measureText(e).width); }).join(",");
+        return tag(emojiInputs, P) + P.emoji.map(function (e) { return round(c.measureText(e).width); }).join(",");
     });
     s("f_metrics.1", function () {
         var c = canvas2d();
-        return tag("f_metrics.1", P) + metricFonts(P.size).map(function (f) {
+        return tag(metricsInputs, P) + metricFonts(P.size).map(function (f) {
             c.font = f; return round(c.measureText(P.glyphs).width);
         }).join(",");
     });
