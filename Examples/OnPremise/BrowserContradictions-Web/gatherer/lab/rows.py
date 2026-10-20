@@ -8,7 +8,7 @@ the factor line, then the sorted FNV-1a 64 hashes), and
 <out prefix>.ranges.txt, the version independent value names
 (browser|from-to|platform) the element reads the range from.
 
-Rows are written for active tests only. --deprecate treats the listed ids as
+Rows are written for active tests only, never for NO_ROWS. --deprecate treats the listed ids as
 deprecated, which is what Pearl does when the catalogue retires a test: no
 rows, so the elements stop counting it.
 
@@ -48,21 +48,28 @@ GENUINE = {
     # Wave 3 captures (C:/bc-data/v4/runs), 20 Oct 2026. Earlier waves used
     # the fin- and vr- labels. Chrome for Testing 148 and 150 give the engine
     # rows of their majors, branded Chrome the build flavour rows.
-    "Chrome|148|Windows": ["v4-win-cft148-headed", "fin-win-cft148-headed", "vr-chrome148"],
-    "Chrome|150|Windows": ["v4-win-cft150-headed", "fin-win-cft150-headed", "vr-chrome150"],
-    "Chrome|155|Windows": ["v4-win-chrome155-headed", "fin-win-chrome155-headed", "vr-chrome155"],
-    "Chrome|156|Windows": ["v4-win-chrome156-headed", "fin-win-chrome156-headed", "vr-chrome156"],
-    "Edge (Chromium) for Windows|155|Windows": ["v4-win-edge155-headed", "fin-win-edge155-headed"],
+    # The final hardening training set (C:/bc-data/v5/runs, v5-train-) is
+    # kept apart from its stress runs (v5-stress-, v5-extra-), which are
+    # never rows.
+    "Chrome|148|Windows": ["v5-train-cft148", "v4-win-cft148-headed", "fin-win-cft148-headed", "vr-chrome148"],
+    "Chrome|150|Windows": ["v5-train-cft150", "v4-win-cft150-headed", "fin-win-cft150-headed", "vr-chrome150"],
+    "Chrome|155|Windows": ["v5-train-chrome155", "v4-win-chrome155-headed", "fin-win-chrome155-headed", "vr-chrome155"],
+    "Chrome|156|Windows": ["v5-train-chrome156", "v4-win-chrome156-headed", "fin-win-chrome156-headed", "vr-chrome156"],
+    "Edge (Chromium) for Windows|155|Windows": ["v5-train-edge155", "v4-win-edge155-headed", "fin-win-edge155-headed"],
     # Headed only: headless Firefox measures text differently.
-    "Firefox|158|Windows": ["v4-win-firefox158-headed", "fin-win-firefox158-headed"],
+    "Firefox|158|Windows": ["v5-train-firefox158", "v4-win-firefox158-headed", "fin-win-firefox158-headed"],
     # Playwright's Linux Chromium is driven (Runtime enabled, IPC flooding
     # protection off), so from wave 3 it is automation, not a genuine Linux
     # browser. Kept for the earlier waves' runs only.
     "Chrome|141|Linux": ["fin-wsl-chromium141"],
 }
 # Label prefixes of Chrome for Testing runs, and the tests they give no rows for.
-FOR_TESTING = ("v4-win-cft", "fin-win-cft", "vr-chrome148", "vr-chrome150")
+FOR_TESTING = ("v5-train-cft", "v4-win-cft", "fin-win-cft", "vr-chrome148", "vr-chrome150")
 FLAVOUR = {"a_voices.2", "a_widevine.1", "g_renderer.2", "p_apis.1"}
+# Bad actor rules that never get baseline rows, whatever their status: lab
+# windows answer what a person never sends (s_offscreen.1 is "1h" or "1v"
+# for an off-screen lab window).
+NO_ROWS = {"s_offscreen.1"}
 INFERRED_ANY = [("Chrome", "macOS", "f_grid.2", "grid"), ("Chrome", "Linux", "f_grid.2", "grid")]
 RANGE_BELOW = 12
 
@@ -125,7 +132,7 @@ def load(runs, label):
 def build(runs, catalogue, deprecate=()):
     """Returns (rows, ranges, report, values, active) for the active tests."""
     tests = json.load(open(catalogue, encoding="utf-8"))["tests"]
-    active = {t["id"] for t in tests if t["status"] == "active"} - set(deprecate)
+    active = {t["id"] for t in tests if t["status"] == "active"} - set(deprecate) - NO_ROWS
     values, report = {}, []
     for claim, labels in GENUINE.items():
         rs = [x for label in labels for x in load(runs, label)]

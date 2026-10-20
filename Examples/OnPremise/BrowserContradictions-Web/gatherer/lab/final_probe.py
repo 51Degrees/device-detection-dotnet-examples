@@ -76,6 +76,14 @@ class Element:
 # listed. The claim follows the user agent: a HeadlessChrome user agent is
 # "Chrome Headless", a claim with no baseline, so Unknown.
 EXPECT = [
+    # Final hardening (C:/bc-data/v5/runs). Rows come from v5-train- only,
+    # so every v5-stress- and v5-extra- run is held out. Genuine browsers
+    # must be False whatever the start conditions.
+    ("v5-train-cft", "True"), ("v5-train-", "False"), ("v5-stress-", "False"),
+    # Protected content switched off refuses Widevine exactly as Chrome for
+    # Testing does: the one known false positive (a_widevine.1).
+    ("v5-extra-chrome155-noprotected", "True"), ("v5-extra-", "False"),
+    ("v5-forge-", "True"),
     # Chrome for Testing is an automation build, caught on purpose by the
     # build flavour tests (a_voices.2, a_widevine.1).
     ("v4-win-cft", "True"),
@@ -151,7 +159,7 @@ rows["GENUINE"].pop("Chrome|150|Windows")
 rows["GENUINE"].pop("Chrome|156|Windows")
 lines, ranges, _, _, _ = rows["build"](runs_dir, catalogue)
 rows["GENUINE"].update(saved)
-HOLD = ("v4-win-cft150", "v4-win-chrome156", "fin-win-cft150", "fin-win-chrome156", "vr-chrome150", "vr-chrome156")
+HOLD = ("v5-train-cft150", "v5-train-chrome156", "v5-stress-chrome156", "v4-win-cft150", "v4-win-chrome156", "fin-win-cft150", "fin-win-chrome156", "vr-chrome150", "vr-chrome156")
 held = [(l, d) for l, d in all_runs if l.startswith(HOLD)]
 print("\nranges without 150 and 156:", ", ".join(ranges))
 b = replay(Element(lines, ranges), "Scenario B: Chrome 150 and 156 held out", held,

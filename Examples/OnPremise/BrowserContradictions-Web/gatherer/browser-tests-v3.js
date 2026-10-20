@@ -8,8 +8,11 @@
 //   { version, results: { id: value }, done: [ids], elapsed }
 // Every id is "<name>.<version>" as listed in tests.json, and every value is
 // a string. A test that cannot run answers "na". A test that throws answers
-// "err". Synchronous tests run first, asynchronous ones race the budget, and
-// whatever has finished when the budget ends is what is sent.
+// "err". A test whose answer would depend on timing, loading or the site
+// (a late or blocked worker, a voice list still loading) answers null and
+// is left out of results, as is any test still running when the budget
+// ends: the element skips a test that is absent. Synchronous tests run
+// first, asynchronous ones race the budget.
 //
 // Changes from version 2: ids carry their test version, the tests
 // tests.json marks deprecated are no longer run, f_grid.1 and e_intlfmt.1
@@ -38,6 +41,20 @@
 // worker file on the site's own origin run only when params.swUrl names
 // it. The synchronous tests now run in slices with a yield between them,
 // after the asynchronous ones have started (see run).
+//
+// Final hardening, 20 October 2026, against false positives on genuine
+// browsers started from clean: a_voices.3 reports the platform's local
+// voices instead of the Google network voices, which a fresh profile can
+// lack for many seconds (a_voices.2 is retired, a_voices.3 is collecting
+// since it catches nothing, so a_widevine.1 alone tells Chrome for
+// Testing from branded Chrome). p_recorder.2 drops HEVC,
+// which depends on the GPU. A test whose answer depends on timing, loading
+// or the site now answers nothing (null) instead of "timeout" or a guess:
+// late answers, workers a Content Security Policy blocks, every key system
+// switched off (a_widevine.1 checks Clear Key), forced colours, and pages a
+// service worker, prefetch or cache delivered (p_navhop.2). Pixel tests ask
+// for a software canvas. s_offscreen.1 and s_uach.2 come from the stealth
+// study as collecting tests.
 //
 // run(budgetMs, params) also takes, beside the inputs below:
 //   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
@@ -91,9 +108,21 @@
     function str(v) { return v === undefined ? "undefined" : v === null ? "null" : String(v); }
     // A 2D context. Text measurement does not depend on the canvas size, so
     // only the tests that read pixels give one.
-    function canvas2d(w, h) { var c = document.createElement("canvas"); if (w) { c.width = w; c.height = h; } return c.getContext("2d"); }
+    // The tests that read pixels ask for willReadFrequently, which keeps the
+    // canvas in software: a GPU canvas rasterises text with different
+    // antialiasing, and the lab VM has no GPU while most visitors do.
+    function canvas2d(w, h) { var c = document.createElement("canvas"); if (w) { c.width = w; c.height = h; return c.getContext("2d", { willReadFrequently: true }); } return c.getContext("2d"); }
     function r3(x) { return String(Math.round(x * 1000) / 1000); }
-    function timeout(p, ms, v) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(v === undefined ? "timeout" : v); }, ms); })]); }
+    // A test that answers null (or undefined) has no answer: run leaves it
+    // out of the results, and the element skips a test that is absent.
+    // Anything that depends on timing or loading answers null rather than
+    // guess, so a slow, busy or hidden page is never read as a different
+    // browser. timeout gives null when the work is not done in time.
+    var LATE = {};
+    function timeout(p, ms) {
+        return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(LATE); }, ms); })])
+            .then(function (v) { return v === LATE ? null : v; });
+    }
     // Tests that need a service worker file, run only when params.swUrl is
     // set (see run).
     var SERVICE = {};
@@ -346,6 +375,9 @@
         return [zoneOffset(jan) === -jan.getTimezoneOffset(), zoneOffset(jul) === -jul.getTimezoneOffset(), strOff === -jan.getTimezoneOffset()]
             .map(function (b) { return b ? "1" : "0"; }).join("");
     });
+    // Collecting from 20 October 2026: V8 sizes the heap from the physical
+    // memory (a quarter of it, up to the cap), so a genuine browser on a
+    // machine with less than 16 GB answers a smaller limit than the lab.
     s("c_heap.1", function () { var m = performance.memory; return m ? str(m.jsHeapSizeLimit) : "na"; });
     // Proprietary codecs the build carries: open Chromium builds lack H.264
     // and AAC, Edge adds E-AC-3. Version 1 also asked for HEVC, which on
@@ -357,33 +389,54 @@
     });
 
     // ---- asynchronous -----------------------------------------------------
-    // The voice families the browser itself brings, not the voices the
-    // user installed: "g" and the number of Google network voices (branded
-    // Chrome), "e" and 1 when Microsoft's online voices are listed (Edge).
-    // Version 1 sent the whole list, which depends on the OS language packs
-    // and on when the local voices finish loading.
-    a("a_voices.2", function () {
-        if (!window.speechSynthesis) return Promise.resolve("na");
+    // The platform's own speech voices: "m1" when a local (localService)
+    // voice is a Microsoft one, "m0" when local voices are listed and none
+    // is. Windows always lists its SAPI voices (which ones depends on the
+    // language packs, so only the vendor is reported). Version 2 counted
+    // the Google network voices, which a fresh Chrome profile sometimes
+    // lists only after 12 s or more. Voices load asynchronously and the
+    // network ones arrive on their own, so this answers "m1" as soon as a
+    // local Microsoft voice is listed and gives no answer while no local
+    // voice is: such a list may still be loading. "m0" needs local voices
+    // and no Microsoft one for a further 2 s, since an extension's local
+    // voices could be listed before the platform's.
+    a("a_voices.3", function () {
+        if (!window.speechSynthesis || !speechSynthesis.getVoices) return Promise.resolve("na");
         return new Promise(function (res) {
-            var done = false;
-            function finish() {
-                if (done) return; done = true;
-                var vs = speechSynthesis.getVoices();
-                var google = vs.filter(function (v) { return !v.localService && /^Google[ \u00A0]/.test(v.name); }).length;
-                var edge = vs.some(function (v) { return !v.localService && /^Microsoft .*Online/.test(v.name); }) ? 1 : 0;
-                res("g" + google + "|e" + edge);
+            var timer = 0, polls = 0, other = 0;
+            function stop(v) { clearInterval(timer); speechSynthesis.removeEventListener("voiceschanged", check); res(v); }
+            function check() {
+                var local = speechSynthesis.getVoices().filter(function (v) { return v.localService; });
+                if (local.some(function (v) { return /^Microsoft /.test(v.name); })) return stop("m1");
+                if (local.length && !other) other = performance.now();
+                if (other && performance.now() - other >= 2000) return stop("m0");
+                if (++polls > 60) stop(null);
             }
-            if (speechSynthesis.getVoices().length) finish();
-            speechSynthesis.onvoiceschanged = finish; setTimeout(finish, 1500);
+            speechSynthesis.addEventListener("voiceschanged", check);
+            timer = setInterval(check, 500);
+            check();
         });
     });
+    // Whether the browser carries the Widevine CDM. Branded Chrome and Edge
+    // bundle it, Chrome for Testing and open Chromium builds do not. A
+    // refusal counts only when Clear Key, which every build has, still
+    // works: a browser with every key system switched off (Firefox with DRM
+    // off) gives no answer, as does a late answer. Chrome's own "Sites can
+    // play protected content" setting refuses Widevine alone, with the same
+    // error as a build without it, so a user who switched it off reads as
+    // Chrome for Testing (lab, 20 October 2026), a false positive no page
+    // can avoid without losing the Chrome for Testing catch.
     a("a_widevine.1", function () {
         if (!navigator.requestMediaKeySystemAccess) return Promise.resolve("na");
-        var cfg = [{ initDataTypes: ["cenc"], videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"', robustness: "SW_SECURE_DECODE" }] }];
-        return Promise.race([
-            navigator.requestMediaKeySystemAccess("com.widevine.alpha", cfg).then(function () { return "yes"; }, function (e) { return "no:" + e.name; }),
-            new Promise(function (r) { setTimeout(function () { r("timeout"); }, 2500); })
-        ]);
+        function ask(system, cfg) {
+            return navigator.requestMediaKeySystemAccess(system, cfg).then(function () { return "yes"; }, function (e) { return "no:" + e.name; });
+        }
+        return timeout(ask("com.widevine.alpha", [{ initDataTypes: ["cenc"], videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.42E01E"', robustness: "SW_SECURE_DECODE" }] }])
+            .then(function (v) {
+                if (v === "yes") return v;
+                return ask("org.w3.clearkey", [{ initDataTypes: ["webm"], videoCapabilities: [{ contentType: 'video/webm; codecs="vp8"' }] }])
+                    .then(function (c) { return c === "yes" ? v : null; });
+            }), 2500);
     });
     a("a_uachigh.1", function () {
         var u = navigator.userAgentData; if (!u || !u.getHighEntropyValues) return Promise.resolve("na");
@@ -442,7 +495,7 @@
     function dedicatedRealm() {
         if (realmCache.dw) return realmCache.dw;
         realmCache.dw = new Promise(function (res) {
-            if (typeof Worker === "undefined") return res(null);
+            if (typeof Worker === "undefined") return res("na");
             try {
                 var url = blobUrl("onmessage=function(e){postMessage((" + realmSig.toString() + ")(self,e.data))}");
                 var w = new Worker(url);
@@ -456,7 +509,7 @@
     function sharedRealm() {
         if (realmCache.sh) return realmCache.sh;
         realmCache.sh = new Promise(function (res) {
-            if (typeof SharedWorker === "undefined") return res(null);
+            if (typeof SharedWorker === "undefined") return res("na");
             try {
                 var url = blobUrl("onconnect=function(e){var p=e.ports[0];p.onmessage=function(m){p.postMessage((" + realmSig.toString() + ")(self,m.data))}}");
                 var w = new SharedWorker(url);
@@ -472,7 +525,7 @@
     function serviceRealm() {
         if (realmCache.svc) return realmCache.svc;
         realmCache.svc = new Promise(function (res) {
-            if (!OPT.swUrl || !navigator.serviceWorker) return res(null);
+            if (!OPT.swUrl || !navigator.serviceWorker) return res("na");
             navigator.serviceWorker.register(OPT.swUrl).then(function (reg) {
                 var worker = reg.active || reg.waiting || reg.installing;
                 var ch = new MessageChannel();
@@ -484,16 +537,22 @@
         return realmCache.svc;
     }
     function mainSig() { return realmSig(window, REALM_K); }
+    // A realm promise gives the realm's fields, "na" when the browser has
+    // no such worker, or null when the worker failed to start or answer: a
+    // site's Content Security Policy can block blob: workers, so a failure
+    // says nothing about the browser and the test gives no answer.
     // One digit per compared field: 1 where the page and the other realm
     // disagree.
     function mismatch(main, other) {
-        if (!other || !other.slice) return "na";
+        if (other === "na") return "na";
+        if (!other || !other.slice) return null;
         var m = "";
         for (var i = 0; i < REPLAY_FIELDS; i++) m += main[i] === other[i] ? "0" : "1";
         return m;
     }
     function generics(sig) {
-        if (!sig || !sig.slice) return "na";
+        if (sig === "na") return "na";
+        if (!sig || !sig.slice) return null;
         return sig.slice(GENERIC_FROM).map(function (x) { return x === "noc" ? x : r3(Number(x)); }).join(",");
     }
 
@@ -506,13 +565,13 @@
     // between realms.
     a("a_wkreplay.1", function () { return dedicatedRealm().then(function (d) { return mismatch(mainSig(), d); }); });
     a("a_shreplay.1", function () { return sharedRealm().then(function (d) { return mismatch(mainSig(), d); }); });
-    sw("a_svcreplay.1", function () { return timeout(serviceRealm(), 4000, "late").then(function (d) { return d === "late" ? "timeout" : mismatch(mainSig(), d); }); });
+    sw("a_svcreplay.1", function () { return timeout(serviceRealm(), 4000).then(function (d) { return mismatch(mainSig(), d); }); });
     // Generic families in a shared or service worker. Those realms have no
     // document font settings, so on Windows every generic but system-ui
     // falls to the platform default face, while fontconfig on Linux keeps
     // serif, sans-serif and monospace apart.
     a("a_shfonts.1", function () { return sharedRealm().then(generics); });
-    sw("a_svcfonts.1", function () { return timeout(serviceRealm(), 4000, "late").then(function (d) { return d === "late" ? "timeout" : generics(d); }); });
+    sw("a_svcfonts.1", function () { return timeout(serviceRealm(), 4000).then(generics); });
     // The same generic widths in the page, through OffscreenCanvas.
     s("f_pagegeneric.1", function () { return generics(mainSig()); });
 
@@ -726,9 +785,12 @@
     // MediaRecorder container and codec support. Recording H.264 and AAC
     // in MP4 goes through the platform encoders, so this is the encode side
     // of what c_codecs.2 asks of the decoders.
-    s("p_recorder.1", function () {
+    // Version 2 leaves out HEVC (hvc1), which Chrome records only through
+    // a hardware encoder: the lab VM has no GPU and answered 0, a visitor
+    // with a recent GPU answers 1.
+    s("p_recorder.2", function () {
         if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "na";
-        return ["video/mp4;codecs=avc1,mp4a.40.2", "audio/mp4;codecs=mp4a.40.2", "video/mp4;codecs=avc1,opus", "audio/mp4;codecs=opus", "video/mp4;codecs=hvc1",
+        return ["video/mp4;codecs=avc1,mp4a.40.2", "audio/mp4;codecs=mp4a.40.2", "video/mp4;codecs=avc1,opus", "audio/mp4;codecs=opus",
             "video/x-matroska;codecs=avc1", "video/webm;codecs=av1", "video/mp4;codecs=av01", "audio/webm;codecs=pcm", "video/mp4;codecs=vp9"]
             .map(function (m) { return MediaRecorder.isTypeSupported(m) ? "1" : "0"; }).join("");
     });
@@ -749,7 +811,10 @@
         "ButtonBorder", "GrayText", "Mark", "MarkText", "AccentColor", "AccentColorText", "SelectedItem", "SelectedItemText", "-webkit-focus-ring-color"];
     var SYS_OLD = ["ActiveBorder", "ActiveCaption", "AppWorkspace", "Background", "ButtonHighlight", "ButtonShadow", "CaptionText", "InactiveBorder", "InactiveCaption",
         "InactiveCaptionText", "InfoBackground", "InfoText", "Menu", "MenuText", "Scrollbar", "ThreeDDarkShadow", "ThreeDFace", "ThreeDHighlight", "ThreeDLightShadow", "ThreeDShadow", "Window", "WindowFrame", "WindowText"];
+    // In forced colours mode (a Windows contrast theme) every system colour
+    // is the user's theme colour, so the tests give no answer.
     function sysColors(names, scheme) {
+        if (window.matchMedia && matchMedia("(forced-colors: active)").matches) return null;
         var b = box();
         return names.map(function (n) {
             if (window.CSS && CSS.supports && !CSS.supports("color", n)) return "x";
@@ -845,9 +910,9 @@
                 var url = blobUrl("onmessage=function(){var d=0,b=0,k=0;function f(){d++;f()}function go(){d=0;try{f()}catch(e){}if(d>b)b=d;if(++k<12)setTimeout(go,0);else postMessage(b)}go()}");
                 var w = new Worker(url);
                 w.onmessage = function (e) { res(String(e.data)); w.terminate(); URL.revokeObjectURL(url); };
-                w.onerror = function () { res("err"); };
+                w.onerror = function () { res(null); };
                 w.postMessage(0);
-            } catch (e) { res("err"); }
+            } catch (e) { res(null); }
         }), 3000);
     });
     // Navigation rate limiting: 300 replaceState calls in a fresh frame.
@@ -859,7 +924,7 @@
             var f = document.createElement("iframe"); f.style.cssText = "position:absolute;left:-10000px;width:10px;height:10px;visibility:hidden";
             document.body.appendChild(f);
             var h, applied = 0, threw = "-";
-            try { h = f.contentWindow.history; } catch (e) { document.body.removeChild(f); return res("na"); }
+            try { h = f.contentWindow.history; } catch (e) { document.body.removeChild(f); return res(null); }
             for (var i = 1; i <= 300; i++) {
                 try { h.replaceState({ n: i }, ""); if (h.state && h.state.n === i) applied++; }
                 catch (e) { if (threw === "-") threw = i + ":" + e.name; }
@@ -869,10 +934,13 @@
         });
     });
     // A document a driver served by route fulfil has no protocol but a
-    // transfer size.
+    // transfer size (Patchright delivers init scripts that way). A page a
+    // service worker answered, a prefetched or prerendered page and one
+    // from a cache can also lack the protocol, so they give no answer.
     s("p_navhop.2", function () {
         var n = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
         if (!n) return "na";
+        if ((navigator.serviceWorker && navigator.serviceWorker.controller) || n.workerStart > 0 || n.deliveryType || n.activationStart > 0) return null;
         return n.nextHopProtocol === "" && n.transferSize > 0 ? "1" : "0";
     });
     // Pointer and touch, for phone claims and emulation.
@@ -894,6 +962,34 @@
     // never is. The other three flags depend on the window mode and the
     // taskbar settings.
     s("c_screen800.1", function () { return screen.width === 800 && screen.height === 600 ? "1" : "0"; });
+    // Window entirely outside its own screen while the page is visible:
+    // "1v". Chrome marks a genuine window that is off every screen as
+    // occluded and the page hidden ("1h"), so "1v" needs
+    // --disable-backgrounding-occluded-windows, which headed stealth stacks
+    // pass. A bad actor rule, not baseline rows: lab windows sit off screen
+    // and answer 1h (or 1v with that flag), which a person never sends.
+    s("s_offscreen.1", function () {
+        var l = screen.availLeft || 0, t = screen.availTop || 0;
+        var out = screenX + outerWidth <= l || screenY + outerHeight <= t || screenX >= l + screen.availWidth || screenY >= t + screen.availHeight;
+        return (out ? "1" : "0") + document.visibilityState.charAt(0);
+    });
+    // The user agent against client hints: whether the brand the user agent
+    // names is listed at its major ("1", "v" other version, "0" missing, "e"
+    // no brands), "h" for a HeadlessChrome brand, then whether the high
+    // entropy hints are filled (platform version, architecture, bitness)
+    // and the form factors. A --user-agent switch replaces the string and
+    // leaves the high entropy hints empty: "1-|---|".
+    a("s_uach.2", function () {
+        var u = navigator.userAgentData; if (!u || !u.getHighEntropyValues) return Promise.resolve("na");
+        var m = /(?:Chrome|HeadlessChrome)\/(\d+)/.exec(navigator.userAgent);
+        var claim = /Edg\//.test(navigator.userAgent) ? "Microsoft Edge" : /HeadlessChrome/.test(navigator.userAgent) ? "HeadlessChrome" : "Google Chrome";
+        var mine = u.brands.filter(function (b) { return b.brand === claim; })[0];
+        var flags = (u.brands.length === 0 ? "e" : mine ? (m && mine.version === m[1] ? "1" : "v") : "0") +
+            (u.brands.some(function (b) { return b.brand === "HeadlessChrome"; }) ? "h" : "-");
+        return u.getHighEntropyValues(["platformVersion", "architecture", "bitness", "formFactors"]).then(function (h) {
+            return flags + "|" + (h.platformVersion ? "p" : "-") + (h.architecture || "-") + (h.bitness || "-") + "|" + (h.formFactors ? h.formFactors.join(",") : "-");
+        }, function () { return null; });
+    });
 
     // Runs every test. The asynchronous tests start first, since most of
     // their work happens off the page's main thread (workers, encoders, the
@@ -916,7 +1012,7 @@
         var later = Object.keys(ASYNC).concat(params.swUrl ? Object.keys(SERVICE) : []);
         var pending = pick(later).map(function (n) {
             var t0 = performance.now(), f = ASYNC[n] || SERVICE[n];
-            return Promise.resolve().then(function () { return f(); }).then(function (v) { results[n] = str(v); }, function () { results[n] = "err"; })
+            return Promise.resolve().then(function () { return f(); }).then(function (v) { if (v !== null && v !== undefined) results[n] = str(v); }, function () { results[n] = "err"; })
                 .then(function () { timing[n] = Math.round(performance.now() - t0); done.push(n); });
         });
         var queue = pick(Object.keys(SYNC));
@@ -927,7 +1023,7 @@
                 var s0 = performance.now();
                 while (queue.length && performance.now() - s0 < SLICE_MS) {
                     var n = queue.shift(), t0 = performance.now();
-                    try { results[n] = str(SYNC[n]()); } catch (e) { results[n] = "err"; }
+                    try { var v = SYNC[n](); if (v !== null && v !== undefined) results[n] = str(v); } catch (e) { results[n] = "err"; }
                     timing[n] = Math.round(performance.now() - t0); done.push(n);
                 }
                 if (queue.length) yieldThen(slice);

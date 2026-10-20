@@ -7,7 +7,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: a real one second AAC encode. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: 47/16397/2. CloakBrowser's Windows persona error:OperationError (claims the encoder, cannot use it), Linux and the other personas NotSupportedError, Firefox NotSupportedError. Risk: Windows N editions. Patch cost high (needs a real AAC encoder)."
+      "note": "Wave 3 lab, 20 Oct 2026: a real one second AAC encode. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: 47/16397/2. CloakBrowser's Windows persona error:OperationError (claims the encoder, cannot use it), Linux and the other personas NotSupportedError, Firefox NotSupportedError. Risk: Windows N editions. Patch cost high (needs a real AAC encoder). Final hardening, 20 Oct 2026: a late encode gives no answer instead of timeout. Same 47/16397/2 in every genuine Chromium run, including a CPU cap that made the whole run 11 to 14 s."
     },
     {
       "id": "a_aacrules.1",
@@ -31,7 +31,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: 300 history.replaceState calls in a fresh frame. Every genuine Chromium 200|-, including --headless=new without a driver, Firefox 199|-. Every Puppeteer, Playwright and CloakBrowser run 300|- (--disable-ipc-flooding-protection). Patch cost trivial for a custom launcher (drop the flag)."
+      "note": "Wave 3 lab, 20 Oct 2026: 300 history.replaceState calls in a fresh frame. Every genuine Chromium 200|-, including --headless=new without a driver, Firefox 199|-. Every Puppeteer, Playwright and CloakBrowser run 300|- (--disable-ipc-flooding-protection). Patch cost trivial for a custom launcher (drop the flag). Final hardening, 20 Oct 2026: an unreachable frame gives no answer instead of na. 200|- after a reload in the same tab too (each run uses a fresh frame)."
     },
     {
       "id": "a_keyboard.1",
@@ -55,7 +55,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: generic family widths in a shared worker, which has no document font settings. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: every generic but system-ui falls to Arial (283.34). Linux and CloakBrowser keep serif, sans-serif and monospace apart. Firefox inherits page settings (its own claim). Blob URL, so it needs no file on the site. About 350 ms, off the main thread. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: generic family widths in a shared worker, which has no document font settings. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: every generic but system-ui falls to Arial (283.34). Linux and CloakBrowser keep serif, sans-serif and monospace apart. Firefox inherits page settings (its own claim). Blob URL, so it needs no file on the site. About 350 ms, off the main thread. Patch cost medium. Final hardening, 20 Oct 2026: as a_wkreplay.1, a shared worker that fails gives no answer instead of na."
     },
     {
       "id": "a_shreplay.1",
@@ -63,7 +63,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the same against a shared worker. Every genuine browser all zeros. Linux claiming Windows through CDP 10000000000001 (real user agent and brands leak), every CloakBrowser 00000000000110. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: the same against a shared worker. Every genuine browser all zeros. Linux claiming Windows through CDP 10000000000001 (real user agent and brands leak), every CloakBrowser 00000000000110. Patch cost medium. Final hardening, 20 Oct 2026: as a_wkreplay.1, a shared worker that fails gives no answer instead of na."
     },
     {
       "id": "a_spcflag.1",
@@ -71,7 +71,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: Secure Payment Confirmation built in. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: on. Linux, Linux claiming Windows and every CloakBrowser persona including macOS and Windows: off (unavailable-feature-not-enabled). Firefox na. Patch cost low (one feature flag), CloakBrowser 146 has not done it."
+      "note": "Wave 3 lab, 20 Oct 2026: Secure Payment Confirmation built in. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: on. Linux, Linux claiming Windows and every CloakBrowser persona including macOS and Windows: off (unavailable-feature-not-enabled). Firefox na. Patch cost low (one feature flag), CloakBrowser 146 has not done it. Final hardening, 20 Oct 2026: a late answer gives no answer instead of timeout (its 4 s limit ran inside the budget on slow devices)."
     },
     {
       "id": "a_svcfonts.1",
@@ -108,10 +108,18 @@
     {
       "id": "a_voices.2",
       "family": "media",
-      "status": "active",
+      "status": "deprecated",
       "introduced": "2026-10-19",
+      "retired": "2026-10-20",
+      "note": "Built in voice families: g<Google network voices>|e<Microsoft online voices>. Branded Chrome 155 and 156 g19|e0 in 16 of 16 gatherer runs, Edge 155 g0|e1, Firefox g0|e0. Chrome for Testing, Linux Chromium and every Puppeteer or Playwright run g0|e0, every CloakBrowser persona g3|e0. Chrome --headless=new with no driver passes. Build flavour, not version: Chrome for Testing captures give no rows for it. Risk: Google voices load asynchronously, one 4 s probe outside the gatherer saw none. Patch cost low: list 19 fake voices. Retired 20 Oct 2026, final hardening: a fresh Chrome 155 profile sometimes listed no Google network voices for more than 12 s, and 4 of 10 visible genuine runs gave True (Low) on this test alone. Replaced by a_voices.3. The Chrome for Testing catch now rests on a_widevine.1."
+    },
+    {
+      "id": "a_voices.3",
+      "family": "media",
+      "status": "collecting",
+      "introduced": "2026-10-20",
       "retired": null,
-      "note": "Built in voice families: g<Google network voices>|e<Microsoft online voices>. Branded Chrome 155 and 156 g19|e0 in 16 of 16 gatherer runs, Edge 155 g0|e1, Firefox g0|e0. Chrome for Testing, Linux Chromium and every Puppeteer or Playwright run g0|e0, every CloakBrowser persona g3|e0. Chrome --headless=new with no driver passes. Build flavour, not version: Chrome for Testing captures give no rows for it. Risk: Google voices load asynchronously, one 4 s probe outside the gatherer saw none. Patch cost low: list 19 fake voices."
+      "note": "Final hardening, 20 Oct 2026: the platform's local voices. m1 when a local (localService) voice is a Microsoft one, m0 when local voices are listed and none is for 2 s, no answer while no local voice is listed (the list may still be loading), never a timeout value. m1 in every one of 90 genuine Windows runs (Chrome 155 and 156, Edge 155, Firefox 158, Chrome for Testing 148 and 150, fresh profiles, hidden, unfocused, reloaded, DPR 1 to 2, CPU capped), answered in 72 to 4758 ms. Collecting, not active: it is deterministic but catches nothing in the lab (CloakBrowser's windows persona, Puppeteer and Patchright answer m1, Linux Chromium in WSL lists no voices and gives no answer), and it does not separate Chrome for Testing, which lists the same SAPI voices."
     },
     {
       "id": "a_webgpu.1",
@@ -135,7 +143,7 @@
       "status": "active",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "EME Widevine access. yes for branded Chrome 155 and 156, Edge 155 and Firefox. no for Chrome for Testing, Linux Chromium, every CloakBrowser persona and every Playwright run (Puppeteer with branded Chrome passes). Build flavour: Chrome for Testing captures give no rows for it. Risk: users who block protected content."
+      "note": "EME Widevine access. yes for branded Chrome 155 and 156, Edge 155 and Firefox. no for Chrome for Testing, Linux Chromium, every CloakBrowser persona and every Playwright run (Puppeteer with branded Chrome passes). Build flavour: Chrome for Testing captures give no rows for it. Risk: users who block protected content. Final hardening, 20 Oct 2026: a late answer is no answer (was timeout, which Firefox sent while it fetches its CDM), and a refusal counts only while Clear Key works, so a browser with every key system off gives no answer. Chrome's own setting Sites can play protected content refuses Widevine alone with the same error as a build without the CDM (both Unsupported keySystem or supportedConfigurations., Clear Key still yes), so a genuine user who switched it off reads True, as in the lab run v5-extra-chrome155-noprotected. That is the known false positive kept for the Chrome for Testing catch, which no other active test makes now that a_voices.2 is retired."
     },
     {
       "id": "a_wkreplay.1",
@@ -143,7 +151,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: page against dedicated worker mismatch bitmask over 14 identity fields. Every genuine browser and every driver 00000000000000. Every CloakBrowser persona and seed 00000000000110 (text noise differs between realms). The source sent to the worker names nothing but its arguments, so it survives obfuscation. Patch cost medium (patch every realm alike)."
+      "note": "Wave 3 lab, 20 Oct 2026: page against dedicated worker mismatch bitmask over 14 identity fields. Every genuine browser and every driver 00000000000000. Every CloakBrowser persona and seed 00000000000110 (text noise differs between realms). The source sent to the worker names nothing but its arguments, so it survives obfuscation. Patch cost medium (patch every realm alike). Final hardening, 20 Oct 2026: a worker that fails to start or answer gives no answer instead of na. A site Content Security Policy that blocks blob: workers (lab ?csp=1) made all three worker tests absent, not different."
     },
     {
       "id": "a_worker.1",
@@ -188,10 +196,10 @@
     {
       "id": "c_heap.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "performance.memory.jsHeapSizeLimit. Windows Chrome 148 to 156 and Edge 155 all 4395630592. Linux Chromium 141 4294705152, every CloakBrowser persona 4294967296 (spoofed round value), headless shell 3760000000. Risk: V8 sizes the heap from physical memory, so machines under 16 GB answer other values that the crowd must supply. Patch cost trivial."
+      "note": "performance.memory.jsHeapSizeLimit. Windows Chrome 148 to 156 and Edge 155 all 4395630592. Linux Chromium 141 4294705152, every CloakBrowser persona 4294967296 (spoofed round value), headless shell 3760000000. Risk: V8 sizes the heap from physical memory, so machines under 16 GB answer other values that the crowd must supply. Patch cost trivial. Collecting from 20 Oct 2026, final hardening: V8 sizes the heap from physical memory (a quarter of it up to the cap), so a genuine Windows Chrome on a machine with less than 16 GB answers a smaller limit than the lab's 32 GB VM. Node 22 in a cgroup capped at 4, 8 and 12 GB answered 2197815296 against 4345298944 unconstrained on the same host. Every forgery it caught is caught by many other tests."
     },
     {
       "id": "c_lang.1",
@@ -279,7 +287,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the 23 deprecated CSS system colours. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ (ActiveCaption, ButtonFace). Risk: high contrast themes change it. Patch cost low (Blink colour table)."
+      "note": "Wave 3 lab, 20 Oct 2026: the 23 deprecated CSS system colours. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ (ActiveCaption, ButtonFace). Risk: high contrast themes change it. Patch cost low (Blink colour table). Final hardening, 20 Oct 2026: no answer in forced colours mode (a Windows contrast theme gives the user's colours, lab run with --force-high-contrast). Unchanged with --force-dark-mode, since the test sets color-scheme light."
     },
     {
       "id": "c_timer.1",
@@ -415,7 +423,7 @@
       "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: deepest recursion in a dedicated worker, most of 12 attempts each in its own task. Exact per V8 build: Chrome 155 10608, Beta 156 10612, Edge 155 10613, Chrome for Testing 150 10613, 148 6368, Linux Chromium 141 and CloakBrowser 146 6376. Firefox varies by about 40. Six attempts in one task sometimes gave the unoptimised depth. Per major only."
+      "note": "Wave 3 lab, 20 Oct 2026: deepest recursion in a dedicated worker, most of 12 attempts each in its own task. Exact per V8 build: Chrome 155 10608, Beta 156 10612, Edge 155 10613, Chrome for Testing 150 10613, 148 6368, Linux Chromium 141 and CloakBrowser 146 6376. Firefox varies by about 40. Six attempts in one task sometimes gave the unoptimised depth. Per major only. Final hardening, 20 Oct 2026: a worker that fails or is late gives no answer instead of err or timeout."
     },
     {
       "id": "f_calibrishape.1",
@@ -423,7 +431,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the same grid for Calibri. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ, Firefox on Windows differs (rasteriser alone). Risk: Windows images without Calibri give a second genuine value. Patch cost high."
+      "note": "Wave 3 lab, 20 Oct 2026: the same grid for Calibri. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ, Firefox on Windows differs (rasteriser alone). Risk: Windows images without Calibri give a second genuine value. Patch cost high. Final hardening, 20 Oct 2026: software canvas as f_segoeshape.1, values unchanged."
     },
     {
       "id": "f_core.1",
@@ -599,7 +607,7 @@
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: 16x16 ink grid of 8 Segoe UI glyphs at 160 px, on canvas so the display scale plays no part. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Every Linux and CloakBrowser capture differs (35 of 2048 bits with the genuine file in the candidate lab, 254 without it). Risk: a Segoe UI update in a Windows release changes it, expect a value per Windows build. Patch cost high (ship the rasteriser)."
+      "note": "Wave 3 lab, 20 Oct 2026: 16x16 ink grid of 8 Segoe UI glyphs at 160 px, on canvas so the display scale plays no part. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Every Linux and CloakBrowser capture differs (35 of 2048 bits with the genuine file in the candidate lab, 254 without it). Risk: a Segoe UI update in a Windows release changes it, expect a value per Windows build. Patch cost high (ship the rasteriser). Final hardening, 20 Oct 2026: the canvas asks for willReadFrequently, which keeps it in software, since a GPU canvas antialiases text differently and the lab VM has no GPU. Values unchanged in the lab."
     },
     {
       "id": "f_segoevar.3",
@@ -812,18 +820,26 @@
     {
       "id": "p_navhop.2",
       "family": "identity",
-      "status": "collecting",
+      "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: document served by route fulfil. 0 in every capture here, 1 only for Playwright route.fulfill in the candidate lab."
+      "note": "Wave 3 lab, 20 Oct 2026: document served by route fulfil. 0 in every capture here, 1 only for Playwright route.fulfill in the candidate lab. Active from 20 Oct 2026 (stealth study): 1 for Patchright with any addInitScript (it delivers init scripts by fulfilling the document through a route), 2 of 2 stealth runs and 1 of 1 final run. 0 in every genuine run: 90 final Windows runs, 12 stealth genuine runs (app and tab windows, real mouse input), every v4 capture. A page a service worker controls, one delivered by prefetch or from a cache (deliveryType set) and a prerendered one give no answer, since they can lack the protocol for innocent reasons. Only fires when the operator uses init scripts. Needs a Chromium change to fix."
     },
     {
       "id": "p_recorder.1",
       "family": "media",
+      "status": "deprecated",
+      "introduced": "2026-10-20",
+      "retired": "2026-10-20",
+      "note": "Wave 3 lab, 20 Oct 2026: MediaRecorder.isTypeSupported over ten containers and codecs. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: 1111011111. Linux 0001001111, every CloakBrowser 0011011111, Firefox 0000000000. Kept beside c_codecs.2: that one asks the decoders and catches open Chromium builds, this one asks the encoders and also catches every CloakBrowser persona. Patch cost low. Retired 20 Oct 2026, final hardening: video/mp4;codecs=hvc1 records only through a hardware HEVC encoder. The lab VM has no GPU and answered 0, a visitor with a recent GPU answers 1. Replaced by p_recorder.2."
+    },
+    {
+      "id": "p_recorder.2",
+      "family": "media",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: MediaRecorder.isTypeSupported over ten containers and codecs. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: 1111011111. Linux 0001001111, every CloakBrowser 0011011111, Firefox 0000000000. Kept beside c_codecs.2: that one asks the decoders and catches open Chromium builds, this one asks the encoders and also catches every CloakBrowser persona. Patch cost low."
+      "note": "Final hardening, 20 Oct 2026: p_recorder.1 without HEVC (nine containers and codecs). 111111111 in every genuine Chromium run (Chrome 155, 156, Edge 155, Chrome for Testing 148 and 150, 82 runs under every start condition), Firefox 000000000. CloakBrowser's windows persona 001111111, Linux Chromium claiming Windows differs too. Risk: Windows N editions without Media Foundation. Patch cost low."
     },
     {
       "id": "p_rtdebug.1",
@@ -848,6 +864,22 @@
       "introduced": "2026-10-13",
       "retired": null,
       "note": "navigator.webdriver and driver globals. false|0|0 for every genuine run and every CloakBrowser persona, true for every Puppeteer and Playwright run with default options (headless, headed, shell). Version independent. Catches plain automation only. Patch cost trivial."
+    },
+    {
+      "id": "s_offscreen.1",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-20",
+      "retired": null,
+      "note": "Final hardening, 20 Oct 2026, from the stealth study: window entirely outside its own screen while the page is visible. A BAD ACTOR RULE, NOT BASELINE ROWS: fail on 1v only. Genuine off-screen windows are occluded and hidden (1h), on-screen people answer 0v, and every headed stealth stack passing --disable-backgrounding-occluded-windows answered 1v. Lab windows sit off screen and answer 1h or, with BC_VISIBLE, 1v, which a person never sends, so lab captures must never become rows (rows.py NO_ROWS) and the rule needs human captures (multi-monitor edges) before it is used."
+    },
+    {
+      "id": "s_uach.2",
+      "family": "identity",
+      "status": "collecting",
+      "introduced": "2026-10-20",
+      "retired": null,
+      "note": "Final hardening, 20 Oct 2026, from the stealth study: the user agent's brand and major against client hints, and whether the high entropy hints are filled. A --user-agent switch leaves them empty: 1-|---| for every headless stack with a swapped user agent (nodriver, Patchright, Puppeteer and Playwright best practice). Genuine Chrome 155, 156 and Edge 155 1-|px8664|Desktop in every run. Chrome for Testing 0-|px8664|Desktop (its brand is not Google Chrome). Collecting until a Pearl rule can say empty high entropy hints with a Chrome user agent. Fix for the operator: Emulation.setUserAgentOverride with userAgentMetadata."
     }
   ]
 }

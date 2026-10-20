@@ -35,10 +35,22 @@ into baseline rows, and replays or drives browsers against the proof site.
   request carries the cookie). `BC_VISIBLE=1` adds
   `--disable-backgrounding-occluded-windows`: Chrome otherwise treats the
   off screen window as hidden, throttles its timers and the tests take 15
-  to 50 seconds. `auto-run.js` drives the same
+  to 50 seconds. Clean start conditions: `BC_EXTRA` adds switches
+  (`--force-device-scale-factor=1.25`), `BC_PREFS` seeds the fresh
+  profile's Preferences (a user setting), `BC_CPU_RATE=800` runs the
+  browser in a job object capped at 8% of the machine through
+  `slow-launch.ps1` (about 4x slower on 6 logical processors, nothing the
+  page can see), and `BC_CPU=4` uses DevTools throttling instead (which
+  sets navigator.webdriver, through --remote-debugging-port). The lab page
+  takes `?reload=1` (runs once, reloads, stores the second run) and
+  `?csp=1` (a Content Security Policy that blocks blob: workers), and
+  stores the page's visibility and focus with each run. `auto-run.js` drives the same
   page through Puppeteer or Playwright with their default options
   (`NODE_PATH` pointing at puppeteer-core and playwright-core).
 - `rows.py <runs> <tests.json> <out prefix> [--deprecate ids]`: baseline
+  rows. NO_ROWS lists bad actor rules that never get rows (s_offscreen.1).
+  The final hardening rows come from the `v5-train-` runs only, so the
+  `v5-stress-` and `v5-extra-` runs replay as held out captures. Baseline
   payload version 2 rows from genuine runs, active tests only, with a noise
   filter for tests that disagree within one browser build, version
   independent `*` rows and their range names. Chrome for Testing runs give

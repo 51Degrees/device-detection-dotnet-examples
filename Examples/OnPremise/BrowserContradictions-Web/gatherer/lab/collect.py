@@ -22,8 +22,14 @@ var params = q.get("params") ? JSON.parse(q.get("params")) : {};
 params.timing = true;
 if (q.get("sw")) params.swUrl = "/browser-tests-sw.js";
 if (q.get("only")) params.only = q.get("only").split(",");
+// ?reload=1 runs the gatherer once, reloads the page in the same tab and
+// stores only the second run, the page reload case.
+var reload = q.get("reload") && !sessionStorage.getItem("bc-reloaded");
+var vis0 = document.visibilityState, focus0 = document.hasFocus();
 window.__51dBrowserTests.run(Number(q.get("budget")) || 4000, params).then(function (r) {
+  if (reload) { sessionStorage.setItem("bc-reloaded", "1"); location.reload(); return new Promise(function () { }); }
   r.label = label; r.gen = Number(r.version || 2); r.params = params; r.dpr = devicePixelRatio; r.ua = navigator.userAgent; r.when = new Date().toISOString();
+  r.page = { reloaded: !!sessionStorage.getItem("bc-reloaded"), vis: vis0 + ">" + document.visibilityState, focus: focus0 + ">" + document.hasFocus() };
   return fetch("/collect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(r) })
     .then(function () { document.getElementById("out").textContent = "done " + label + " " + r.done.length + " tests " + r.elapsed + "ms"; document.title = "done"; });
 }).catch(function (e) { document.getElementById("out").textContent = "failed " + e; document.title = "failed"; });
@@ -75,6 +81,10 @@ class H(BaseHTTPRequestHandler):
             body = MATHS.encode(); self.send_response(200); self.send_header("Content-Type", "text/html")
         else:
             body = PAGE.encode(); self.send_response(200); self.send_header("Content-Type", "text/html")
+            # ?csp=1: a site whose Content Security Policy allows workers
+            # from its own origin only, so the gatherer's blob: workers fail.
+            if "csp=1" in self.path:
+                self.send_header("Content-Security-Policy", "worker-src 'self'")
         self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
 
     def do_POST(self):
