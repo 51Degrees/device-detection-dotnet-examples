@@ -27,6 +27,24 @@
 // uses inputs that each separate Windows from Linux, m_atanh.1 is retired
 // m_libm.1 is new and c_codecs.2 leaves out HEVC.
 //
+// Wave 3, 20 October 2026: the candidate tests the lab promoted join here
+// (platform font code, genuine Microsoft font files, worker realms, the
+// platform AAC encoder, Secure Payment Confirmation, system colours and
+// automation residue), with the lab's per major and supporting candidates
+// as collecting tests. c_screen800.1 is the 800 x 600 rule of
+// c_winframe.1 on its own. p_rtdebug.1 (Runtime domain residue) and
+// e_wkdepth.1 (worker recursion depth, per V8 build) come from the timing
+// study. f_segoevar.3 drops the Display family. Tests that need a service
+// worker file on the site's own origin run only when params.swUrl names
+// it. The synchronous tests now run in slices with a yield between them,
+// after the asynchronous ones have started (see run).
+//
+// run(budgetMs, params) also takes, beside the inputs below:
+//   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
+//           turns on the service worker tests
+//   only    an array of ids to run, for the lab
+//   timing  true adds { id: ms } as "timing" to the answer, for the lab
+//
 // Parameterised inputs. params is optional and every field defaults to the
 // value version 2 used:
 //   glyphs  the string f_metrics and f_grid measure
@@ -70,7 +88,16 @@
     function s(id, f) { SYNC[id] = f; }
     function a(id, f) { ASYNC[id] = f; }
     function str(v) { return v === undefined ? "undefined" : v === null ? "null" : String(v); }
-    function canvas2d() { return document.createElement("canvas").getContext("2d"); }
+    // A 2D context. Text measurement does not depend on the canvas size, so
+    // only the tests that read pixels give one.
+    function canvas2d(w, h) { var c = document.createElement("canvas"); if (w) { c.width = w; c.height = h; } return c.getContext("2d"); }
+    function r3(x) { return String(Math.round(x * 1000) / 1000); }
+    function timeout(p, ms, v) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(v === undefined ? "timeout" : v); }, ms); })]); }
+    // Tests that need a service worker file, run only when params.swUrl is
+    // set (see run).
+    var SERVICE = {};
+    function sw(id, f) { SERVICE[id] = f; }
+    var OPT = {};
     function round(x) { return Number(x).toPrecision(17); }
     function vec(f, xs) { return xs.map(function (x) { return round(f(x)); }).join(","); }
 
@@ -364,19 +391,556 @@
         });
     });
 
-    function run(budgetMs, params) {
-        var started = performance.now();
-        P = {};
-        Object.keys(DEFAULTS).forEach(function (k) { P[k] = params && params[k] !== undefined ? params[k] : DEFAULTS[k]; });
-        var results = {}; var done = [];
-        Object.keys(SYNC).forEach(function (n) { try { results[n] = str(SYNC[n]()); } catch (e) { results[n] = "err"; } done.push(n); });
-        var pending = Object.keys(ASYNC).map(function (n) {
-            return Promise.resolve().then(function () { return ASYNC[n](); }).then(function (v) { results[n] = str(v); done.push(n); }, function () { results[n] = "err"; done.push(n); });
+    // ==== wave 3 tests (lab evidence in tests.json notes) ==================
+
+    // A hidden box for DOM text measurements, out of view and out of the
+    // flow. run() takes it out of the page once the synchronous tests ran.
+    var lab = null;
+    function box() {
+        if (!lab || !lab.parentNode) {
+            lab = document.createElement("div");
+            lab.style.cssText = "position:absolute;left:-10000px;top:0;visibility:hidden;white-space:nowrap;contain:layout";
+            document.body.appendChild(lab);
+        }
+        return lab;
+    }
+    function spanW(text, css) {
+        var b = box(); var sp = document.createElement("span"); sp.style.cssText = css; sp.textContent = text;
+        b.appendChild(sp); var w = sp.getBoundingClientRect().width; b.removeChild(sp); return w;
+    }
+    var NOFONT = "'zz-none-zz'";
+
+    // ---- worker realms ----------------------------------------------------
+    // realmSig runs in the page and, sent as source text, in a dedicated
+    // worker, a shared worker and a service worker. It uses nothing but its
+    // arguments: g is the realm's global object and K the strings it needs,
+    // sent along with the source. An obfuscated script renames the script's
+    // own names and moves string literals into a table no worker has, so
+    // the function must not name either. Answers a list of fields: the
+    // first REPLAY_FIELDS are compared between realms, the rest are generic
+    // family widths from OffscreenCanvas.
+    var REALM_K = ["2d", "40px ", "mmmiii@@WW", "noc", "nouad", "/", ";", ":", "Arial", "'Times New Roman'",
+        "serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "math"];
+    function realmSig(g, K) {
+        var n = g.navigator, c = null, out = [], u = n.userAgentData;
+        try { c = new g.OffscreenCanvas(10, 10).getContext(K[0]); } catch (e) { c = null; }
+        function w(f) { if (!c) return K[3]; c.font = K[1] + f; return String(c.measureText(K[2]).width); }
+        out.push(n.userAgent, n.platform, String(n.hardwareConcurrency), String(n.deviceMemory), (n.languages || []).join(K[5]), n.language,
+            g.Intl.DateTimeFormat().resolvedOptions().timeZone, String(new g.Date(2026, 0, 15).getTimezoneOffset()),
+            g.Math.tanh(0.7).toPrecision(17), g.Math.atanh(0.5).toPrecision(17), g.Math.expm1(0.3).toPrecision(17),
+            w(K[8]), w(K[9]),
+            u ? u.platform + K[5] + u.mobile + K[5] + u.brands.map(function (b) { return b.brand + K[7] + b.version; }).join(K[6]) : K[4],
+            w(K[10]), w(K[11]), w(K[12]), w(K[13]), w(K[14]), w(K[15]), w(K[16]));
+        return out;
+    }
+    var REPLAY_FIELDS = 14;
+    var GENERIC_FROM = 14;
+
+    function blobUrl(src) { return URL.createObjectURL(new Blob([src], { type: "text/javascript" })); }
+    var realmCache = {};
+    function dedicatedRealm() {
+        if (realmCache.dw) return realmCache.dw;
+        realmCache.dw = new Promise(function (res) {
+            if (typeof Worker === "undefined") return res(null);
+            try {
+                var url = blobUrl("onmessage=function(e){postMessage((" + realmSig.toString() + ")(self,e.data))}");
+                var w = new Worker(url);
+                w.onmessage = function (e) { res(e.data); w.terminate(); URL.revokeObjectURL(url); };
+                w.onerror = function () { res(null); };
+                w.postMessage(REALM_K);
+            } catch (e) { res(null); }
         });
-        var budget = new Promise(function (r) { setTimeout(r, budgetMs || 3000); });
-        return Promise.race([Promise.all(pending), budget]).then(function () {
-            return { version: "3", results: results, done: done, elapsed: Math.round(performance.now() - started) };
+        return realmCache.dw;
+    }
+    function sharedRealm() {
+        if (realmCache.sh) return realmCache.sh;
+        realmCache.sh = new Promise(function (res) {
+            if (typeof SharedWorker === "undefined") return res(null);
+            try {
+                var url = blobUrl("onconnect=function(e){var p=e.ports[0];p.onmessage=function(m){p.postMessage((" + realmSig.toString() + ")(self,m.data))}}");
+                var w = new SharedWorker(url);
+                w.port.onmessage = function (e) { res(e.data); w.port.close(); URL.revokeObjectURL(url); };
+                w.onerror = function () { res(null); };
+                w.port.postMessage(REALM_K);
+            } catch (e) { res(null); }
+        });
+        return realmCache.sh;
+    }
+    // The service worker file (browser-tests-sw.js) evaluates the source it
+    // is sent, so the test logic stays here and the file never changes.
+    function serviceRealm() {
+        if (realmCache.svc) return realmCache.svc;
+        realmCache.svc = new Promise(function (res) {
+            if (!OPT.swUrl || !navigator.serviceWorker) return res(null);
+            navigator.serviceWorker.register(OPT.swUrl).then(function (reg) {
+                var worker = reg.active || reg.waiting || reg.installing;
+                var ch = new MessageChannel();
+                ch.port1.onmessage = function (e) { res(e.data); };
+                function go() { (reg.active || worker).postMessage({ src: realmSig.toString(), k: REALM_K }, [ch.port2]); }
+                if (reg.active) go(); else worker.addEventListener("statechange", function () { if (worker.state === "activated") go(); });
+            }, function () { res(null); });
+        });
+        return realmCache.svc;
+    }
+    function mainSig() { return realmSig(window, REALM_K); }
+    // One digit per compared field: 1 where the page and the other realm
+    // disagree.
+    function mismatch(main, other) {
+        if (!other || !other.slice) return "na";
+        var m = "";
+        for (var i = 0; i < REPLAY_FIELDS; i++) m += main[i] === other[i] ? "0" : "1";
+        return m;
+    }
+    function generics(sig) {
+        if (!sig || !sig.slice) return "na";
+        return sig.slice(GENERIC_FROM).map(function (x) { return x === "noc" ? x : r3(Number(x)); }).join(",");
+    }
+
+    // Worker scope replay: which fields differ between the page and a
+    // dedicated or a shared worker. A user agent override from a driver,
+    // and JavaScript injected into the page, do not reach every realm: a
+    // Playwright user agent override leaves the dedicated worker's
+    // platform, and a shared worker escapes the page's emulation entirely.
+    // CloakBrowser's text noise makes its OffscreenCanvas widths differ
+    // between realms.
+    a("a_wkreplay.1", function () { return dedicatedRealm().then(function (d) { return mismatch(mainSig(), d); }); });
+    a("a_shreplay.1", function () { return sharedRealm().then(function (d) { return mismatch(mainSig(), d); }); });
+    sw("a_svcreplay.1", function () { return timeout(serviceRealm(), 4000, "late").then(function (d) { return d === "late" ? "timeout" : mismatch(mainSig(), d); }); });
+    // Generic families in a shared or service worker. Those realms have no
+    // document font settings, so on Windows every generic but system-ui
+    // falls to the platform default face, while fontconfig on Linux keeps
+    // serif, sans-serif and monospace apart.
+    a("a_shfonts.1", function () { return sharedRealm().then(generics); });
+    sw("a_svcfonts.1", function () { return timeout(serviceRealm(), 4000, "late").then(function (d) { return d === "late" ? "timeout" : generics(d); }); });
+    // The same generic widths in the page, through OffscreenCanvas.
+    s("f_pagegeneric.1", function () { return generics(mainSig()); });
+
+    // ---- fonts: platform font code ---------------------------------------
+    // Quoted 'sans', 'serif' and 'monospace' are family names, not generic
+    // families. Only fontconfig answers them, through its alias rules: on
+    // Windows and macOS no family has those names.
+    s("f_quotedalias.1", function () {
+        var t = "mmmmmlllliiiWW00@@#", fb = spanW(t, "font-size:40px;font-family:" + NOFONT);
+        return ["sans", "serif", "monospace", "Sans", "Mono", "sans-serif"].map(function (q) {
+            return spanW(t, "font-size:40px;font-family:'" + q + "', " + NOFONT) === fb ? "0" : "1";
+        }).join("");
+    });
+    // Text field average character width, from the font's own metrics
+    // through the platform scaler (DirectWrite or FreeType), rounded to half
+    // a pixel because the exact width moves with the display scale.
+    function inputW(font, n) {
+        var b = box(); var i = document.createElement("input"); i.size = n;
+        i.style.cssText = "padding:0;border:0;margin:0;font:" + font; b.appendChild(i);
+        var w = i.getBoundingClientRect().width; b.removeChild(i); return w;
+    }
+    s("f_inputavg.2", function () {
+        return ["Arial", "Times New Roman", "Calibri", "Tahoma"].map(function (f) {
+            var font = "16px '" + f + "'";
+            return String(Math.round((inputW(font, 101) - inputW(font, 1)) / 50) / 2);
+        }).join(",");
+    });
+    // Which named face each generic family resolves to in the page.
+    var GENMAP = [["serif", ["Times New Roman", "DejaVu Serif", "Liberation Serif", "Times"]], ["sans-serif", ["Arial", "DejaVu Sans", "Liberation Sans", "Helvetica"]],
+        ["monospace", ["Consolas", "Courier New", "DejaVu Sans Mono", "Liberation Mono", "Menlo"]], ["cursive", ["Comic Sans MS", "Apple Chancery"]],
+        ["fantasy", ["Impact", "Papyrus"]], ["system-ui", ["Segoe UI", "DejaVu Sans", "Ubuntu", "Cantarell", "Helvetica Neue"]],
+        ["math", ["Cambria Math", "STIX Two Math", "Latin Modern Math"]], ["emoji", ["Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji"]]];
+    s("f_genericmap.1", function () {
+        var t = "mmmmmlllliiiWW00@@#";
+        var fb = spanW(t, "font-size:40px;font-family:" + NOFONT);
+        return GENMAP.map(function (p) {
+            var g = spanW(t, "font-size:40px;font-family:" + p[0]);
+            for (var i = 0; i < p[1].length; i++) if (spanW(t, "font-size:40px;font-family:'" + p[1][i] + "', " + NOFONT) === g) return p[1][i];
+            return g === fb ? "default" : "?" + r3(g);
+        }).join(";");
+    });
+    // The fallback face for symbols and scripts the primary font lacks.
+    var FALLBACK = [
+        ["\u265E", ["Segoe UI Symbol", "Segoe UI Emoji", "MS Gothic", "DejaVu Sans", "Noto Sans Symbols 2"]],
+        ["\u2713", ["Segoe UI Symbol", "Segoe UI Emoji", "MS Gothic", "Arial", "DejaVu Sans"]],
+        ["\u2318", ["Segoe UI Symbol", "Segoe UI Emoji", "MS Gothic", "DejaVu Sans"]],
+        ["\u10D0\u10D1\u10D2", ["Sylfaen", "Segoe UI", "DejaVu Sans", "Noto Sans Georgian"]],
+        ["\u0531\u0532\u0533", ["Segoe UI", "Sylfaen", "DejaVu Sans", "Noto Sans Armenian"]],
+        ["\u2600\u2602", ["Segoe UI Symbol", "Segoe UI Emoji", "MS Gothic", "DejaVu Sans"]],
+        ["\u2190\u21D2", ["Segoe UI Symbol", "Arial", "Times New Roman", "MS Gothic", "DejaVu Sans"]],
+        ["\u0915\u093F", ["Nirmala UI", "Mangal", "Noto Sans Devanagari"]],
+        ["\u1E9E\u0180", ["Segoe UI", "Arial", "Times New Roman", "Calibri", "DejaVu Sans"]]];
+    s("f_fallback.1", function () {
+        return FALLBACK.map(function (t) {
+            var base = spanW(t[0], "font-size:40px;font-family:" + NOFONT);
+            for (var i = 0; i < t[1].length; i++) if (spanW(t[0], "font-size:40px;font-family:'" + t[1][i] + "', " + NOFONT) === base) return t[1][i];
+            return "?" + r3(base);
+        }).join(";");
+    });
+
+    // ---- fonts: genuine Microsoft files -----------------------------------
+    // Glyph outline signature. Each glyph is drawn large, cropped to its ink
+    // box and reduced to a 16 x 16 grid of cells that are more than half
+    // ink, so raster and hinting differences mostly vanish and the outline
+    // decides. Canvas, so the display scale plays no part.
+    function glyphBits(font, ch) {
+        var S = 240, c = canvas2d(S, S); c.font = font; c.fillStyle = "#000"; c.textBaseline = "alphabetic"; c.fillText(ch, 20, 180);
+        var d = c.getImageData(0, 0, S, S).data, x0 = S, y0 = S, x1 = -1, y1 = -1, x, y;
+        for (y = 0; y < S; y++) for (x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3] >= 128) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0) return "empty";
+        var N = 16, bits = "", bw = (x1 - x0 + 1) / N, bh = (y1 - y0 + 1) / N;
+        for (var gy = 0; gy < N; gy++) for (var gx = 0; gx < N; gx++) {
+            var ink = 0, tot = 0;
+            for (y = Math.floor(y0 + gy * bh); y < Math.floor(y0 + (gy + 1) * bh) || y === Math.floor(y0 + gy * bh); y++)
+                for (x = Math.floor(x0 + gx * bw); x < Math.floor(x0 + (gx + 1) * bw) || x === Math.floor(x0 + gx * bw); x++) { tot++; if (d[(y * S + x) * 4 + 3] >= 128) ink++; }
+            bits += ink * 2 > tot ? "1" : "0";
+        }
+        var hex = ""; for (var i = 0; i < bits.length; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
+        return (x1 - x0 + 1) + "x" + (y1 - y0 + 1) + ":" + hex;
+    }
+    var SHAPE_GLYPHS = ["g", "@", "&", "\u00DF", "\u0105", "\u0436", "R", "3"];
+    s("f_segoeshape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
+    s("f_calibrishape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px Calibri", ch); }).join("|"); });
+    // Exact small size raster of Segoe UI. DirectWrite and FreeType differ
+    // even with the same file, but ClearType tuning may move it too.
+    s("f_segoeraster.1", function () {
+        var c = canvas2d(200, 24); c.font = "13px 'Segoe UI'"; c.fillStyle = "#000"; c.fillText("Segoe UI 0123 g\u00DF@&", 2, 17);
+        var d = c.getImageData(0, 0, 200, 24).data, alpha = ""; for (var i = 3; i < d.length; i += 4) alpha += String.fromCharCode(d[i]);
+        return fnv(alpha);
+    });
+    // Segoe UI Variable, Windows 11 only. The value is the shape of the width
+    // curve over weights: "<" where the next setting is wider, "=" where it
+    // renders the same. Chrome on Windows snaps font-weight to the named
+    // instances and ignores font-variation-settings, Firefox and FreeType
+    // follow the axes.
+    function curve(ws) { var o = ""; for (var i = 1; i < ws.length; i++) o += Math.abs(ws[i] - ws[i - 1]) < 0.05 ? "=" : ws[i] > ws[i - 1] ? "<" : ">"; return o; }
+    var VAR_TEXT = "Variable weight 0123 Wwg";
+    function varPresent(f) { return spanW(VAR_TEXT, "font-size:40px;font-family:" + f + ", " + NOFONT) !== spanW(VAR_TEXT, "font-size:40px;font-family:" + NOFONT); }
+    // Each width is measured in its own task: the first use of each weight
+    // of a variable font builds a new platform font, which took up to 150
+    // ms per family headed and 850 ms under 4x CPU throttling, too long for
+    // one task. stepwise runs each step in its own task and resolves with
+    // their answers, and familyCurves answers one curve per family, or
+    // "absent" where the family is not installed.
+    function stepwise(steps) {
+        return new Promise(function (res) {
+            var out = [], ch = new MessageChannel();
+            function next() {
+                try { out.push(steps[out.length]()); } catch (e) { out.push(NaN); }
+                if (out.length < steps.length) ch.port2.postMessage(0); else { ch.port1.close(); res(out); }
+            }
+            ch.port1.onmessage = next;
+            next();
         });
     }
-    window.__51dBrowserTests = { run: run, names: Object.keys(SYNC).concat(Object.keys(ASYNC)), defaults: DEFAULTS };
+    function familyCurves(fams, settings, cssOf) {
+        var out = [], i = 0;
+        function one() {
+            if (i >= fams.length) return Promise.resolve(out.join("|"));
+            var f = fams[i++];
+            return stepwise([function () { return varPresent(f); }].concat(settings.map(function (v) { return function () { return spanW(VAR_TEXT, cssOf(f, v)); }; })))
+                .then(function (r) { out.push(r[0] ? curve(r.slice(1)) : "absent"); return one(); });
+        }
+        return one();
+    }
+    // Version 3 leaves out Segoe UI Variable Display, which answered as
+    // Text did everywhere and cost a third of the time.
+    a("f_segoevar.3", function () {
+        return familyCurves(["'Segoe UI Variable Text'", "'Segoe UI Variable'"], [300, 350, 400, 450, 500, 600, 700], function (f, wg) {
+            return "font-size:40px;font-weight:" + wg + ";font-family:" + f;
+        });
+    });
+    a("f_segoevaraxis.2", function () {
+        return familyCurves(["'Segoe UI Variable Text'", "'Segoe UI Variable'"], ["'wght' 300", "'wght' 350", "'wght' 400", "'wght' 450", "'wght' 500", "'wght' 650", "'wght' 700"], function (f, v) {
+            return "font-size:40px;font-family:" + f + ";font-variation-settings:" + v;
+        });
+    });
+    // Glyphs newer than the 2002 Core Fonts: rupee, ruble and lira. "1" when
+    // the face itself has the glyph.
+    s("f_newglyphs.2", function () {
+        return ["Arial", "Times New Roman", "Courier New"].map(function (f) {
+            return ["\u20B9", "\u20BD", "\u20BA"].map(function (ch) {
+                var x = spanW(ch, "font-size:100px;font-family:'" + f + "', 'Segoe UI Symbol', 'DejaVu Sans'");
+                var y = spanW(ch, "font-size:100px;font-family:'" + f + "', 'Courier New', 'DejaVu Sans Mono'");
+                return Math.abs(x - y) < 0.05 ? "1" : "0";
+            }).join("");
+        }).join("|");
+    });
+    // Kerning pairs: width with kerning minus width without.
+    var PAIRS = ["AV", "AT", "AY", "LT", "To", "Te", "Ty", "Wa", "Yo", "VA", "P.", "F,", "r.", "y.", "Av", "LY", "Tr", "Kv", "\"A", "Fe"];
+    s("f_kerning.1", function () {
+        var c = canvas2d(); if (!("fontKerning" in c)) return "na";
+        return ["Calibri", "Arial", "Segoe UI", "Times New Roman"].map(function (f) {
+            c.font = "100px '" + f + "'";
+            return PAIRS.map(function (p) { c.fontKerning = "normal"; var k = c.measureText(p).width; c.fontKerning = "none"; return r3(k - c.measureText(p).width); }).join(",");
+        }).join("|");
+    });
+    // OpenType features: "+", "-" or "0" for the width change when a feature
+    // is switched on.
+    s("f_otfeatures.2", function () {
+        var t = "Small Caps 0123456789 Office", base;
+        return [["Calibri", ["smcp", "c2sc", "onum", "lnum", "pnum", "tnum", "ss01"]], ["Cambria", ["smcp", "onum", "tnum"]], ["Segoe UI", ["smcp", "ss01", "tnum", "case"]]].map(function (p) {
+            base = spanW(t, "font-size:40px;font-family:'" + p[0] + "'");
+            return p[1].map(function (f) {
+                var d = spanW(t, "font-size:40px;font-family:'" + p[0] + "';font-feature-settings:'" + f + "' 1") - base;
+                return d > 0.5 ? "+" : d < -0.5 ? "-" : "0";
+            }).join("");
+        }).join("|");
+    });
+    // Vertical metrics from canvas: the font's ascent and descent as the
+    // platform scaler reports them, and the ink box of "Hg".
+    var VFONTS = ["Arial", "Times New Roman", "Segoe UI", "Calibri", "Consolas", "Cambria"];
+    s("f_vmetrics.1", function () {
+        var c = canvas2d(); c.font = "100px Arial"; if (c.measureText("x").fontBoundingBoxAscent === undefined) return "na";
+        return VFONTS.map(function (f) {
+            c.font = "100px '" + f + "'"; var m = c.measureText("Hg");
+            return r3(m.fontBoundingBoxAscent) + "/" + r3(m.fontBoundingBoxDescent) + "/" + r3(m.actualBoundingBoxAscent) + "/" + r3(m.actualBoundingBoxDescent);
+        }).join(",");
+    });
+
+    // ---- media and platform features -------------------------------------
+    // AAC through the platform encoder. Chromium allows it on Windows, macOS
+    // and Android only, and on Windows only at four bitrates and 1, 2 or 6
+    // channels. One digit per configuration.
+    a("a_aacrules.1", function () {
+        if (typeof AudioEncoder === "undefined") return Promise.resolve("na");
+        var cfgs = [96000, 100000, 128000, 320000].map(function (b) { return { codec: "mp4a.40.2", sampleRate: 48000, numberOfChannels: 2, bitrate: b }; })
+            .concat([1, 6, 4].map(function (ch) { return { codec: "mp4a.40.2", sampleRate: 48000, numberOfChannels: ch }; }));
+        return Promise.all(cfgs.map(function (cfg) {
+            return AudioEncoder.isConfigSupported(cfg).then(function (r) { return r.supported ? "1" : "0"; }, function () { return "E"; });
+        })).then(function (x) { return x.join(""); });
+    });
+    // A real one second AAC encode: chunks, bytes and the decoder
+    // description length. A build that claims AAC support without the
+    // platform encoder fails here.
+    a("a_aacencode.1", function () {
+        return timeout(new Promise(function (res) {
+            if (typeof AudioEncoder === "undefined") return res("na");
+            var chunks = 0, bytes = 0, desc = "-";
+            var enc = new AudioEncoder({
+                output: function (ch, m) { chunks++; bytes += ch.byteLength; if (m && m.decoderConfig && desc === "-") desc = m.decoderConfig.description ? String(m.decoderConfig.description.byteLength) : "0"; },
+                error: function (e) { res("error:" + e.name); }
+            });
+            try { enc.configure({ codec: "mp4a.40.2", sampleRate: 48000, numberOfChannels: 2, bitrate: 128000 }); } catch (e) { return res("cfg:" + e.name); }
+            var n = 48000, buf = new Float32Array(n * 2);
+            for (var i = 0; i < n; i++) { buf[i] = buf[n + i] = Math.sin(i / 10) * 0.3; }
+            try { enc.encode(new AudioData({ format: "f32-planar", sampleRate: 48000, numberOfFrames: n, numberOfChannels: 2, timestamp: 0, data: buf })); } catch (e) { return res("enc:" + e.name); }
+            enc.flush().then(function () { res(chunks + "/" + bytes + "/" + desc); try { enc.close(); } catch (e) { } }, function (e) { res("flush:" + e.name); });
+        }), 5000);
+    });
+    // MediaRecorder container and codec support. Recording H.264 and AAC
+    // in MP4 goes through the platform encoders, so this is the encode side
+    // of what c_codecs.2 asks of the decoders.
+    s("p_recorder.1", function () {
+        if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) return "na";
+        return ["video/mp4;codecs=avc1,mp4a.40.2", "audio/mp4;codecs=mp4a.40.2", "video/mp4;codecs=avc1,opus", "audio/mp4;codecs=opus", "video/mp4;codecs=hvc1",
+            "video/x-matroska;codecs=avc1", "video/webm;codecs=av1", "video/mp4;codecs=av01", "audio/webm;codecs=pcm", "video/mp4;codecs=vp9"]
+            .map(function (m) { return MediaRecorder.isTypeSupported(m) ? "1" : "0"; }).join("");
+    });
+    // Secure Payment Confirmation is built for Windows, macOS and Android
+    // only. "off" only for unavailable-feature-not-enabled, which no
+    // Windows or macOS Chrome answers. The other answers depend on Windows
+    // Hello and on how the browser was launched, so they all read "on".
+    a("a_spcflag.1", function () {
+        if (typeof PaymentRequest === "undefined" || !PaymentRequest.securePaymentConfirmationAvailability) return Promise.resolve("na");
+        return timeout(PaymentRequest.securePaymentConfirmationAvailability().then(function (v) { return v === "unavailable-feature-not-enabled" ? "off" : "on"; },
+            function (e) { return "E:" + e.name; }), 4000);
+    });
+    // Shape detection APIs, shipped on macOS, ChromeOS and Android only.
+    s("p_shapedetect.1", function () { return [typeof window.BarcodeDetector, typeof window.FaceDetector, typeof window.TextDetector].map(function (t) { return t.charAt(0); }).join(""); });
+
+    // ---- CSS system colours ----------------------------------------------
+    var SYS_MODERN = ["ActiveText", "LinkText", "VisitedText", "Canvas", "CanvasText", "Field", "FieldText", "Highlight", "HighlightText", "ButtonFace", "ButtonText",
+        "ButtonBorder", "GrayText", "Mark", "MarkText", "AccentColor", "AccentColorText", "SelectedItem", "SelectedItemText", "-webkit-focus-ring-color"];
+    var SYS_OLD = ["ActiveBorder", "ActiveCaption", "AppWorkspace", "Background", "ButtonHighlight", "ButtonShadow", "CaptionText", "InactiveBorder", "InactiveCaption",
+        "InactiveCaptionText", "InfoBackground", "InfoText", "Menu", "MenuText", "Scrollbar", "ThreeDDarkShadow", "ThreeDFace", "ThreeDHighlight", "ThreeDLightShadow", "ThreeDShadow", "Window", "WindowFrame", "WindowText"];
+    function sysColors(names, scheme) {
+        var b = box();
+        return names.map(function (n) {
+            if (window.CSS && CSS.supports && !CSS.supports("color", n)) return "x";
+            var e = document.createElement("div"); e.style.setProperty("color-scheme", scheme); e.style.setProperty("color", n); b.appendChild(e);
+            var v = getComputedStyle(e).color; b.removeChild(e);
+            return v.replace(/rgba?\(|\)| /g, "");
+        }).join(";");
+    }
+    s("c_activetext.1", function () { return sysColors(["ActiveText", "LinkText", "VisitedText"], "light"); });
+    s("c_syscolors.1", function () { return sysColors(SYS_MODERN, "light"); });
+    s("c_syscolorsdark.1", function () { return sysColors(SYS_MODERN, "dark"); });
+    // The deprecated system colours, which Blink takes from its own per
+    // platform tables.
+    s("c_sysold.1", function () { return sysColors(SYS_OLD, "light"); });
+
+    // ---- version surface -------------------------------------------------
+    function ownNames(o) { try { return Object.getOwnPropertyNames(o).sort(); } catch (e) { return []; } }
+    var PROTOS = ["Navigator", "Document", "HTMLElement", "Element", "Node", "Window", "HTMLMediaElement", "CanvasRenderingContext2D", "HTMLInputElement", "ShadowRoot", "Performance", "Response", "Request"];
+    s("e_surfprotos.1", function () {
+        var all = [];
+        var counts = PROTOS.map(function (k) { var c = window[k]; if (!c || !c.prototype) return "-"; var n = ownNames(c.prototype); all.push(k + ":" + n.join(",")); return String(n.length); });
+        return counts.join(",") + "|" + fnv(all.join(";"));
+    });
+    // Interface constructors on the global, without page or extension globals.
+    s("e_surfglobals.1", function () {
+        var g = ownNames(window).filter(function (k) {
+            if (!/^[A-Z]/.test(k)) return false;
+            var d = Object.getOwnPropertyDescriptor(window, k);
+            return d && typeof d.value === "function" && /\[native code\]/.test(Function.prototype.toString.call(d.value));
+        });
+        return g.length + "|" + fnv(g.join(","));
+    });
+    s("e_surfcss.1", function () {
+        var cs = getComputedStyle(document.documentElement), n = [];
+        for (var i = 0; i < cs.length; i++) n.push(cs[i]);
+        n.sort();
+        return n.length + "|" + fnv(n.join(","));
+    });
+    s("e_intllists.1", function () {
+        if (!Intl.supportedValuesOf) return "na";
+        var all = [];
+        var c = ["calendar", "collation", "currency", "numberingSystem", "timeZone", "unit"].map(function (k) {
+            try { var v = Intl.supportedValuesOf(k); all.push(v.join(",")); return String(v.length); } catch (e) { return "E"; }
+        });
+        return c.join(",") + "|" + fnv(all.join(";"));
+    });
+
+    // ---- automation residue -----------------------------------------------
+    // Runtime.enable residue: an attached inspector session formats logged
+    // errors, which runs Error.prepareStackTrace and reads the error's name,
+    // and previews a proxy prototype. Value: prepareStackTrace calls, name
+    // reads and ownKeys traps.
+    s("p_cdprt.1", function () {
+        var had = Object.prototype.hasOwnProperty.call(Error, "prepareStackTrace"), orig = Error.prepareStackTrace, calls = 0, reads = 0, own = 0;
+        Error.prepareStackTrace = function (e, st) { calls++; return orig ? orig(e, st) : String(e); };
+        try {
+            console.debug(new Error("51d"));
+            var e2 = new Error("51d"); Object.defineProperty(e2, "name", { configurable: true, get: function () { reads++; return "Error"; } });
+            console.debug(e2);
+            var t = new Proxy({}, { ownKeys: function (x) { own++; return Reflect.ownKeys(x); } });
+            console.groupEnd(Object.create(t));
+        } finally { if (had) Error.prepareStackTrace = orig; else delete Error.prepareStackTrace; }
+        return calls + "|" + reads + "|" + own;
+    });
+    // Runtime domain residue, the stronger form found by the timing study:
+    // an Error whose prototype carries a stack getter is logged. Only an
+    // inspector client that called Runtime.enable (Puppeteer, Playwright,
+    // most stealth stacks, or open DevTools) formats it and reads the
+    // getter. Value: getter reads.
+    s("p_rtdebug.1", function () {
+        var hit = 0, e = new Error("51d");
+        try { delete e.stack; } catch (x) { }
+        var proto = Object.create(Error.prototype);
+        Object.defineProperty(proto, "stack", { configurable: true, get: function () { hit++; return ""; } });
+        Object.setPrototypeOf(e, proto);
+        console.debug(e);
+        return String(hit);
+    });
+    // The deepest recursion a dedicated worker allows, the most of twelve
+    // attempts, each in its own task so the optimised code V8 compiles in
+    // the background is in place from the second attempt (six attempts in
+    // one task sometimes answered the unoptimised depth). Workers get a
+    // fixed 500 KB stack on every desktop OS, so this is exact per V8
+    // build and tells the engine version, not the OS: Chrome 155 10608,
+    // Chrome 148 6368 in the lab. The worker source is a plain string, so
+    // obfuscation cannot reach it.
+    a("e_wkdepth.1", function () {
+        return timeout(new Promise(function (res) {
+            if (typeof Worker === "undefined") return res("na");
+            try {
+                var url = blobUrl("onmessage=function(){var d=0,b=0,k=0;function f(){d++;f()}function go(){d=0;try{f()}catch(e){}if(d>b)b=d;if(++k<12)setTimeout(go,0);else postMessage(b)}go()}");
+                var w = new Worker(url);
+                w.onmessage = function (e) { res(String(e.data)); w.terminate(); URL.revokeObjectURL(url); };
+                w.onerror = function () { res("err"); };
+                w.postMessage(0);
+            } catch (e) { res("err"); }
+        }), 3000);
+    });
+    // Navigation rate limiting: 300 replaceState calls in a fresh frame.
+    // Chromium ignores calls past 200 in 10 s unless launched with
+    // --disable-ipc-flooding-protection, which Puppeteer, Playwright and
+    // CloakBrowser pass. Value: applied count, first throw index and name.
+    a("a_ipcflood.1", function () {
+        return new Promise(function (res) {
+            var f = document.createElement("iframe"); f.style.cssText = "position:absolute;left:-10000px;width:10px;height:10px;visibility:hidden";
+            document.body.appendChild(f);
+            var h, applied = 0, threw = "-";
+            try { h = f.contentWindow.history; } catch (e) { document.body.removeChild(f); return res("na"); }
+            for (var i = 1; i <= 300; i++) {
+                try { h.replaceState({ n: i }, ""); if (h.state && h.state.n === i) applied++; }
+                catch (e) { if (threw === "-") threw = i + ":" + e.name; }
+            }
+            document.body.removeChild(f);
+            res(applied + "|" + threw);
+        });
+    });
+    // A document a driver served by route fulfil has no protocol but a
+    // transfer size.
+    s("p_navhop.2", function () {
+        var n = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+        if (!n) return "na";
+        return n.nextHopProtocol === "" && n.transferSize > 0 ? "1" : "0";
+    });
+    // Pointer and touch, for phone claims and emulation.
+    s("c_pointer.1", function () {
+        function mq(q) { return matchMedia(q).matches ? "1" : "0"; }
+        return [mq("(pointer: fine)") + mq("(pointer: coarse)") + mq("(pointer: none)"), mq("(hover: hover)"),
+            mq("(any-pointer: fine)") + mq("(any-pointer: coarse)") + mq("(any-pointer: none)"), mq("(any-hover: hover)"),
+            String(navigator.maxTouchPoints), "ontouchstart" in window ? "1" : "0", typeof TouchEvent === "undefined" ? "0" : "1"].join("|");
+    });
+    // Headless signs a user agent swap does not reach: no window frame
+    // around the page (outer equals inner), no taskbar (screen equals the
+    // available area) and the 800 x 600 default screen. One flag each.
+    s("c_winframe.1", function () {
+        return [outerWidth === innerWidth ? "1" : "0", outerHeight === innerHeight ? "1" : "0",
+            screen.height === screen.availHeight ? "1" : "0", screen.width === 800 && screen.height === 600 ? "1" : "0"].join("");
+    });
+    // The strong rule of c_winframe.1 on its own: headless Chrome reports an
+    // 800 x 600 screen whatever the window size, a real display almost
+    // never is. The other three flags depend on the window mode and the
+    // taskbar settings.
+    s("c_screen800.1", function () { return screen.width === 800 && screen.height === 600 ? "1" : "0"; });
+
+    // Runs every test. The asynchronous tests start first, since most of
+    // their work happens off the page's main thread (workers, encoders, the
+    // browser process). The synchronous tests then run in slices of about
+    // SLICE_MS with a yield to the event loop between slices, so the page
+    // never sees one long task, and the budget starts when the last of them
+    // is done: whatever has finished when the budget ends is what is sent.
+    // The yield uses a MessageChannel because timers are throttled to once
+    // a second in background tabs.
+    var SLICE_MS = 30;
+    function run(budgetMs, params) {
+        var started = performance.now();
+        params = params || {};
+        OPT = params;
+        P = {};
+        Object.keys(DEFAULTS).forEach(function (k) { P[k] = params[k] !== undefined ? params[k] : DEFAULTS[k]; });
+        realmCache = {};
+        function pick(ids) { return params.only ? ids.filter(function (n) { return params.only.indexOf(n) >= 0; }) : ids; }
+        var results = {}, done = [], timing = {};
+        var later = Object.keys(ASYNC).concat(params.swUrl ? Object.keys(SERVICE) : []);
+        var pending = pick(later).map(function (n) {
+            var t0 = performance.now(), f = ASYNC[n] || SERVICE[n];
+            return Promise.resolve().then(function () { return f(); }).then(function (v) { results[n] = str(v); }, function () { results[n] = "err"; })
+                .then(function () { timing[n] = Math.round(performance.now() - t0); done.push(n); });
+        });
+        var queue = pick(Object.keys(SYNC));
+        var channel = typeof MessageChannel === "undefined" ? null : new MessageChannel();
+        function yieldThen(f) { if (channel) { channel.port1.onmessage = f; channel.port2.postMessage(0); } else setTimeout(f, 0); }
+        var synced = new Promise(function (res) {
+            function slice() {
+                var s0 = performance.now();
+                while (queue.length && performance.now() - s0 < SLICE_MS) {
+                    var n = queue.shift(), t0 = performance.now();
+                    try { results[n] = str(SYNC[n]()); } catch (e) { results[n] = "err"; }
+                    timing[n] = Math.round(performance.now() - t0); done.push(n);
+                }
+                if (queue.length) yieldThen(slice);
+                else { if (lab && lab.parentNode) lab.parentNode.removeChild(lab); if (channel) channel.port1.close(); res(); }
+            }
+            slice();
+        });
+        return synced.then(function () {
+            var budget = new Promise(function (r) { setTimeout(r, budgetMs || 3000); });
+            return Promise.race([Promise.all(pending), budget]);
+        }).then(function () {
+            if (lab && lab.parentNode) lab.parentNode.removeChild(lab);
+            var r = { version: "3", results: results, done: done, elapsed: Math.round(performance.now() - started) };
+            if (params.timing) r.timing = timing;
+            return r;
+        });
+    }
+    window.__51dBrowserTests = { run: run, names: Object.keys(SYNC).concat(Object.keys(ASYNC)), service: Object.keys(SERVICE), defaults: DEFAULTS };
 })();

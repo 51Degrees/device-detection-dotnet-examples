@@ -21,7 +21,13 @@ into baseline rows, and replays or drives browsers against the proof site.
   platform differences. Playwright needs `LD_LIBRARY_PATH` pointing at the
   extracted libs. CloakBrowser (npm `cloakbrowser`, Node 20 or newer) allows
   one session at a time on the free tier.
-- `win-run.js <kind> <exe> <label> <url> <runs dir>`: one genuine Windows
+- The lab page also takes `?budget=<ms>` (default 4000), `?sw=1` (runs the
+  service worker tests with `../browser-tests-sw.js`) and `?only=id,id`, and
+  every run stores the per test timings.
+- `timing-run.js <exe> <label> <runs> <cpu rate> [budget]`: run time through
+  Puppeteer with a fresh browser per run, optionally with DevTools CPU
+  throttling (`4` for 4x). `BC_URL` points it at another collector.
+- `win-run.js <kind> <exe> <label> <url> <runs dir> [timeout s] [user agent]`: one genuine Windows
   run, headed (`--app=` window off screen, fresh profile) or Firefox, then
   stops every process using that profile. `auto-run.js` drives the same
   page through Puppeteer or Playwright with their default options

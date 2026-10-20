@@ -45,17 +45,23 @@ import sys
 
 # claim as device detection names it -> lab label prefixes of genuine runs
 GENUINE = {
-    "Chrome|148|Windows": ["fin-win-cft148-headed", "vr-chrome148"],
-    "Chrome|150|Windows": ["fin-win-cft150-headed", "vr-chrome150"],
-    "Chrome|155|Windows": ["fin-win-chrome155-headed", "vr-chrome155"],
-    "Chrome|156|Windows": ["fin-win-chrome156-headed", "vr-chrome156"],
-    "Edge (Chromium) for Windows|155|Windows": ["fin-win-edge155-headed"],
+    # Wave 3 captures (C:/bc-data/v4/runs), 20 Oct 2026. Earlier waves used
+    # the fin- and vr- labels. Chrome for Testing 148 and 150 give the engine
+    # rows of their majors, branded Chrome the build flavour rows.
+    "Chrome|148|Windows": ["v4-win-cft148-headed", "fin-win-cft148-headed", "vr-chrome148"],
+    "Chrome|150|Windows": ["v4-win-cft150-headed", "fin-win-cft150-headed", "vr-chrome150"],
+    "Chrome|155|Windows": ["v4-win-chrome155-headed", "fin-win-chrome155-headed", "vr-chrome155"],
+    "Chrome|156|Windows": ["v4-win-chrome156-headed", "fin-win-chrome156-headed", "vr-chrome156"],
+    "Edge (Chromium) for Windows|155|Windows": ["v4-win-edge155-headed", "fin-win-edge155-headed"],
     # Headed only: headless Firefox measures text differently.
-    "Firefox|158|Windows": ["fin-win-firefox158-headed"],
+    "Firefox|158|Windows": ["v4-win-firefox158-headed", "fin-win-firefox158-headed"],
+    # Playwright's Linux Chromium is driven (Runtime enabled, IPC flooding
+    # protection off), so from wave 3 it is automation, not a genuine Linux
+    # browser. Kept for the earlier waves' runs only.
     "Chrome|141|Linux": ["fin-wsl-chromium141"],
 }
 # Label prefixes of Chrome for Testing runs, and the tests they give no rows for.
-FOR_TESTING = ("fin-win-cft", "vr-chrome148", "vr-chrome150")
+FOR_TESTING = ("v4-win-cft", "fin-win-cft", "vr-chrome148", "vr-chrome150")
 FLAVOUR = {"a_voices.2", "a_widevine.1", "g_renderer.2", "p_apis.1"}
 INFERRED_ANY = [("Chrome", "macOS", "f_grid.2", "grid"), ("Chrome", "Linux", "f_grid.2", "grid")]
 RANGE_BELOW = 12
@@ -123,6 +129,8 @@ def build(runs, catalogue, deprecate=()):
     values, report = {}, []
     for claim, labels in GENUINE.items():
         rs = [x for label in labels for x in load(runs, label)]
+        if not rs:
+            continue
         seen = {}
         for build_, r in rs:
             for test, value in r.items():

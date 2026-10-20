@@ -1,18 +1,20 @@
 // Runs one genuine Windows browser against the lab collector and waits for
 // its run to be stored.
-//   node win-run.js <kind> <exe> <label> <url> <runs dir> [timeout s]
+//   node win-run.js <kind> <exe> <label> <url> <runs dir> [timeout s] [user agent]
 // kind
 //   chromium   Chrome or Edge, headed, fresh profile, an off-screen --app=
 //              window, nothing else changed.
 //   firefox    Firefox, headed, fresh profile.
 //   firefox-headless  Firefox with -headless.
-//   headless   Chrome or Edge with --headless=new and no driver at all.
+//   headless   Chrome or Edge with --headless=new and no driver at all. A
+//              user agent argument swaps the HeadlessChrome one, as
+//              scrapers do.
 // The profile is deleted afterwards and the whole process tree is stopped.
 const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const [kind, exe, label, url, runs, timeoutS] = process.argv.slice(2);
+const [kind, exe, label, url, runs, timeoutS, userAgent] = process.argv.slice(2);
 const temp = process.env.BC_PROFILES || 'C:\\bc-temp';
 const profile = path.join(temp, 'prof-' + label + '-' + Date.now());
 fs.mkdirSync(profile, { recursive: true });
@@ -21,7 +23,7 @@ let args;
 if (kind === 'firefox' || kind === 'firefox-headless') {
   args = ['-no-remote', '-new-instance', '-profile', profile].concat(kind === 'firefox-headless' ? ['-headless'] : ['-width', '1024', '-height', '768']).concat([full]);
 } else {
-  args = ['--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'];
+  args = ['--user-data-dir=' + profile, '--no-first-run', '--no-default-browser-check'].concat(userAgent ? ['--user-agent=' + userAgent] : []);
   args = kind === 'headless' ? args.concat(['--headless=new', full]) : args.concat(['--window-position=-2400,-2400', '--window-size=1024,768', '--app=' + full]);
 }
 const before = new Set(fs.readdirSync(runs));

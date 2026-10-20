@@ -72,20 +72,39 @@ class Element:
         return ("True" if failed else "False"), counted, failed, "+".join(sorted(scopes))
 
 
-def expect(label):
+# Expected verdict per wave 3 label (C:/bc-data/v4/runs), every label
+# listed. The claim follows the user agent: a HeadlessChrome user agent is
+# "Chrome Headless", a claim with no baseline, so Unknown.
+EXPECT = [
     # Chrome for Testing is an automation build, caught on purpose by the
     # build flavour tests (a_voices.2, a_widevine.1).
+    ("v4-win-cft", "True"),
+    ("v4-win-chrome155-headed", "False"), ("v4-win-chrome156-headed", "False"),
+    ("v4-win-edge155-headed", "False"), ("v4-win-firefox158-headed", "False"),
+    ("v4-auto-chrome155-headlessflag", "Unknown"),
+    # --headless=new with the headed user agent: c_screen800.1.
+    ("v4-auto-chrome155-headlessua", "True"),
+    ("v4-auto-puppeteer-chrome155-headless", "Unknown"), ("v4-auto-playwright-chrome155-headless", "Unknown"),
+    ("v4-auto-puppeteer-chrome155-headed", "True"), ("v4-auto-playwright-chrome155-headed", "True"),
+    ("v4-wsl-chromium141", "Unknown"),
+    ("v4-forge-", "True"), ("v4-cloak-", "True"),
+]
+
+
+def expect(label):
+    for prefix, want in EXPECT:
+        if label.startswith(prefix):
+            return want
+    # Earlier waves' labels, as judged before.
     if label.startswith(("fin-win-cft", "vr-chrome148", "vr-chrome150")):
         return "True"
     if label.startswith(("fin-win-", "vr-")) and "headless" not in label:
         return "False"
-    # Playwright's Linux Chromium sends a HeadlessChrome user agent, a claim
-    # with no baseline.
     if label.startswith("fin-wsl-chromium141"):
         return "Unknown"
     if label.startswith(("fin-cloak-", "fin-forge-", "fin-win-firefox158-headless")):
         return "True"
-    return None  # automation on a genuine box: reported, not judged
+    return None
 
 
 def replay(element, title, runs, hold=(), pearl=False):
@@ -101,7 +120,7 @@ def replay(element, title, runs, hold=(), pearl=False):
             # flavour tests, so they get no "*" rows and 150 is judged on the
             # engine tests alone.
             want = {150: "False", 156: "Unknown"}.get(m, want)
-        if pearl and label.startswith(("fin-cloak-macos", "fin-cloak-linux")):
+        if pearl and label.startswith(("fin-cloak-macos", "fin-cloak-linux", "v4-cloak-macos", "v4-cloak-linux")):
             want = "Unknown"  # Pearl has no macOS or Linux Chrome claim and infers no rows
         if pearl and label.startswith("fin-wsl-chromium141"):
             want = "False"  # Pearl keeps the Chrome Headless claim it was given
@@ -132,10 +151,11 @@ rows["GENUINE"].pop("Chrome|150|Windows")
 rows["GENUINE"].pop("Chrome|156|Windows")
 lines, ranges, _, _, _ = rows["build"](runs_dir, catalogue)
 rows["GENUINE"].update(saved)
-held = [(l, d) for l, d in all_runs if l.startswith(("fin-win-cft150", "fin-win-chrome156", "vr-chrome150", "vr-chrome156"))]
+HOLD = ("v4-win-cft150", "v4-win-chrome156", "fin-win-cft150", "fin-win-chrome156", "vr-chrome150", "vr-chrome156")
+held = [(l, d) for l, d in all_runs if l.startswith(HOLD)]
 print("\nranges without 150 and 156:", ", ".join(ranges))
 b = replay(Element(lines, ranges), "Scenario B: Chrome 150 and 156 held out", held,
-           hold=("fin-win-cft150", "fin-win-chrome156", "vr-chrome150", "vr-chrome156"))
+           hold=HOLD)
 c = True
 if pearl:
     lines = [l for l in open(pearl[0], encoding="utf-8").read().splitlines() if l.count("|") >= 3]

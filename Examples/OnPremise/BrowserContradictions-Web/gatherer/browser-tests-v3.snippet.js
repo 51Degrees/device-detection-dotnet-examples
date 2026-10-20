@@ -3,7 +3,11 @@
 // results as the 51D_BrowserTests cookie in the form "3|id=value&id=value",
 // ids being versioned ("f_emoji.1"). A value longer than 40 UTF-16 code
 // units is sent as h:<fnv1a32> so the cookie stays well under 4 KB, and the
-// baseline hashes those values the same way.
+// baseline hashes those values the same way. With the 76 tests of the wave 3
+// gatherer the whole cookie is 2.6 KB in every lab capture (1.2 KB of it
+// active tests), under the 4 KB a browser keeps for one cookie. 51Degrees.core.js
+// also posts every 51D_ cookie to the JSON endpoint as a form field, which
+// is where the element reads it first.
 (function () {
     function fnv(text) {
         var h = 0x811c9dc5;
