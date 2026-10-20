@@ -252,10 +252,18 @@
     {
       "id": "c_syscolors.1",
       "family": "environment",
-      "status": "collecting",
+      "status": "deprecated",
       "introduced": "2026-10-13",
       "retired": "2026-10-16",
-      "note": "Wave 3 lab, 20 Oct 2026: modern CSS system colours. Per major (Chrome 148 lacks AccentColor). Windows users with a custom accent or high contrast add values."
+      "note": ""
+    },
+    {
+      "id": "c_syscolors.2",
+      "family": "environment",
+      "status": "collecting",
+      "introduced": "2026-10-20",
+      "retired": null,
+      "note": "Wave 3 lab, 20 Oct 2026: modern CSS system colours. Per major (Chrome 148 lacks AccentColor). Windows users with a custom accent or high contrast add values. Version 1 is the retired version 2 gatherer test of the same name. Wave 3 lab runs in C:/bc-data/v4/runs carry this value under c_syscolors.1."
     },
     {
       "id": "c_syscolorsdark.1",

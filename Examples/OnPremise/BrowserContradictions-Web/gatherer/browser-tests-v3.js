@@ -758,7 +758,9 @@
         }).join(";");
     }
     s("c_activetext.1", function () { return sysColors(["ActiveText", "LinkText", "VisitedText"], "light"); });
-    s("c_syscolors.1", function () { return sysColors(SYS_MODERN, "light"); });
+    // Version 1 was a version 2 gatherer test retired on 16 October, so the
+    // candidate starts at version 2.
+    s("c_syscolors.2", function () { return sysColors(SYS_MODERN, "light"); });
     s("c_syscolorsdark.1", function () { return sysColors(SYS_MODERN, "dark"); });
     // The deprecated system colours, which Blink takes from its own per
     // platform tables.
