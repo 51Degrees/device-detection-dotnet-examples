@@ -12,10 +12,10 @@
     {
       "id": "a_aacrules.1",
       "family": "media",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: AudioEncoder AAC configurations through the platform encoder. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: 1010110. Linux and the macOS and Linux CloakBrowser personas 0000000, CloakBrowser's Windows persona passes (patched). Risk: Windows N editions without Media Foundation answer 0000000. Patch cost low."
+      "note": "Wave 3 lab, 20 Oct 2026: AudioEncoder AAC configurations through the platform encoder. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: 1010110. Linux and the macOS and Linux CloakBrowser personas 0000000, CloakBrowser's Windows persona passes (patched). Risk: Windows N editions without Media Foundation answer 0000000. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "a_devices.1",
@@ -28,10 +28,10 @@
     {
       "id": "a_ipcflood.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: 300 history.replaceState calls in a fresh frame. Every genuine Chromium 200|-, including --headless=new without a driver, Firefox 199|-. Every Puppeteer, Playwright and CloakBrowser run 300|- (--disable-ipc-flooding-protection). Patch cost trivial for a custom launcher (drop the flag). Final hardening, 20 Oct 2026: an unreachable frame gives no answer instead of na. 200|- after a reload in the same tab too (each run uses a fresh frame)."
+      "note": "Wave 3 lab, 20 Oct 2026: 300 history.replaceState calls in a fresh frame. Every genuine Chromium 200|-, including --headless=new without a driver, Firefox 199|-. Every Puppeteer, Playwright and CloakBrowser run 300|- (--disable-ipc-flooding-protection). Patch cost trivial for a custom launcher (drop the flag). Final hardening, 20 Oct 2026: an unreachable frame gives no answer instead of na. 200|- after a reload in the same tab too (each run uses a fresh frame). Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "a_keyboard.1",
@@ -68,10 +68,10 @@
     {
       "id": "a_spcflag.1",
       "family": "environment",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: Secure Payment Confirmation built in. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: on. Linux, Linux claiming Windows and every CloakBrowser persona including macOS and Windows: off (unavailable-feature-not-enabled). Firefox na. Patch cost low (one feature flag), CloakBrowser 146 has not done it. Final hardening, 20 Oct 2026: a late answer gives no answer instead of timeout (its 4 s limit ran inside the budget on slow devices)."
+      "note": "Wave 3 lab, 20 Oct 2026: Secure Payment Confirmation built in. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: on. Linux, Linux claiming Windows and every CloakBrowser persona including macOS and Windows: off (unavailable-feature-not-enabled). Firefox na. Patch cost low (one feature flag), CloakBrowser 146 has not done it. Final hardening, 20 Oct 2026: a late answer gives no answer instead of timeout (its 4 s limit ran inside the budget on slow devices). Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "a_svcfonts.1",
@@ -140,18 +140,18 @@
     {
       "id": "a_widevine.1",
       "family": "media",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "EME Widevine access. yes for branded Chrome 155 and 156, Edge 155 and Firefox. no for Chrome for Testing, Linux Chromium, every CloakBrowser persona and every Playwright run (Puppeteer with branded Chrome passes). Build flavour: Chrome for Testing captures give no rows for it. Risk: users who block protected content. Final hardening, 20 Oct 2026: a late answer is no answer (was timeout, which Firefox sent while it fetches its CDM), and a refusal counts only while Clear Key works, so a browser with every key system off gives no answer. Chrome's own setting Sites can play protected content refuses Widevine alone with the same error as a build without the CDM (both Unsupported keySystem or supportedConfigurations., Clear Key still yes), so a genuine user who switched it off reads True, as in the lab run v5-extra-chrome155-noprotected. That is the known false positive kept for the Chrome for Testing catch, which no other active test makes now that a_voices.2 is retired."
+      "note": "EME Widevine access. yes for branded Chrome 155 and 156, Edge 155 and Firefox. no for Chrome for Testing, Linux Chromium, every CloakBrowser persona and every Playwright run (Puppeteer with branded Chrome passes). Build flavour: Chrome for Testing captures give no rows for it. Risk: users who block protected content. Final hardening, 20 Oct 2026: a late answer is no answer (was timeout, which Firefox sent while it fetches its CDM), and a refusal counts only while Clear Key works, so a browser with every key system off gives no answer. Chrome's own setting Sites can play protected content refuses Widevine alone with the same error as a build without the CDM (both Unsupported keySystem or supportedConfigurations., Clear Key still yes), so a genuine user who switched it off reads True, as in the lab run v5-extra-chrome155-noprotected. That is the known false positive kept for the Chrome for Testing catch, which no other active test makes now that a_voices.2 is retired. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "a_wkreplay.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: page against dedicated worker mismatch bitmask over 14 identity fields. Every genuine browser and every driver 00000000000000. Every CloakBrowser persona and seed 00000000000110 (text noise differs between realms). The source sent to the worker names nothing but its arguments, so it survives obfuscation. Patch cost medium (patch every realm alike). Final hardening, 20 Oct 2026: a worker that fails to start or answer gives no answer instead of na. A site Content Security Policy that blocks blob: workers (lab ?csp=1) made all three worker tests absent, not different."
+      "note": "Wave 3 lab, 20 Oct 2026: page against dedicated worker mismatch bitmask over 14 identity fields. Every genuine browser and every driver 00000000000000. Every CloakBrowser persona and seed 00000000000110 (text noise differs between realms). The source sent to the worker names nothing but its arguments, so it survives obfuscation. Patch cost medium (patch every realm alike). Final hardening, 20 Oct 2026: a worker that fails to start or answer gives no answer instead of na. A site Content Security Policy that blocks blob: workers (lab ?csp=1) made all three worker tests absent, not different. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "a_worker.1",
@@ -180,10 +180,10 @@
     {
       "id": "c_codecs.2",
       "family": "media",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-19",
       "retired": null,
-      "note": "canPlayType for H.264, AV1, AAC, E-AC-3. Chrome 148 to 156 (branded and for Testing) identical, Edge adds E-AC-3, Firefox own value. Catches open Chromium builds (Playwright Chromium 141 claiming Windows). Every CloakBrowser persona passes. Patch cost: rebuild with proprietary codecs."
+      "note": "canPlayType for H.264, AV1, AAC, E-AC-3. Chrome 148 to 156 (branded and for Testing) identical, Edge adds E-AC-3, Firefox own value. Catches open Chromium builds (Playwright Chromium 141 claiming Windows). Every CloakBrowser persona passes. Patch cost: rebuild with proprietary codecs. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "c_geometry.1",
@@ -244,10 +244,10 @@
     {
       "id": "c_screen800.1",
       "family": "environment",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: screen exactly 800 x 600, the strong rule of c_winframe.1 on its own. Every headed run 0. Chrome --headless=new with and without a swapped user agent, and Puppeteer headless, 1. The only active test that catches --headless=new with a swapped user agent. Risk: a real 800 x 600 display or VM console. Patch cost trivial (--screen-info)."
+      "note": "Wave 3 lab, 20 Oct 2026: screen exactly 800 x 600, the strong rule of c_winframe.1 on its own. Every headed run 0. Chrome --headless=new with and without a swapped user agent, and Puppeteer headless, 1. The only active test that catches --headless=new with a swapped user agent. Risk: a real 800 x 600 display or VM console. Patch cost trivial (--screen-info). Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "c_scrollbar.1",
@@ -284,10 +284,10 @@
     {
       "id": "c_sysold.1",
       "family": "environment",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the 23 deprecated CSS system colours. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ (ActiveCaption, ButtonFace). Risk: high contrast themes change it. Patch cost low (Blink colour table). Final hardening, 20 Oct 2026: no answer in forced colours mode (a Windows contrast theme gives the user's colours, lab run with --force-high-contrast). Unchanged with --force-dark-mode, since the test sets color-scheme light."
+      "note": "Wave 3 lab, 20 Oct 2026: the 23 deprecated CSS system colours. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ (ActiveCaption, ButtonFace). Risk: high contrast themes change it. Patch cost low (Blink colour table). Final hardening, 20 Oct 2026: no answer in forced colours mode (a Windows contrast theme gives the user's colours, lab run with --force-high-contrast). Unchanged with --force-dark-mode, since the test sets color-scheme light. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "c_timer.1",
@@ -428,10 +428,10 @@
     {
       "id": "f_calibrishape.1",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the same grid for Calibri. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ, Firefox on Windows differs (rasteriser alone). Risk: Windows images without Calibri give a second genuine value. Patch cost high. Final hardening, 20 Oct 2026: software canvas as f_segoeshape.1, values unchanged."
+      "note": "Wave 3 lab, 20 Oct 2026: the same grid for Calibri. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser differ, Firefox on Windows differs (rasteriser alone). Risk: Windows images without Calibri give a second genuine value. Patch cost high. Final hardening, 20 Oct 2026: software canvas as f_segoeshape.1, values unchanged. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_core.1",
@@ -444,18 +444,18 @@
     {
       "id": "f_core.2",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-19",
       "retired": null,
-      "note": "Presence of fonts each OS ships: 7 Windows, 3 macOS, 3 Linux. Genuine Windows Chrome, Edge and Firefox all 1111111000000. Catches Linux Chromium claiming Windows and the CloakBrowser linux persona. The CloakBrowser windows, macos and auto personas pass because Windows fonts are installed in WSL. Patch cost low."
+      "note": "Presence of fonts each OS ships: 7 Windows, 3 macOS, 3 Linux. Genuine Windows Chrome, Edge and Firefox all 1111111000000. Catches Linux Chromium claiming Windows and the CloakBrowser linux persona. The CloakBrowser windows, macos and auto personas pass because Windows fonts are installed in WSL. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_emoji.1",
       "family": "text",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "Emoji advance widths, DirectWrite against FreeType. Windows Chromium 148 to 156 and Edge identical. Every CloakBrowser persona differs and varies by seed. Linux Chromium 141 differs. Risk: Segoe UI Emoji differs between Windows releases."
+      "note": "Emoji advance widths, DirectWrite against FreeType. Windows Chromium 148 to 156 and Edge identical. Every CloakBrowser persona differs and varies by seed. Linux Chromium 141 differs. Risk: Segoe UI Emoji differs between Windows releases. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_fallback.1",
@@ -492,10 +492,10 @@
     {
       "id": "f_inputavg.2",
       "family": "text",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: text field average character width from the font's xAvgCharWidth through the platform scaler, to half a pixel. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: 8,8,7,8. Firefox 9,8,8.5,9. Linux and every CloakBrowser: 7,6.5,8.5,7 with the same font files. Candidate lab: same at 100, 125, 150 and 200 percent display scale. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: text field average character width from the font's xAvgCharWidth through the platform scaler, to half a pixel. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: 8,8,7,8. Firefox 9,8,8.5,9. Linux and every CloakBrowser: 7,6.5,8.5,7 with the same font files. Candidate lab: same at 100, 125, 150 and 200 percent display scale. Patch cost medium. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_kerning.1",
@@ -524,10 +524,10 @@
     {
       "id": "f_kw_menu.1",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_kw_messagebox.1",
@@ -540,18 +540,18 @@
     {
       "id": "f_kw_smallcaption.1",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_kw_statusbar.1",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low."
+      "note": "CSS system font keyword through canvas. Windows Chrome 148 to 156 and Edge 155 '12px \"Segoe UI\"', Firefox keeps the keyword. Linux Chromium and every CloakBrowser persona '16px Arial', also with Windows fonts installed (Windows only theme font provider). Risk: localised Windows uses another UI font. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_metrics.1",
@@ -612,34 +612,34 @@
     {
       "id": "f_segoevar.3",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: Segoe UI Variable Text width curve over weights 300 to 700, and the bare family. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: <<=<=<|absent (DirectWrite snaps to named instances). Firefox <<==<<|absent. Linux and CloakBrowser: absent|<<==<<. Measured stepwise, one task per weight. Version 2 also measured Display, which answered as Text. Risk: Windows 10 has no Segoe UI Variable, so a Windows 10 capture is needed. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: Segoe UI Variable Text width curve over weights 300 to 700, and the bare family. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: <<=<=<|absent (DirectWrite snaps to named instances). Firefox <<==<<|absent. Linux and CloakBrowser: absent|<<==<<. Measured stepwise, one task per weight. Version 2 also measured Display, which answered as Text. Risk: Windows 10 has no Segoe UI Variable, so a Windows 10 capture is needed. Patch cost medium. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_segoevaraxis.2",
       "family": "fonts",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: the same family with font-variation-settings. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: ======|absent (Chrome on Windows ignores the axis). Firefox <<<<<<|absent. Linux and CloakBrowser absent|======. Same Windows 10 caveat as f_segoevar.3. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: the same family with font-variation-settings. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each: ======|absent (Chrome on Windows ignores the axis). Firefox <<<<<<|absent. Linux and CloakBrowser absent|======. Same Windows 10 caveat as f_segoevar.3. Patch cost medium. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_systemui.1",
       "family": "text",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
-      "note": "system-ui width and which named font it equals. Windows Chromium 148 to 156 and Edge identical. Linux Chromium differs, every CloakBrowser persona differs and varies by seed (noise). Risk: localised Windows UI font."
+      "note": "system-ui width and which named font it equals. Windows Chromium 148 to 156 and Edge identical. Linux Chromium differs, every CloakBrowser persona differs and varies by seed (noise). Risk: localised Windows UI font. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "f_vmetrics.1",
       "family": "text",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Wave 3 lab, 20 Oct 2026: canvas font bounding box and ink box of Hg for six Microsoft fonts. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser give Calibri 75/25 and Consolas 74/26 against 95/27 and 92/25 with the same files (FreeType against DirectWrite ascent tables). Not reached by CloakBrowser's Windows font metrics switch. Patch cost medium."
+      "note": "Wave 3 lab, 20 Oct 2026: canvas font bounding box and ink box of Hg for six Microsoft fonts. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Linux and every CloakBrowser give Calibri 75/25 and Consolas 74/26 against 95/27 and 92/25 with the same files (FreeType against DirectWrite ascent tables). Not reached by CloakBrowser's Windows font metrics switch. Patch cost medium. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "g_canvasdeterminism.1",
@@ -836,10 +836,10 @@
     {
       "id": "p_recorder.2",
       "family": "media",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
-      "note": "Final hardening, 20 Oct 2026: p_recorder.1 without HEVC (nine containers and codecs). 111111111 in every genuine Chromium run (Chrome 155, 156, Edge 155, Chrome for Testing 148 and 150, 82 runs under every start condition), Firefox 000000000. CloakBrowser's windows persona 001111111, Linux Chromium claiming Windows differs too. Risk: Windows N editions without Media Foundation. Patch cost low."
+      "note": "Final hardening, 20 Oct 2026: p_recorder.1 without HEVC (nine containers and codecs). 111111111 in every genuine Chromium run (Chrome 155, 156, Edge 155, Chrome for Testing 148 and 150, 82 runs under every start condition), Firefox 000000000. CloakBrowser's windows persona 001111111, Linux Chromium claiming Windows differs too. Risk: Windows N editions without Media Foundation. Patch cost low. Key list, 22 Oct 2026: collecting, the Website stores only the 13 key tests."
     },
     {
       "id": "p_rtdebug.1",
