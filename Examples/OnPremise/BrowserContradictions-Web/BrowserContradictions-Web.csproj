@@ -25,4 +25,11 @@
     <None Update="derived\*.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The lab has its own projects and generated files. -->
+  <ItemGroup>
+    <Compile Remove="gatherer\lab\**" />
+    <Content Remove="gatherer\lab\**" />
+    <None Remove="gatherer\lab\**" />
+  </ItemGroup>
+
 </Project>

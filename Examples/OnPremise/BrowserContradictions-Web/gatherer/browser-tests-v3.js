@@ -56,6 +56,13 @@
 // for a software canvas. s_offscreen.1 and s_uach.2 come from the stealth
 // study as collecting tests.
 //
+// 23 October 2026: m_takwork.1 is a collecting test, timed runs of the
+// Takeuchi function on inputs the server chooses (params.tak). The server
+// knows exactly how many calls each input takes, so a genuine engine's
+// times must be proportional to those counts: TakTiming.cs fits the time
+// per call from the run and checks every input against it. Times made up,
+// replayed or modelled without the work fail. No baseline row needed.
+//
 // run(budgetMs, params) also takes, beside the inputs below:
 //   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
 //           turns on the service worker tests
@@ -70,8 +77,9 @@
 //           New Roman and monospace and size * 27 / 32 for sans-serif (a
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
+//   tak     the inputs of m_takwork, seven [x, y, z] lists, x > y > z >= 0
 // A parameterised test's inputs are the array its inputs function below
-// returns (metricsInputs, emojiInputs, tanhInputs). When
+// returns (metricsInputs, emojiInputs, tanhInputs, takInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -93,7 +101,10 @@
         // from Linux Chromium 141 and CloakBrowser 146 on its own. Found by
         // lab/maths-probe.js over 6,609 inputs: Windows tanh differs from
         // V8's fdlibm port only for |x| below about 1.9.
-        tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125]
+        tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125],
+        // TakTiming.ChooseVariants(TakTiming.DefaultSeed) in the element
+        // must match.
+        tak: [[27, 18, 10], [36, 24, 17], [21, 17, 8], [39, 37, 27], [28, 14, 8], [25, 24, 12], [21, 7, 0]]
     };
     // The inputs each parameterised test consumes, in tag order. Plain
     // functions rather than a table keyed by test id, so no test id is an
@@ -101,6 +112,7 @@
     function metricsInputs(p) { return [p.glyphs, p.size]; }
     function emojiInputs(p) { return [p.emoji, p.size]; }
     function tanhInputs(p) { return [p.tanh]; }
+    function takInputs(p) { return [p.tak]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -914,6 +926,40 @@
                 w.postMessage(0);
             } catch (e) { res(null); }
         }), 3000);
+    });
+    // Timed runs of tak(x, y, z) for each of the server's input lists, in a
+    // dedicated worker so the page's own work does not land in the times.
+    // The worker first finds the timer's tick (the smallest step between
+    // two different performance.now readings, after the first), warms the
+    // function up, then runs every list three times, interleaved, so one
+    // burst of other work cannot slow every repeat of one list. Value: tag,
+    // "g" + tick in ms ("c" when no tick was seen within the bound), "|",
+    // then per list "result:t1,t2,t3" in ms, joined by ";". TakTiming.cs
+    // in the element knows each list's call count exactly and checks the
+    // times are proportional to it. The worker source is a plain string,
+    // so obfuscation cannot reach it.
+    a("m_takwork.1", function () {
+        var v = P.tak, pre = tag(takInputs, P);
+        return timeout(new Promise(function (res) {
+            if (typeof Worker === "undefined") return res("na");
+            try {
+                var url = blobUrl("onmessage=function(e){var v=e.data,i,j,k,q,p,g=1e9,n=0,o=[],T=[];" +
+                    "function t(x,y,z){return y>=x?z:t(t(x-1,y,z),t(y-1,z,x),t(z-1,x,y))}" +
+                    "p=performance.now();for(k=0;k<3e6&&n<4;k++){q=performance.now();if(q>p){if(n>0&&q-p<g)g=q-p;p=q;n++}}" +
+                    "for(k=0;k<6;k++)t(18,12,6);" +
+                    "for(i=0;i<v.length;i++){T.push([]);o.push(0)}" +
+                    "for(j=0;j<3;j++)for(i=0;i<v.length;i++){p=performance.now();o[i]=t(v[i][0],v[i][1],v[i][2]);T[i].push(Math.round((performance.now()-p)*1e3)/1e3)}" +
+                    "postMessage([n<4?-1:Math.round(g*1e4)/1e4,o,T])}");
+                var w = new Worker(url);
+                w.onmessage = function (e) {
+                    var d = e.data;
+                    res(pre + "g" + (d[0] < 0 ? "c" : d[0]) + "|" + d[1].map(function (r, i) { return r + ":" + d[2][i].join(","); }).join(";"));
+                    w.terminate(); URL.revokeObjectURL(url);
+                };
+                w.onerror = function () { res(null); };
+                w.postMessage(v);
+            } catch (e) { res(null); }
+        }), 8000);
     });
     // Navigation rate limiting: 300 replaceState calls in a fresh frame.
     // Chromium ignores calls past 200 in 10 s unless launched with
