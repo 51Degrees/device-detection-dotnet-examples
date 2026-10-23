@@ -794,6 +794,14 @@
       "note": "Math.tanh at 8 inputs, each of which separates on its own (lab/maths-probe.js, 249 of 6,609 inputs separate, all below |x| 1.9). Windows Chrome 148, 150, 155, 156 and Edge 155 identical on all 6,609 inputs. Linux Chromium 141, every CloakBrowser persona and Firefox give V8 fdlibm's answer. Not touched by the Chrome 150 libm change. Patch cost medium: ship the Windows C runtime tanh or a lookup."
     },
     {
+      "id": "m_tanhwalk.1",
+      "family": "maths",
+      "status": "collecting",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Chained 64 step walk through Math.tanh from a seed (params.walk), checked on the server by TanhWalk.cs for any seed, no baseline row needed. Chromium 148 and later calls std::tanh (V8 c1486295): Windows UCRT is within 0.0012 ulp of correctly rounded for |x| < 0.05, fdlibm (Chromium 147 and earlier on every OS, Firefox) misrounds 30% of steps and glibc (Linux Chromium 148+) likewise. Lab, 23 Oct 2026, 300 seeds each: Windows Chrome for Testing 148 and 150, Chrome 155, Beta 156, Edge 155 pass the Windows model 300 of 300; Linux Chromium 141, CloakBrowser 146 (Windows and Linux personas) and Firefox are fdlibm exactly 300 of 300 and pass 0; glibc tanh passes 0. 20,000 UCRT walks: 0 rejected, 230 needed the tie tolerance. Catches nothing below a Chrome 148 claim. Patch cost high once seeds rotate: a bit exact near correctly rounded tanh in the engine. Unknown: macOS, Android, Windows on Arm, CPUs without FMA."
+    },
+    {
       "id": "p_apis.1",
       "family": "identity",
       "status": "collecting",

@@ -56,6 +56,15 @@
 // for a software canvas. s_offscreen.1 and s_uach.2 come from the stealth
 // study as collecting tests.
 //
+// 23 October 2026: m_tanhwalk.1 is a collecting test, a chained walk
+// through Math.tanh from a seed the server can choose (params.walk), so an
+// answer recorded for one seed is no use for another. Chromium 148 and later
+// takes tanh from the platform C library (V8 c1486295): the Windows UCRT
+// is all but correctly rounded for these inputs, fdlibm (Chromium 147 and
+// earlier, Firefox) and glibc (Linux Chromium 148 and later) are not. The
+// server checks an answer for any seed with TanhWalk.cs, no baseline row
+// needed.
+//
 // run(budgetMs, params) also takes, beside the inputs below:
 //   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
 //           turns on the service worker tests
@@ -70,8 +79,9 @@
 //           New Roman and monospace and size * 27 / 32 for sans-serif (a
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
+//   walk    the seed of m_tanhwalk, two integers 0 to 4294967295
 // A parameterised test's inputs are the array its inputs function below
-// returns (metricsInputs, emojiInputs, tanhInputs). When
+// returns (metricsInputs, emojiInputs, tanhInputs, walkInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -93,7 +103,9 @@
         // from Linux Chromium 141 and CloakBrowser 146 on its own. Found by
         // lab/maths-probe.js over 6,609 inputs: Windows tanh differs from
         // V8's fdlibm port only for |x| below about 1.9.
-        tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125]
+        tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125],
+        // TanhWalk.DefaultSeed in the element must match.
+        walk: [2654435769, 2135587861]
     };
     // The inputs each parameterised test consumes, in tag order. Plain
     // functions rather than a table keyed by test id, so no test id is an
@@ -101,6 +113,7 @@
     function metricsInputs(p) { return [p.glyphs, p.size]; }
     function emojiInputs(p) { return [p.emoji, p.size]; }
     function tanhInputs(p) { return [p.tanh]; }
+    function walkInputs(p) { return [p.walk]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -178,6 +191,30 @@
     // Chrome from V8's own fdlibm port, so the last digit differs. Version
     // 1 had one separating input of eight.
     s("m_tanh.2", function () { return tag(tanhInputs, P) + vec(Math.tanh, P.tanh); });
+    // A chained walk through Math.tanh from the seed (a, b), 64 steps. Each
+    // step makes a 52 bit input in [-0.05, 0.05) from two 32 bit states,
+    // calls tanh once and folds all 64 bits of the answer back into the
+    // states, so one last-bit difference at any step changes every later
+    // input and the result. Everything but tanh is integer arithmetic or
+    // exactly rounded double arithmetic, identical in every engine, so the
+    // server can redo the walk (TanhWalk.cs). Answers 16 hex chars.
+    function tanhWalk(a, b, n) {
+        var dv = new DataView(new ArrayBuffer(8));
+        var s1 = a >>> 0, s2 = b >>> 0;
+        function hex(v) { return ("0000000" + (v >>> 0).toString(16)).slice(-8); }
+        for (var i = 0; i < n; i++) {
+            s1 = Math.imul(s1 ^ (s1 >>> 16), 0x85EBCA6B); s1 = (s1 ^ (s1 >>> 13)) >>> 0;
+            s2 = Math.imul(s2 ^ (s2 >>> 16), 0xC2B2AE35); s2 = (s2 ^ (s2 >>> 13)) >>> 0;
+            dv.setFloat64(0, Math.tanh(((s1 * 1048576 + (s2 >>> 12)) / 4503599627370496 - 0.5) * 0.1));
+            var hi = dv.getUint32(0), lo = dv.getUint32(4);
+            s1 = (s1 ^ lo) >>> 0;
+            s2 = (s2 ^ hi ^ Math.imul(lo, 0x27D4EB2F)) >>> 0;
+        }
+        s1 = Math.imul(s1 ^ (s1 >>> 16), 0x85EBCA6B) >>> 0;
+        s2 = Math.imul(s2 ^ (s2 >>> 16), 0xC2B2AE35) >>> 0;
+        return hex(s1) + hex(s2);
+    }
+    s("m_tanhwalk.1", function () { return tag(walkInputs, P) + tanhWalk(P.walk[0], P.walk[1], 64); });
     s("m_expm1.1", function () { return vec(Math.expm1, [1e-10, 0.3, 2.5, 7.7, 0.0123, 13.37]); });
     s("m_sinh.1", function () { return vec(Math.sinh, MATHS_IN); });
     s("m_cbrt.1", function () { return vec(Math.cbrt, [2, 3, 7.7, 1e-5, 123.456]); });

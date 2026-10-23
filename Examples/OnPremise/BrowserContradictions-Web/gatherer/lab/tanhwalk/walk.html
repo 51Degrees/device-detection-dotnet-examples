@@ -1,0 +1,21 @@
+<!doctype html><meta charset=utf-8><title>walk</title><pre id=o>running</pre>
+<!-- Runs the real gatherer's m_tanhwalk.1 once per seed in seeds.json and
+     posts the values it would send, tag included. -->
+<script src="/gatherer/browser-tests-v3.js"></script>
+<script>
+(async function () {
+  var label = new URLSearchParams(location.search).get('label') || 'x';
+  var seeds = await (await fetch('/js/seeds.json')).json();
+  var bt = window.__51dBrowserTests;
+  var out = { label: label, ua: navigator.userAgent, n: seeds.n, walks: [], defaultSeed: null };
+  var t0 = performance.now();
+  for (var i = 0; i < seeds.seeds.length; i++) {
+    var r = await bt.run(3000, { only: ['m_tanhwalk.1'], walk: seeds.seeds[i] });
+    out.walks.push(r.results['m_tanhwalk.1'] || null);
+  }
+  out.ms_per_walk = (performance.now() - t0) / seeds.seeds.length;
+  out.defaultSeed = (await bt.run(3000, { only: ['m_tanhwalk.1'] })).results['m_tanhwalk.1'] || null;
+  await fetch('/result?label=' + encodeURIComponent(label), { method: 'POST', body: JSON.stringify(out) });
+  document.getElementById('o').textContent = 'done'; document.title = 'done';
+})();
+</script>

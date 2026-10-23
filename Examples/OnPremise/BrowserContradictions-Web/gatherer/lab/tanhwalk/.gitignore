@@ -1,0 +1,9 @@
+results/
+refs/
+inputs.json
+seeds.json
+vectors.txt
+scale-*.txt
+__pycache__/
+check/bin/
+check/obj/
