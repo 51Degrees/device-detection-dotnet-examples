@@ -3,6 +3,7 @@
 //   dotnet run -- seeds <n> <out.json>    n seeded input lists for the lab page
 //   dotnet run -- verify <runs dir>...    checks every captured m_takwork.1
 //   dotnet run -- forge <runs dir>...     bad actor answers built from them
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using BrowserContradictions.Web;
@@ -13,7 +14,11 @@ if (cmd == "default")
 {
     var d = TakTiming.ChooseVariants(TakTiming.DefaultSeed.A, TakTiming.DefaultSeed.B);
     Console.WriteLine(TakTiming.Json(d));
-    foreach (var v in d) Console.WriteLine($"  {v[0]},{v[1]},{v[2]} calls {TakTiming.Calls(v[0], v[1], v[2]).Calls}");
+    var sw = Stopwatch.StartNew();
+    var hashes = TakTiming.ExpectedHashes(d);
+    Console.WriteLine($"  hashes in {sw.ElapsedMilliseconds} ms");
+    for (var i = 0; i < d.Length; i++)
+        Console.WriteLine($"  {d[i][0]},{d[i][1]},{d[i][2]} calls {TakTiming.Calls(d[i][0], d[i][1], d[i][2]).Calls} hash {hashes[i]:x8}");
     return 0;
 }
 if (cmd == "seeds")
@@ -73,20 +78,22 @@ if (cmd == "verify")
 
 if (cmd == "forge")
 {
-    // Each forger knows the inputs and the right answers (tak results are
-    // cheap to compute) and has a genuine run of some other inputs to copy
-    // times from. What it does not have is the work: its times come from a
-    // model of the cost, not from doing it.
+    // Each forger knows the inputs and has a genuine run of some other
+    // inputs to copy times from. All but one did the traversal for the
+    // hashes (a forger with native code can): what they do not have is
+    // the times, which come from a model of the cost, not from doing it.
     var genuine = Runs().Where(r => TakTiming.Verify(r.Vars, r.Value).Outcome == TakTiming.Outcome.Pass).ToList();
     var rng = new Random(7);
     var rows = new List<(string, TakTiming.Verdict, string)>();
-    string Build(int[][] vars, Func<int, int[], double> time, string tick = "0.1")
+    string Build(int[][] vars, Func<int, int[], double> time, string tick = "0.1", bool traversal = true)
     {
+        var hashes = TakTiming.ExpectedHashes(vars);
         var parts = vars.Select((v, i) =>
         {
-            var r = TakTiming.Calls(v[0], v[1], v[2]).Result;
+            // Without the traversal, the best guess at a hash is a memo's answer.
+            var h = traversal ? hashes[i].ToString("x8") : ((uint)TakTiming.Calls(v[0], v[1], v[2]).Calls).ToString("x8");
             var ts = Enumerable.Range(0, TakTiming.Reps).Select(_ => Math.Round(time(i, v) * (1 + 0.03 * rng.NextDouble()), 1).ToString(CultureInfo.InvariantCulture));
-            return r + ":" + string.Join(",", ts);
+            return h + ":" + string.Join(",", ts);
         });
         return TakTiming.Tag(vars) + "g" + tick + "|" + string.Join(";", parts);
     }
@@ -111,10 +118,12 @@ if (cmd == "forge")
         rows.Add(("forge-model-exp", null, Build(vars, (i, v) => 0.01 * Math.Pow(2, v[0] - v[1]))));
         // 7. Control: the right model, which needs the exact call counts.
         rows.Add(("forge-exact-counts", null, Build(vars, (i, v) => 5e-6 * TakTiming.Calls(v[0], v[1], v[2]).Calls)));
+        // 8. The right model, but a memo in place of the traversal.
+        rows.Add(("forge-no-traversal", null, Build(vars, (i, v) => 5e-6 * TakTiming.Calls(v[0], v[1], v[2]).Calls, "0.1", false)));
         // Replay of the genuine value against new inputs, as sent.
         rows.Add(("forge-resend", null, other.Value));
         var last = rows.Count;
-        for (var i = last - 8; i < last; i++) rows[i] = (rows[i].Item1, TakTiming.Verify(vars, rows[i].Item3), rows[i].Item3);
+        for (var i = last - 9; i < last; i++) rows[i] = (rows[i].Item1, TakTiming.Verify(vars, rows[i].Item3), rows[i].Item3);
     }
     Report(rows);
     return 0;

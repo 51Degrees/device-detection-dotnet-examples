@@ -61,7 +61,8 @@
 // knows exactly how many calls each input takes, so a genuine engine's
 // times must be proportional to those counts: TakTiming.cs fits the time
 // per call from the run and checks every input against it. Times made up,
-// replayed or modelled without the work fail. No baseline row needed.
+// replayed or modelled without the work fail. A hash folded over every
+// call proves the calls were made. No baseline row needed.
 //
 // run(budgetMs, params) also takes, beside the inputs below:
 //   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
@@ -932,23 +933,27 @@
     // The worker first finds the timer's tick (the smallest step between
     // two different performance.now readings, after the first), warms the
     // function up, then runs every list three times, interleaved, so one
-    // burst of other work cannot slow every repeat of one list. Value: tag,
-    // "g" + tick in ms ("c" when no tick was seen within the bound), "|",
-    // then per list "result:t1,t2,t3" in ms, joined by ";". TakTiming.cs
-    // in the element knows each list's call count exactly and checks the
-    // times are proportional to it. The worker source is a plain string,
+    // burst of other work cannot slow every repeat of one list. Every call
+    // folds its arguments into a 32 bit hash (xor, multiply, rotate), so
+    // the hash can only come from the whole traversal: tak's value and
+    // call count have a cheap memo, the hash has none. Value: tag, "g" +
+    // tick in ms ("c" when no tick was seen within the bound), "|", then
+    // per list "hash:t1,t2,t3", the hash 8 hex digits and the times in ms,
+    // joined by ";". TakTiming.cs in the element knows each list's call
+    // count exactly, checks the times are proportional to it, and redoes
+    // the traversal for the hashes. The worker source is a plain string,
     // so obfuscation cannot reach it.
     a("m_takwork.1", function () {
         var v = P.tak, pre = tag(takInputs, P);
         return timeout(new Promise(function (res) {
             if (typeof Worker === "undefined") return res("na");
             try {
-                var url = blobUrl("onmessage=function(e){var v=e.data,i,j,k,q,p,g=1e9,n=0,o=[],T=[];" +
-                    "function t(x,y,z){return y>=x?z:t(t(x-1,y,z),t(y-1,z,x),t(z-1,x,y))}" +
+                var url = blobUrl("onmessage=function(e){var v=e.data,i,j,k,q,p,h=0,g=1e9,n=0,o=[],T=[];" +
+                    "function t(x,y,z){h=Math.imul(h^(x<<10^y<<5^z),0x9E3779B1);h=h<<13|h>>>19;return y>=x?z:t(t(x-1,y,z),t(y-1,z,x),t(z-1,x,y))}" +
                     "p=performance.now();for(k=0;k<3e6&&n<4;k++){q=performance.now();if(q>p){if(n>0&&q-p<g)g=q-p;p=q;n++}}" +
                     "for(k=0;k<6;k++)t(18,12,6);" +
                     "for(i=0;i<v.length;i++){T.push([]);o.push(0)}" +
-                    "for(j=0;j<3;j++)for(i=0;i<v.length;i++){p=performance.now();o[i]=t(v[i][0],v[i][1],v[i][2]);T[i].push(Math.round((performance.now()-p)*1e3)/1e3)}" +
+                    "for(j=0;j<3;j++)for(i=0;i<v.length;i++){h=0;p=performance.now();t(v[i][0],v[i][1],v[i][2]);T[i].push(Math.round((performance.now()-p)*1e3)/1e3);o[i]=('0000000'+(h>>>0).toString(16)).slice(-8)}" +
                     "postMessage([n<4?-1:Math.round(g*1e4)/1e4,o,T])}");
                 var w = new Worker(url);
                 w.onmessage = function (e) {

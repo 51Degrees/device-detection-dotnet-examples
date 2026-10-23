@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace BrowserContradictions.Web;
@@ -12,8 +13,18 @@ namespace BrowserContradictions.Web;
 /// while a browser has to make every one of them. The server sends
 /// <see cref="Variants"/> input sets whose call counts it picked to span
 /// about ten to one. The browser runs each <see cref="Reps"/> times in a
-/// dedicated worker, interleaved, and sends the answers and every elapsed
-/// time.
+/// dedicated worker, interleaved, and sends every elapsed time and, per
+/// input, a hash folded over every call in order (<see cref="Hash"/>).
+/// </para>
+/// <para>
+/// The hash is the proof the calls were made. tak's value and call count
+/// come cheap from a memo, because the same sub problems recur millions of
+/// times, but the hash enters each recurrence with a different state and a
+/// step of xor, multiply and rotate has no closed form, so the only way to
+/// it is the whole traversal. Working it out here costs the same traversal,
+/// about 130 ms for a run's seven inputs, once per input list
+/// (<see cref="ExpectedHashes"/> keeps it): the server issues one list per
+/// window, so that is once per window.
 /// </para>
 /// <para>
 /// The assertion: a genuine engine spends a near constant time per call, so
@@ -29,8 +40,9 @@ namespace BrowserContradictions.Web;
 /// <para>
 /// What it catches: an answer whose times were not measured from the work
 /// (made up, replayed from other inputs, a memoised or native tak, a faked
-/// clock). What it cannot catch: a real browser engine, however automated,
-/// does the work and passes. Timers a browser coarsens (Firefox
+/// clock), and an answer made without the traversal. What it cannot catch:
+/// a real browser engine, however automated, does the work and passes, and
+/// so does one genuine run per window replayed for the rest of the window. Timers a browser coarsens (Firefox
 /// resistFingerprinting) cannot resolve the smaller inputs, and the check
 /// answers Unresolved rather than guess.
 /// </para>
@@ -106,7 +118,8 @@ public static class TakTiming
     private static readonly object MemoLock = new();
 
     /// <summary>tak(x, y, z) and the number of calls the plain recursion
-    /// makes for it, the outer call included, as the gatherer's t() does.</summary>
+    /// makes for it, the outer call included, as the gatherer's t() does.
+    /// Memoised, so cheap.</summary>
     public static (int Result, long Calls) Calls(int x, int y, int z)
     {
         lock (MemoLock) return Tak(x, y, z);
@@ -143,6 +156,48 @@ public static class TakTiming
         Memo[(x, y, z)] = r;
         return r;
     }
+
+    /// <summary>
+    /// The hash the gatherer's worker folds over the calls of tak(x, y, z):
+    /// from 0, at the start of every call, h = rotl((h ^ (x &lt;&lt; 10 ^ y
+    /// &lt;&lt; 5 ^ z)) * 0x9E3779B1, 13) in 32 bits, the calls in the order
+    /// JavaScript evaluates them. The same traversal as the browser's, with
+    /// no memo possible.
+    /// </summary>
+    public static uint Hash(int x, int y, int z)
+    {
+        var h = 0;
+        Walk(ref h, x, y, z);
+        return (uint)h;
+    }
+
+    private static int Walk(ref int h, int x, int y, int z)
+    {
+        h = unchecked((int)((uint)(h ^ ((x << 10) ^ (y << 5) ^ z)) * 0x9E3779B1u));
+        h = (h << 13) | (int)((uint)h >> 19);
+        if (y >= x) return z;
+        var a = Walk(ref h, x - 1, y, z);
+        var b = Walk(ref h, y - 1, z, x);
+        var c = Walk(ref h, z - 1, x, y);
+        return Walk(ref h, a, b, c);
+    }
+
+    private static readonly ConcurrentDictionary<string, uint[]> HashCache = new();
+
+    /// <summary>The expected hash per input of a list, the traversal done
+    /// once per distinct list and kept. The cache is cleared when it holds
+    /// <see cref="HashCacheLimit"/> lists.</summary>
+    public static uint[] ExpectedHashes(int[][] variants)
+    {
+        var key = Json(variants);
+        if (HashCache.TryGetValue(key, out var found)) return found;
+        var hashes = variants.Select(v => Hash(v[0], v[1], v[2])).ToArray();
+        if (HashCache.Count >= HashCacheLimit) HashCache.Clear();
+        return HashCache.GetOrAdd(key, hashes);
+    }
+
+    /// <summary>Input lists whose hashes are kept before the cache is cleared.</summary>
+    public const int HashCacheLimit = 256;
 
     // Every input set x > y > z >= 0, x up to 40, no deeper than MaxDepth,
     // whose call count is near the range. Many sets share a count (adding one to all three keeps it),
@@ -199,19 +254,18 @@ public static class TakTiming
 
     /// <summary>The tag the gatherer puts before the value: empty for the
     /// default inputs, else "p" + FNV-1a 32 of the inputs list + ":".</summary>
-    public static string Tag(int[][] variants)
-    {
-        var d = ChooseVariants(DefaultSeed.A, DefaultSeed.B);
-        return Json(variants) == Json(d) ? "" : "p" + Fnv1a32("[" + Json(variants) + "]") + ":";
-    }
+    public static string Tag(int[][] variants) =>
+        Json(variants) == DefaultJson.Value ? "" : "p" + Fnv1a32("[" + Json(variants) + "]") + ":";
+
+    private static readonly Lazy<string> DefaultJson = new(() => Json(ChooseVariants(DefaultSeed.A, DefaultSeed.B)));
 
     // ---- the check ---------------------------------------------------------
 
     /// <summary>
     /// Checks a browser's m_takwork value against the inputs the server
     /// issued for it. Value: tag, "g" + timer tick in ms ("c" when the
-    /// browser saw no tick), "|", then per input "result:t1,t2,t3" in ms,
-    /// joined by ";".
+    /// browser saw no tick), "|", then per input "hash:t1,t2,t3", the hash 8
+    /// hex digits and the times in ms, joined by ";".
     /// </summary>
     public static Verdict Verify(int[][] variants, string value)
     {
@@ -226,9 +280,8 @@ public static class TakTiming
         if (bar < 2 || body[0] != 'g') return V(Outcome.Fail, "shape");
         double tick;
         if (body[1..bar] == "c") tick = CoarseTickMs;
-        else if (!double.TryParse(body[1..bar], NumberStyles.Float, CultureInfo.InvariantCulture, out tick) || tick <= 0)
+        else if (!double.TryParse(body[1..bar], NumberStyles.Float, CultureInfo.InvariantCulture, out tick) || !(tick > 0) || !double.IsFinite(tick))
             return V(Outcome.Fail, "shape");
-        if (tick > MaxTickMs) return V(Outcome.Unresolved, "timer", double.NaN, double.NaN, tick);
         var parts = body[(bar + 1)..].Split(';');
         if (parts.Length != variants.Length) return V(Outcome.Fail, "shape");
 
@@ -237,21 +290,28 @@ public static class TakTiming
         for (var i = 0; i < parts.Length; i++)
         {
             var colon = parts[i].IndexOf(':');
-            if (colon < 1) return V(Outcome.Fail, "shape");
-            var (r, c) = Calls(variants[i][0], variants[i][1], variants[i][2]);
-            if (parts[i][..colon] != r.ToString(CultureInfo.InvariantCulture)) return V(Outcome.Fail, "result");
+            if (colon != 8) return V(Outcome.Fail, "shape");
+            var c = Calls(variants[i][0], variants[i][1], variants[i][2]).Calls;
             var times = parts[i][(colon + 1)..].Split(',');
             if (times.Length != Reps) return V(Outcome.Fail, "shape");
             var best = double.MaxValue;
             foreach (var t in times)
             {
-                if (!double.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out var ms) || ms < 0 || double.IsNaN(ms))
+                if (!double.TryParse(t, NumberStyles.Float, CultureInfo.InvariantCulture, out var ms) || !(ms >= 0) || !double.IsFinite(ms))
                     return V(Outcome.Fail, "shape");
                 best = Math.Min(best, ms);
             }
             fastest[i] = best;
             calls[i] = c;
         }
+
+        // The hashes before anything the timer decides, so an answer made
+        // without the traversal fails whatever tick it claims.
+        var hashes = ExpectedHashes(variants);
+        for (var i = 0; i < parts.Length; i++)
+            if (!uint.TryParse(parts[i].AsSpan(0, 8), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var got) || got != hashes[i])
+                return V(Outcome.Fail, "hash", double.NaN, double.NaN, tick);
+        if (tick > MaxTickMs) return V(Outcome.Unresolved, "timer", double.NaN, double.NaN, tick);
 
         // k, ms per call, as the median input's: one slowed input cannot move it.
         var rate = fastest.Select((t, i) => t / calls[i]).OrderBy(r => r).ToArray();
