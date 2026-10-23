@@ -27,10 +27,30 @@ namespace BrowserContradictions.Web;
 /// production): a list of failing tests in a response would tell a forger
 /// exactly which answers to fix.
 /// </para>
+/// <para>
+/// Canaries (PHASE2-FORMATS, canaries): an id starting "x_" is a canary,
+/// never a test. It never counts in HasContradictions. It is tripped when
+/// the baseline has a coverage row for it on the claim (the shipped script
+/// never sends it), otherwise when its value has a "1" flag. Any payload
+/// value that equals one of the claim's poison rows, "claim|x_poison.1|value",
+/// trips x_poison.1. Tripped ids go to CanaryTripped. The example's JSON
+/// builder has no per property exclusion, so CanaryTripped reaches the
+/// page's JSON like Claim does: on the cloud the entitlement keeps it from
+/// licence key holders because no product lists it.
+/// </para>
 /// </summary>
 public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropertyMetaData>
 {
     public const string DefaultCookie = "51D_BrowserTests";
+
+    /// <summary>Ids starting with this are canaries, never tests.</summary>
+    public const string CanaryPrefix = "x_";
+
+    /// <summary>
+    /// The one id the element names, which is not a test: the baseline's
+    /// poison rows are value rows under it.
+    /// </summary>
+    public const string PoisonId = "x_poison.1";
 
     private readonly IEvidenceKeyFilter _filter;
 
@@ -54,6 +74,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             new ElementPropertyMetaData(this, "Measurements", typeof(string), true, "Bot Detection"),
             new ElementPropertyMetaData(this, "EvidenceSource", typeof(string), true, "Bot Detection"),
             new ElementPropertyMetaData(this, "ClaimScope", typeof(string), true, "Bot Detection"),
+            new ElementPropertyMetaData(this, "CanaryTripped", typeof(string), true, "Bot Detection"),
         ];
     }
 
@@ -96,6 +117,7 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         result["EvidenceSource"] = source;
         result["Contradictions"] = "";
         result["Measurements"] = "";
+        result["CanaryTripped"] = "";
 
         if (raw == null)
         {
@@ -121,8 +143,20 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
         var evaluated = 0;
         var viaAny = 0;
         var failed = new List<string>();
+        var tripped = new SortedSet<string>(StringComparer.Ordinal);
+        bool Has(string row) => baseline.Contains($"{claim}|{row}") || (any != null && baseline.Contains($"{any}|{row}"));
         foreach (var (test, value) in measurements)
         {
+            // Poison rows: a value equal to one, under any id, means the
+            // sender replayed the plain baseline.
+            if (Has($"{PoisonId}|{value}")) tripped.Add(PoisonId);
+            if (test.StartsWith(CanaryPrefix, StringComparison.Ordinal))
+            {
+                // A canary: tripped by presence when the baseline marks it
+                // with a coverage row, else by any "1" flag. Never a test.
+                if (Has(test) || value.Contains('1')) tripped.Add(test);
+                continue;
+            }
             string scope;
             if (baseline.Contains($"{claim}|{test}")) scope = claim;
             else if (any != null && baseline.Contains($"{any}|{test}")) { scope = any; viaAny++; }
@@ -131,9 +165,10 @@ public class BrowserTestsElement : FlowElementBase<IElementData, IElementPropert
             if (baseline.Contains($"{scope}|{test}|{value}") == false) failed.Add(test);
         }
         result["ClaimScope"] = viaAny == 0 ? "exact" : viaAny == evaluated ? "any version" : "mixed";
+        result["CanaryTripped"] = string.Join(",", tripped);
         Logger.LogInformation(
-            "Browser tests claim {Claim} source {Source} measured {Measured} evaluated {Evaluated} failed {Failed}: {Tests}",
-            claim, source, measurements.Count, evaluated, failed.Count, string.Join(",", failed));
+            "Browser tests claim {Claim} source {Source} measured {Measured} evaluated {Evaluated} failed {Failed}: {Tests} canaries tripped: {Canaries}",
+            claim, source, measurements.Count, evaluated, failed.Count, string.Join(",", failed), string.Join(",", tripped));
         if (evaluated == 0)
         {
             result["HasContradictions"] = "Unknown";

@@ -54,10 +54,16 @@ GENUINE = {
     "Chrome|148|Windows": ["v5-train-cft148", "v4-win-cft148-headed", "fin-win-cft148-headed", "vr-chrome148"],
     "Chrome|150|Windows": ["v5-train-cft150", "v4-win-cft150-headed", "fin-win-cft150-headed", "vr-chrome150"],
     "Chrome|155|Windows": ["v5-train-chrome155", "v4-win-chrome155-headed", "fin-win-chrome155-headed", "vr-chrome155"],
-    "Chrome|156|Windows": ["v5-train-chrome156", "v4-win-chrome156-headed", "fin-win-chrome156-headed", "vr-chrome156"],
+    "Chrome|156|Windows": ["v6-train-chrome156", "v5-train-chrome156", "v4-win-chrome156-headed", "fin-win-chrome156-headed", "vr-chrome156"],
+    # Canary captures (C:/bc-data/v6/runs), 23 Oct 2026: stable Chrome 156,
+    # Beta 157, Edge 156 and Firefox 158. The v6-priv- runs (Brave, Firefox
+    # resistFingerprinting) are never rows: Brave shares Chrome's user agent
+    # and would read as noise within the build.
+    "Chrome|157|Windows": ["v6-train-chrome157"],
     "Edge (Chromium) for Windows|155|Windows": ["v5-train-edge155", "v4-win-edge155-headed", "fin-win-edge155-headed"],
+    "Edge (Chromium) for Windows|156|Windows": ["v6-train-edge156"],
     # Headed only: headless Firefox measures text differently.
-    "Firefox|158|Windows": ["v5-train-firefox158", "v4-win-firefox158-headed", "fin-win-firefox158-headed"],
+    "Firefox|158|Windows": ["v6-train-firefox158", "v5-train-firefox158", "v4-win-firefox158-headed", "fin-win-firefox158-headed"],
     # Playwright's Linux Chromium is driven (Runtime enabled, IPC flooding
     # protection off), so from wave 3 it is automation, not a genuine Linux
     # browser. Kept for the earlier waves' runs only.
@@ -132,6 +138,8 @@ def load(runs, label):
 def build(runs, catalogue, deprecate=()):
     """Returns (rows, ranges, report, values, active) for the active tests."""
     tests = json.load(open(catalogue, encoding="utf-8"))["tests"]
+    # Canaries never get rows from runs: their rows, if any, come from the
+    # catalogue (PHASE2-FORMATS, canaries), see canary_rows.
     active = {t["id"] for t in tests if t["status"] == "active"} - set(deprecate) - NO_ROWS
     values, report = {}, []
     for claim, labels in GENUINE.items():
@@ -184,7 +192,31 @@ def build(runs, catalogue, deprecate=()):
             rows.add(f"{claim}|{test}")
             for v in vs:
                 rows.add(f"{claim}|{test}|{v}")
+        rows.update(canary_rows(claim, tests))
     return sorted(rows), ranges, report, values, active
+
+
+def poison_value(claim, test, index):
+    """The same value Pearl's BaselineBuilder.PoisonValue gives."""
+    import hashlib
+    return "p" + hashlib.sha256(f"51D poison|{claim}|{test}|{index}".encode("utf-8")).hexdigest()[:12]
+
+
+def canary_rows(claim, tests):
+    """The catalogue's canary rows for one row claim: a coverage row for an
+    absent canary, two poison value rows for a poison canary, none for a
+    flags canary."""
+    out = set()
+    for t in tests:
+        if t["status"] != "canary":
+            continue
+        rule = t.get("rule", "flags")
+        if rule == "absent":
+            out.add(f"{claim}|{t['id']}")
+        elif rule == "poison":
+            for i in (1, 2):
+                out.add(f"{claim}|{t['id']}|{poison_value(claim, t['id'], i)}")
+    return out
 
 
 def main():

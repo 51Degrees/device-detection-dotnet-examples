@@ -57,7 +57,18 @@ class Element:
         star = f"{browser}|*|{platform}"
         in_range = any(b == browser and p == platform and lo <= major <= hi for b, p, lo, hi in self.ranges)
         counted, failed, scopes = 0, [], set()
+        self.tripped = set()
+
+        def has_any(row):
+            return self.has(f"{exact}|{row}") or (in_range and self.has(f"{star}|{row}"))
         for test, value in sorted(results.items()):
+            # Canaries (PHASE2-FORMATS): never counted, reported apart.
+            if has_any(f"x_poison.1|{rows['pack'](value)}"):
+                self.tripped.add("x_poison.1")
+            if test.startswith("x_"):
+                if has_any(test) or "1" in value:
+                    self.tripped.add(test)
+                continue
             if self.has(f"{exact}|{test}"):
                 use = exact; scopes.add("exact")
             elif in_range and self.has(f"{star}|{test}"):
@@ -84,6 +95,19 @@ EXPECT = [
     # Testing does: the one known false positive (a_widevine.1).
     ("v5-extra-chrome155-noprotected", "True"), ("v5-extra-", "False"),
     ("v5-forge-", "True"),
+    # Canary captures, 23 Oct 2026. Genuine and privacy browsers False, the
+    # forgeries True or Unknown (HeadlessChrome and the headless user agent
+    # swap are judged on their own claims), canaries listed apart.
+    # Known false positive of the 13 key tests, not of the canaries: Firefox
+    # with privacy.resistFingerprinting answers a_aacencode.1, a_shfonts.1,
+    # f_genericmap.1 and f_segoeshape.1 differently, so it reads True.
+    # Printed, not judged, until the key list is reviewed for it.
+    ("v6-priv-firefox158-rfp", None), ("v6-priv-firefox158-torlike", None), ("v6-quick-firefox158-rfp", None),
+    ("v6-train-", "False"), ("v6-priv-", "False"), ("v6-quick-", "False"),
+    # HeadlessChrome user agents are Unknown (no baseline), and genuine Chrome
+    # under --headless=new with a swapped user agent passes the 13 key tests.
+    ("v6-forge-chromium141-genuine", "Unknown"), ("v6-forge-puppeteer-headless", "Unknown"),
+    ("v6-forge-chrome156-headlessua", "False"), ("v6-forge-", "True"),
     # Chrome for Testing is an automation build, caught on purpose by the
     # build flavour tests (a_voices.2, a_widevine.1).
     ("v4-win-cft", "True"),
@@ -127,7 +151,9 @@ def replay(element, title, runs, hold=(), pearl=False):
             # With 156 held out only one branded major (155) carries the build
             # flavour tests, so they get no "*" rows and 150 is judged on the
             # engine tests alone.
-            want = {150: "False", 156: "Unknown"}.get(m, want)
+            # With Beta 157 captured (v6), 156 held out sits inside the
+            # range and passes through the "*" rows too.
+            want = {150: "False", 156: "False"}.get(m, want)
         if pearl and label.startswith(("fin-cloak-macos", "fin-cloak-linux", "v4-cloak-macos", "v4-cloak-linux")):
             want = "Unknown"  # Pearl has no macOS or Linux Chrome claim and infers no rows
         if pearl and label.startswith("fin-wsl-chromium141"):
@@ -136,7 +162,8 @@ def replay(element, title, runs, hold=(), pearl=False):
         if want is not None:
             ok += got == want; bad += got != want
         print(f"{mark} {label[:44]:44} {b[:12]}|{m}|{p:8} {got:7} {scope:9} {n:2} counted"
-              + (f"  failed {','.join(failed)}" if failed else ""))
+              + (f"  failed {','.join(failed)}" if failed else "")
+              + (f"  CANARY {','.join(sorted(element.tripped))}" if element.tripped else ""))
     print(f"{ok} of {ok + bad} as expected")
     return bad == 0
 

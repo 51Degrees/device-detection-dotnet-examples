@@ -1000,6 +1000,228 @@
     // The yield uses a MessageChannel because timers are throttled to once
     // a second in background tabs.
     var SLICE_MS = 30;
+    // ---- canaries ---------------------------------------------------------
+    // Tests that exist to catch tampering, not to measure the browser
+    // (catalogue status "canary", PHASE2-FORMATS). Every value is a string of
+    // 0 and 1 flags, one per check, and the element reads a canary as
+    // tripped when any flag is 1. A canary never gets baseline rows and never
+    // changes HasContradictions. Every check is written so a genuine browser
+    // answers 0, including Brave, Firefox with resistFingerprinting and Tor
+    // style settings, and an API that is missing answers 0 too. A check that
+    // throws answers 0, so a canary never answers "err".
+    function flag(f) { try { return f() ? "1" : "0"; } catch (e) { return "0"; } }
+    function flags(fs) { return fs.map(flag).join(""); }
+    // Native function text: Chrome "function get userAgent() { [native code] }",
+    // Firefox and Safari "function userAgent() {\n    [native code]\n}". The
+    // name must be in the text: a Proxy over a native function prints as
+    // "function () { [native code] }", with no name, which is how a proxied
+    // getter shows through a realm whose toString was not patched.
+    var FTS = Function.prototype.toString;
+    function isNative(f, name, ts) {
+        if (typeof f !== "function") return false;
+        var text = (ts || FTS).call(f);
+        return new RegExp("^function (get |set )?" + (name || "[\\w$]*") + "\\(\\) \\{\\s*\\[native code\\]\\s*\\}$").test(text);
+    }
+    function hasOwn(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+    // The native getters and methods a forger patches, with the instance an
+    // own property would shadow them on. Names a browser lacks are skipped.
+    function natives() {
+        var list = [];
+        function add(proto, inst, names, must) {
+            if (!proto) return;
+            names.forEach(function (n) {
+                var d = Object.getOwnPropertyDescriptor(proto, n);
+                list.push({ proto: proto, inst: inst, name: n, d: d, f: d && (d.get || d.value), must: must });
+            });
+        }
+        add(Navigator.prototype, navigator, ["userAgent", "platform", "language", "languages", "hardwareConcurrency", "webdriver", "plugins"], true);
+        add(Navigator.prototype, navigator, ["deviceMemory", "userAgentData", "vendor", "maxTouchPoints"], false);
+        add(Screen.prototype, screen, ["width", "height", "availWidth", "availHeight", "colorDepth"], true);
+        add(HTMLCanvasElement.prototype, null, ["toDataURL", "toBlob", "getContext"], true);
+        add(CanvasRenderingContext2D.prototype, null, ["measureText", "getImageData", "fillText"], true);
+        add(window.WebGLRenderingContext && WebGLRenderingContext.prototype, null, ["getParameter", "getSupportedExtensions", "getShaderPrecisionFormat"], true);
+        add(window.WebGL2RenderingContext && WebGL2RenderingContext.prototype, null, ["getParameter"], false);
+        add(Date.prototype, null, ["getTimezoneOffset"], true);
+        add(Intl.DateTimeFormat.prototype, null, ["resolvedOptions"], true);
+        add(window.AudioBuffer && AudioBuffer.prototype, null, ["getChannelData"], false);
+        add(window.Permissions && Permissions.prototype, null, ["query"], false);
+        add(Element.prototype, null, ["getBoundingClientRect", "getClientRects"], true);
+        add(HTMLIFrameElement.prototype, null, ["contentWindow", "contentDocument"], true);
+        add(Function.prototype, null, ["toString"], true);
+        return list;
+    }
+
+    // Impossible values: answers no genuine engine gives. jsHeapSizeLimit is
+    // never an exact power of two (CloakBrowser answers 2^32, genuine Chrome
+    // 4395630592, 4294705152, 2197815296), the heap counters are ordered,
+    // hardwareConcurrency is a positive integer, and languages[0] is
+    // language. Dropped after the lab (23 Oct 2026): deviceMemory outside
+    // 0.25 .. 8 (Chrome 156 answers 32 and Brave farbles it to 4, 16 or 32),
+    // availWidth above width (genuine Chrome at 125% scale rounds the two
+    // apart by one pixel), and 800 x 600 at 24 bit (Firefox with
+    // resistFingerprinting and letterboxing can answer exactly that).
+    s("x_round.1", function () {
+        var m = performance.memory;
+        return flags([
+            function () { var h = m.jsHeapSizeLimit; return h >= 2147483648 && Math.log2(h) === Math.floor(Math.log2(h)); },
+            function () { return m.usedJSHeapSize > m.totalJSHeapSize || m.totalJSHeapSize > m.jsHeapSizeLimit; },
+            function () { var c = navigator.hardwareConcurrency; return c !== undefined && (c !== Math.floor(c) || c < 1 || c > 1024); },
+            function () { return navigator.languages.length > 0 && navigator.languages[0] !== navigator.language; }
+        ]);
+    });
+    // A property nobody defines must be absent on navigator and screen in
+    // every way of asking. A catch-all Proxy or getter answers otherwise.
+    s("x_lie_nope.1", function () {
+        var k = "zq51dNope" + (1 + Date.now() % 7);
+        return [navigator, screen].map(function (o) {
+            return flags([
+                function () { return typeof o[k] !== "undefined"; },
+                function () { return k in o; },
+                function () { return Object.getOwnPropertyDescriptor(o, k) !== undefined; },
+                function () { try { void o[k]; return false; } catch (e) { return true; } }
+            ]);
+        }).join("");
+    });
+    // The getters and methods a forger patches must still be native: native
+    // source text, no "prototype", only length and name as own properties,
+    // no own property on the instance shadowing the prototype getter, and
+    // the ones every engine has must exist. Function.prototype.toString
+    // itself is in the list, so a patched toString is caught by its own
+    // text and own properties.
+    s("x_lie_native.1", function () {
+        var ts = 0, pr = 0, own = 0, shadow = 0, missing = 0;
+        natives().forEach(function (n) {
+            if (!n.d) { if (n.must) missing++; return; }
+            if (!n.f) { pr++; return; }
+            if (!isNative(n.f, n.name)) ts++;
+            if ("prototype" in n.f) pr++;
+            if (Object.getOwnPropertyNames(n.f).sort().join() !== "length,name") own++;
+            if (n.inst && hasOwn(n.inst, n.name)) shadow++;
+        });
+        return flags([function () { return ts > 0; }, function () { return pr > 0; }, function () { return own > 0; }, function () { return shadow > 0; }, function () { return missing > 0; }]);
+    });
+    // The same questions asked from a fresh realm. A toString patched in the
+    // page does not reach an iframe's Function.prototype.toString, so the
+    // iframe's toString reveals the page's patched functions (the DataDome
+    // iframe trick), and the iframe's own navigator must agree with the
+    // page's.
+    s("x_lie_realm.1", function () {
+        var fr = document.createElement("iframe");
+        fr.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
+        (document.body || document.documentElement).appendChild(fr);
+        try {
+            var w = fr.contentWindow, ts2 = w.Function.prototype.toString;
+            var same = ["userAgent", "platform", "language", "hardwareConcurrency", "deviceMemory", "webdriver", "maxTouchPoints"].every(function (k) { return str(w.navigator[k]) === str(navigator[k]); })
+                && str(w.navigator.languages) === str(navigator.languages)
+                && w.screen.width === screen.width && w.screen.height === screen.height && w.screen.colorDepth === screen.colorDepth;
+            return flags([
+                function () { return natives().some(function (n) { return n.f && !isNative(n.f, n.name, ts2); }); },
+                function () { return !isNative(FTS, "toString", ts2) || !isNative(ts2, "toString", FTS); },
+                function () { return !same; },
+                function () { return Object.getOwnPropertyNames(w.navigator).length > 0 || Object.getOwnPropertyNames(w.screen).length > 0; }
+            ]);
+        } finally { fr.parentNode.removeChild(fr); }
+    });
+    // A native getter or method called on a plain object throws a TypeError
+    // from the binding with no JavaScript frames of its own, so its stack is
+    // the stack of an Error made on the line before, frame for frame. A
+    // JavaScript replacement answers instead of throwing, and a Proxy trap
+    // adds a frame of its own (puppeteer-extra stealth 2.11.2 on Chrome 156:
+    // "at newHandler.<computed> [as apply]"), whatever it is called.
+    s("x_lie_call.1", function () {
+        var noThrow = 0, frames = 0;
+        // Frame locations without line and column, so the control error and
+        // the thrown one made in this function compare equal.
+        function locs(st) {
+            return (st || "").split("\n").filter(function (l) { return /^\s+at |@/.test(l); })
+                .map(function (l) { return l.replace(/:\d+:\d+\)?\s*$/, "").replace(/:\d+\)?\s*$/, ""); });
+        }
+        natives().forEach(function (n) {
+            // Promise returning methods (Permissions.query) reject instead of
+            // throwing, and Date and toString accept any object.
+            if (!n.f || n.name === "toString" || n.name === "query" || n.proto === Date.prototype) return;
+            var control = locs(new Error("c").stack), thrown = null;
+            try { n.f.call({}); } catch (e) { thrown = e; }
+            if (!thrown || !(thrown instanceof TypeError)) { noThrow++; return; }
+            // V8's own builtins (Intl) do add a frame of their own, so only
+            // the browser bindings are compared frame for frame.
+            if (n.proto === Intl.DateTimeFormat.prototype) return;
+            var got = locs(String(thrown.stack || ""));
+            if (got.length !== control.length || got.some(function (l, i) { return l !== control[i]; })) frames++;
+        });
+        return flags([function () { return noThrow > 0; }, function () { return frames > 0; }]);
+    });
+    // Text widths add up: with kerning off and no letter spacing the width of
+    // "AV" is the width of "A" plus the width of "V" to within 1/64 px, in
+    // every font and in a second measurement. Patched or noisy measureText
+    // breaks the sum or the repeat.
+    s("x_lie_add.1", function () {
+        var ctx = canvas2d();
+        var kern = "fontKerning" in ctx;
+        if (kern) ctx.fontKerning = "none";
+        if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+        var pairs = kern ? ["AV", "To", "Wa", "il", "17"] : ["il", "17", "mm", "nn"];
+        function w(t) { return ctx.measureText(t).width; }
+        return ["Arial", "system-ui", "Times New Roman", "monospace"].map(function (font) {
+            return flag(function () {
+                ctx.font = "16px " + font;
+                return pairs.some(function (p) {
+                    var a = w(p.charAt(0)), b = w(p.charAt(1)), ab = w(p);
+                    return Math.abs(ab - a - b) > 1 / 64 || w(p) !== ab || w(p.charAt(0)) !== a;
+                });
+            });
+        }).join("");
+    });
+    // The same fact asked two ways: the Chrome major in the user agent
+    // against the client hint brands, the platform in the user agent and the
+    // client hints against navigator.platform, and the Intl time zone
+    // against the offsets Date uses in January and July and in
+    // Date.toString. Dropped after the lab (23 Oct 2026): screen.width
+    // against a device-width media query, which Brave farbles apart.
+    function zoneOffset(tz, d) {
+        var parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" }).formatToParts(d), v = {};
+        parts.forEach(function (p) { v[p.type] = p.value; });
+        return Math.round((Date.UTC(v.year, v.month - 1, v.day, v.hour % 24, v.minute, v.second) - d.getTime()) / 60000);
+    }
+    s("x_lie_two.1", function () {
+        var ua = navigator.userAgent, uad = navigator.userAgentData, plat = navigator.platform;
+        function platOk(claim) {
+            if (/Windows/.test(claim)) return /^Win/.test(plat);
+            if (/Macintosh|macOS/.test(claim)) return /^Mac/.test(plat);
+            if (/Android|Linux|CrOS|Chrome OS|Chromium OS/.test(claim)) return /^Linux/.test(plat);
+            if (/iPhone|iPad|iPod/.test(claim)) return /^(iPhone|iPad|iPod|Mac)/.test(plat);
+            return true;
+        }
+        return flags([
+            function () { var m = /Chrome\/(\d+)/.exec(ua); return !!(m && uad && uad.brands.length) && !uad.brands.some(function (b) { return b.version === m[1]; }); },
+            function () { return !platOk(ua); },
+            function () { return !!(uad && uad.platform) && !platOk(uad.platform); },
+            function () {
+                var tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (!tz) return false;
+                var y = new Date().getFullYear();
+                return [new Date(y, 0, 15, 12), new Date(y, 6, 15, 12)].some(function (d) { return zoneOffset(tz, d) !== -d.getTimezoneOffset(); });
+            },
+            function () { var d = new Date(), m = /GMT([+-])(\d\d)(\d\d)/.exec(d.toString()); return !!m && (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) !== -d.getTimezoneOffset(); }
+        ]);
+    });
+    // An own property on the instance, or a data property on the prototype,
+    // where the engine has an accessor on the prototype: the shape of a
+    // defineProperty spoof. Also the navigator and screen objects themselves
+    // replaced, and the window's navigator or screen turned into a data
+    // property.
+    s("x_lie_shadow.1", function () {
+        function dataProp(proto, names) { return names.some(function (n) { var d = Object.getOwnPropertyDescriptor(proto, n); return !!d && "value" in d; }); }
+        function winData(n) { var d = Object.getOwnPropertyDescriptor(window, n) || Object.getOwnPropertyDescriptor(Window.prototype, n); return !!d && "value" in d; }
+        return flags([
+            function () { return Object.getOwnPropertyNames(navigator).length > 0; },
+            function () { return Object.getOwnPropertyNames(screen).length > 0; },
+            function () { return dataProp(Navigator.prototype, ["webdriver", "userAgent", "platform", "language", "languages", "plugins", "hardwareConcurrency", "deviceMemory", "userAgentData", "vendor"]) || dataProp(Screen.prototype, ["width", "height", "colorDepth"]); },
+            function () { return winData("navigator") || winData("screen"); },
+            function () { return Object.getPrototypeOf(navigator) !== Navigator.prototype || navigator.constructor !== Navigator || Object.getPrototypeOf(screen) !== Screen.prototype; },
+            function () { return Object.prototype.toString.call(navigator) !== "[object Navigator]" || Object.prototype.toString.call(screen) !== "[object Screen]"; }
+        ]);
+    });
+
     function run(budgetMs, params) {
         var started = performance.now();
         params = params || {};

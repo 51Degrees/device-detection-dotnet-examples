@@ -38,6 +38,9 @@ const [kind, exe, label, url, runs, timeoutS, userAgent] = process.argv.slice(2)
 const temp = process.env.BC_PROFILES || 'C:\\bc-temp';
 const profile = path.join(temp, 'prof-' + label + '-' + Date.now());
 fs.mkdirSync(profile, { recursive: true });
+// BC_FFPREFS is written as the fresh Firefox profile's user.js, for example
+// user_pref("privacy.resistFingerprinting", true);
+if (process.env.BC_FFPREFS) fs.writeFileSync(path.join(profile, 'user.js'), process.env.BC_FFPREFS);
 if (process.env.BC_PREFS) {
   fs.mkdirSync(path.join(profile, 'Default'), { recursive: true });
   fs.writeFileSync(path.join(profile, 'Default', 'Preferences'), process.env.BC_PREFS);

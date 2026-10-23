@@ -44,7 +44,7 @@ app.MapGet("/", (IFlowDataProvider provider) =>
     var derived = data.Get("derived");
     foreach (var p in new[] { "BrowserName", "BrowserVersion", "PlatformName", "IsCrawler", "HasWebDriver", "IsVisible", "BrowserTests" })
         Row($"device.{p}", () => device[p]);
-    foreach (var p in new[] { "Claim", "EvidenceSource", "HasContradictions", "Contradictions", "Measurements" })
+    foreach (var p in new[] { "Claim", "EvidenceSource", "HasContradictions", "CanaryTripped", "Contradictions", "Measurements" })
         Row($"browser.{p}", () => browser[p]);
     Row("derived.HumanConfidenceProof", () => derived["HumanConfidenceProof"]);
 
@@ -87,6 +87,7 @@ const string ReportJs = """
         "browser.claim": b.claim,
         "browser.hascontradictions": b.hascontradictions,
         "browser.contradictions": b.contradictions,
+        "browser.canarytripped": b.canarytripped,
         "derived.humanconfidenceproof": x.humanconfidenceproof,
         "device.haswebdriver": d.haswebdriver,
         "baseline leaked": text.indexOf("2|h64") >= 0 || Object.keys(d).some(function (k) {
@@ -105,6 +106,7 @@ const string ReportJs = """
         "diag": (window.__diag || []).join(" "),
         "server.evidencesource": cell("s-browser-EvidenceSource"),
         "server.hascontradictions": cell("s-browser-HasContradictions"),
+        "server.canarytripped": cell("s-browser-CanaryTripped"),
         "server.humanconfidenceproof": cell("s-derived-HumanConfidenceProof")
       };
       document.getElementById("client").textContent = JSON.stringify(out, null, 2);

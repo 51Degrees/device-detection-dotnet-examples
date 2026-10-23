@@ -880,6 +880,96 @@
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Final hardening, 20 Oct 2026, from the stealth study: the user agent's brand and major against client hints, and whether the high entropy hints are filled. A --user-agent switch leaves them empty: 1-|---| for every headless stack with a swapped user agent (nodriver, Patchright, Puppeteer and Playwright best practice). Genuine Chrome 155, 156 and Edge 155 1-|px8664|Desktop in every run. Chrome for Testing 0-|px8664|Desktop (its brand is not Google Chrome). Collecting until a Pearl rule can say empty high entropy hints with a Chrome user agent. Fix for the operator: Emulation.setUserAgentOverride with userAgentMetadata."
+    },
+    {
+      "id": "x_lie_add.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Canvas measureText additivity: with kerning off and no letter spacing, width(AB) equals width(A) plus width(B) within 1/64 px in Arial, system-ui, Times New Roman and monospace, and a repeat measurement is identical. Patched or noisy measureText breaks it. Lab 23 Oct 2026: clean in Chrome, Edge, Firefox (plain, resistFingerprinting, Tor like) and Brave. Risk: the CanvasBlocker extension's TextMetrics noise."
+    },
+    {
+      "id": "x_lie_call.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Each native getter or method called on a plain object must throw a TypeError whose stack has no extra frames and names no Proxy or Reflect.apply. A JavaScript replacement answers instead of throwing. Promise returning methods and Date are left out. Lab 23 Oct 2026: clean in every genuine and privacy browser."
+    },
+    {
+      "id": "x_lie_native.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "The getters and methods a forger patches (Navigator, Screen, canvas, WebGL, Date, Intl, iframe contentWindow, Function.prototype.toString) must be native: native source text, no prototype, own properties length and name only, no own property on the instance, and the ones every engine has present. Lab 23 Oct 2026: clean in every genuine and privacy browser."
+    },
+    {
+      "id": "x_lie_nope.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "A property nobody defines (zq51dNope plus a digit) on navigator and screen: typeof not undefined, in true, a descriptor, or access throwing. A catch all Proxy or getter answers otherwise. Lab 23 Oct 2026: clean in every genuine and privacy browser."
+    },
+    {
+      "id": "x_lie_realm.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "The same functions seen through an about:blank iframe's Function.prototype.toString (the DataDome trick: a toString patched in the page does not reach the iframe), the iframe's navigator and screen agreeing with the page's, and no own properties on them. Lab 23 Oct 2026: clean in every genuine and privacy browser."
+    },
+    {
+      "id": "x_lie_shadow.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "The shape of a defineProperty spoof: own properties on navigator or screen, data properties where Navigator.prototype and Screen.prototype have accessors, window.navigator or window.screen as a data property, a replaced navigator or screen object, or a wrong Object.prototype.toString tag. Lab 23 Oct 2026: clean in every genuine and privacy browser."
+    },
+    {
+      "id": "x_lie_two.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "The same fact two ways: the Chrome major in the user agent against the client hint brands, the platform in the user agent and in the client hints against navigator.platform, the Intl time zone against Date offsets in January and July, and the GMT offset in Date.toString against getTimezoneOffset. Lab 23 Oct 2026: clean in every genuine and privacy browser. Dropped flag: screen.width against a device-width media query, which Brave farbles apart."
+    },
+    {
+      "id": "x_phantom.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "absent",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Registered here only: the shipped script never runs or sends it, so its id in a payload means the sender built the payload from the catalogue or the data file. The baseline carries a coverage row for it on every claim as the marker."
+    },
+    {
+      "id": "x_poison.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "poison",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Never in any script. BaselineBuilder writes two value rows per claim whose values are deterministic per claim (PoisonValue). A payload value equal to one, under any test id, means the sender replayed the plain baseline rows."
+    },
+    {
+      "id": "x_round.1",
+      "family": "canary",
+      "status": "canary",
+      "rule": "flags",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Impossible values no engine gives: jsHeapSizeLimit an exact power of two at or above 2^31 (CloakBrowser 146 answers 4294967296, genuine Chrome 4395630592 or 4294705152), heap counters out of order, hardwareConcurrency not a positive integer up to 1024, languages[0] not language. Lab 23 Oct 2026: clean in Chrome 156 and 157, Edge 156, Firefox 158 plain, resistFingerprinting, Tor like and fingerprintingProtection, Brave 155. Dropped flags: deviceMemory outside 0.25 to 8 (Chrome 156 answers 32, Brave farbles 4, 16, 32), availWidth above width (Chrome at 125 percent scale rounds them one pixel apart), 800 x 600 at 24 bit (Firefox resistFingerprinting with letterboxing can answer it)."
     }
   ]
 }
