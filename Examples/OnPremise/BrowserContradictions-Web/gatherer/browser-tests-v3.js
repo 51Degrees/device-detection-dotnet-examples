@@ -80,8 +80,11 @@
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
 //   walk    the seed of m_tanhwalk, two integers 0 to 4294967295
+//   shapes  the glyphs f_segoeshape.2 rasterises, an array of one
+//           character strings
 // A parameterised test's inputs are the array its inputs function below
-// returns (metricsInputs, emojiInputs, tanhInputs, walkInputs). When
+// returns (metricsInputs, emojiInputs, tanhInputs, walkInputs,
+// shapeInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -105,7 +108,8 @@
         // V8's fdlibm port only for |x| below about 1.9.
         tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125],
         // TanhWalk.DefaultSeed in the element must match.
-        walk: [2654435769, 2135587861]
+        walk: [2654435769, 2135587861],
+        shapes: ["g", "@", "&", "ß", "ą", "ж", "R", "3"]
     };
     // The inputs each parameterised test consumes, in tag order. Plain
     // functions rather than a table keyed by test id, so no test id is an
@@ -114,6 +118,7 @@
     function emojiInputs(p) { return [p.emoji, p.size]; }
     function tanhInputs(p) { return [p.tanh]; }
     function walkInputs(p) { return [p.walk]; }
+    function shapeInputs(p) { return [p.shapes]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -689,8 +694,11 @@
         var hex = ""; for (var i = 0; i < bits.length; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
         return (x1 - x0 + 1) + "x" + (y1 - y0 + 1) + ":" + hex;
     }
-    var SHAPE_GLYPHS = ["g", "@", "&", "\u00DF", "\u0105", "\u0436", "R", "3"];
+    var SHAPE_GLYPHS = DEFAULTS.shapes;
     s("f_segoeshape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
+    // The same grid for glyphs the server chooses per window (params.shapes),
+    // so the answer for one window is no use for the next.
+    s("f_segoeshape.2", function () { return tag(shapeInputs, P) + P.shapes.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
     s("f_calibrishape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px Calibri", ch); }).join("|"); });
     // Exact small size raster of Segoe UI. DirectWrite and FreeType differ
     // even with the same file, but ClearType tuning may move it too.

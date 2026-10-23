@@ -1,0 +1,26 @@
+<!doctype html><meta charset=utf-8><title>oracle</title><pre id=o>running</pre>
+<!-- Runs the real gatherer's parameterised tests once per window in
+     jobs.json, exactly as a visitor's browser would with the server's
+     params, and posts the tagged values. -->
+<script src="/gatherer/browser-tests-v3.js"></script>
+<script>
+(async function () {
+  var label = new URLSearchParams(location.search).get('label') || 'x';
+  var jobs = await (await fetch('/jobs.json')).json();
+  var bt = window.__51dBrowserTests;
+  var out = { label: label, ua: navigator.userAgent, env: {
+    dpr: devicePixelRatio, w: innerWidth, h: innerHeight, lang: navigator.language,
+    platform: navigator.platform, webdriver: navigator.webdriver }, jobs: [] };
+  var t0 = performance.now();
+  for (var i = 0; i < jobs.length; i++) {
+    var j = jobs[i];
+    var params = { only: j.tests };
+    Object.keys(j.params).forEach(function (k) { params[k] = j.params[k]; });
+    var r = await bt.run(3000, params);
+    out.jobs.push({ window: j.window, results: r.results });
+  }
+  out.ms = Math.round(performance.now() - t0);
+  await fetch('/result?label=' + encodeURIComponent(label), { method: 'POST', body: JSON.stringify(out) });
+  document.getElementById('o').textContent = 'done'; document.title = 'done';
+})().catch(function (e) { document.getElementById('o').textContent = 'failed ' + e; document.title = 'failed'; });
+</script>

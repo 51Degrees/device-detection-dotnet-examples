@@ -610,6 +610,14 @@
       "note": "Wave 3 lab, 20 Oct 2026: 16x16 ink grid of 8 Segoe UI glyphs at 160 px, on canvas so the display scale plays no part. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Every Linux and CloakBrowser capture differs (35 of 2048 bits with the genuine file in the candidate lab, 254 without it). Risk: a Segoe UI update in a Windows release changes it, expect a value per Windows build. Patch cost high (ship the rasteriser). Final hardening, 20 Oct 2026: the canvas asks for willReadFrequently, which keeps it in software, since a GPU canvas antialiases text differently and the lab VM has no GPU. Values unchanged in the lab."
     },
     {
+      "id": "f_segoeshape.2",
+      "family": "fonts",
+      "status": "collecting",
+      "introduced": "2026-10-24",
+      "retired": null,
+      "note": "f_segoeshape.1 for glyphs the server chooses per window (params.shapes), checked against the text oracle (gatherer/lab/textoracle) rather than a baseline row. Prototype, 24 Oct 2026."
+    },
+    {
       "id": "f_segoevar.3",
       "family": "fonts",
       "status": "collecting",
