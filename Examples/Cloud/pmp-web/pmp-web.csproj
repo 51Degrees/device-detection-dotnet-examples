@@ -18,7 +18,7 @@
   <ItemGroup>
     <PackageReference Include="FiftyOne.Pipeline.Web" Version="4.5.125" />
     <PackageReference Include="FiftyOne.Did.Cloud" Version="4.5.125" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.32" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="8.0.33" />
   </ItemGroup>
 
   <!-- The device detection cloud engine comes from the shared example base,
