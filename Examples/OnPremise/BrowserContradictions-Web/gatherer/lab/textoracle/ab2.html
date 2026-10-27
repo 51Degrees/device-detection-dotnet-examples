@@ -1,0 +1,50 @@
+<!doctype html><meta charset=utf-8><title>ab2</title><pre id=o>running</pre>
+<!-- A/B for the per window glyph shape test: font size and grid, with the
+     gatherer's glyphBits logic parameterised. Variants come from ab.json's
+     windows (the shapes of jobs.json are reused per window). -->
+<script>
+(async function () {
+  var label = new URLSearchParams(location.search).get('label') || 'x';
+  var jobs = await (await fetch('/jobs.json')).json();
+  function canvas2d(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c.getContext("2d", { willReadFrequently: true }); }
+  function glyphBits(font, ch, S, N, thr) {
+    var c = canvas2d(S, S); c.font = font; c.fillStyle = "#000"; c.textBaseline = "alphabetic"; c.fillText(ch, S / 12, S * 0.75);
+    var d = c.getImageData(0, 0, S, S).data, x0 = S, y0 = S, x1 = -1, y1 = -1, x, y;
+    for (y = 0; y < S; y++) for (x = 0; x < S; x++) if (d[(y * S + x) * 4 + 3] >= thr) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return "empty";
+    var bits = "", bw = (x1 - x0 + 1) / N, bh = (y1 - y0 + 1) / N;
+    for (var gy = 0; gy < N; gy++) for (var gx = 0; gx < N; gx++) {
+      var ink = 0, tot = 0;
+      for (y = Math.floor(y0 + gy * bh); y < Math.floor(y0 + (gy + 1) * bh) || y === Math.floor(y0 + gy * bh); y++)
+        for (x = Math.floor(x0 + gx * bw); x < Math.floor(x0 + (gx + 1) * bw) || x === Math.floor(x0 + gx * bw); x++) { tot++; if (d[(y * S + x) * 4 + 3] >= thr) ink++; }
+      bits += ink * 2 > tot ? "1" : "0";
+    }
+    var hex = ""; for (var i = 0; i < bits.length; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
+    return (x1 - x0 + 1) + "x" + (y1 - y0 + 1) + ":" + hex;
+  }
+  // id: [font px, canvas px, grid N, alpha threshold, glyph count, family]
+  var VARIANTS = {
+    S0_segoe160_g16: [160, 240, 16, 128, 8, "'Segoe UI'"],
+    S1_segoe96_g16: [96, 144, 16, 128, 8, "'Segoe UI'"],
+    S2_segoe64_g16: [64, 96, 16, 128, 8, "'Segoe UI'"],
+    S3_segoe160_g8: [160, 240, 8, 128, 8, "'Segoe UI'"],
+    S4_segoe96_g8: [96, 144, 8, 128, 8, "'Segoe UI'"],
+    S5_segoe160_g16_4glyphs: [160, 240, 16, 128, 4, "'Segoe UI'"],
+    S6_segoe160_g16_thr64: [160, 240, 16, 64, 8, "'Segoe UI'"],
+    S7_arial160_g16: [160, 240, 16, 128, 8, "Arial"],
+    S8_sysui160_g16: [160, 240, 16, 128, 8, "system-ui"],
+    S9_sansserif160_g16: [160, 240, 16, 128, 8, "sans-serif"]
+  };
+  var out = { label: label, ua: navigator.userAgent, runs: [], ms: {} };
+  Object.keys(VARIANTS).forEach(function (id) {
+    var v = VARIANTS[id], t0 = performance.now();
+    jobs.forEach(function (j) {
+      var val = j.params.shapes.slice(0, v[4]).map(function (ch) { return glyphBits(v[0] + "px " + v[5], ch, v[1], v[2], v[3]); }).join("|");
+      out.runs.push({ variant: id, window: j.window, value: val });
+    });
+    out.ms[id] = Math.round((performance.now() - t0) / jobs.length * 10) / 10;
+  });
+  await fetch('/result?label=' + encodeURIComponent(label), { method: 'POST', body: JSON.stringify(out) });
+  document.getElementById('o').textContent = 'done'; document.title = 'done';
+})().catch(function (e) { document.getElementById('o').textContent = 'failed ' + e; document.title = 'failed'; });
+</script>

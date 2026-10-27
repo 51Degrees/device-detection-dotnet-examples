@@ -63,6 +63,28 @@
 // per call from the run and checks every input against it. Times made up,
 // replayed or modelled without the work fail. A hash folded over every
 // call proves the calls were made. No baseline row needed.
+// 23 October 2026: m_tanhwalk.1 is a collecting test, a chained walk
+// through Math.tanh from a seed the server can choose (params.walk), so an
+// answer recorded for one seed is no use for another. Chromium 148 and later
+// takes tanh from the platform C library (V8 c1486295): the Windows UCRT
+// is all but correctly rounded for these inputs, fdlibm (Chromium 147 and
+// earlier, Firefox) and glibc (Linux Chromium 148 and later) are not. The
+// server checks an answer for any seed with TanhWalk.cs, no baseline row
+// needed.
+//
+// 27 October 2026: the active set is the nine tests a bad actor cannot pass
+// without Microsoft's fonts and text rasteriser or a correctly rounded
+// maths library, plus the proof of work: a_shfonts.1, f_fallback.1,
+// f_genericmap.1, f_grid.2, f_quotedalias.1, f_segoeshape.1, f_segoeshape.2,
+// m_tanhwalk.1 and m_takwork.1. f_metrics.1 goes back to collecting (a
+// changed default font gives a genuine user another value, and Linux with
+// the Windows font files matches it) and so does m_tanh.2 (eight fixed
+// inputs are tabulable, m_tanhwalk.1 replaces it). The five tests the
+// Website already held back (a_aacencode.1, a_shreplay.1, p_navhop.2,
+// p_rtdebug.1, p_webdriver.1) are collecting here too. The canaries stay in
+// the catalogue and are not run until they are reviewed. Every active test
+// carries a plain English description in tests.json, which the Website
+// shows, so the catalogue is the one place the test information comes from.
 //
 // run(budgetMs, params) also takes, beside the inputs below:
 //   swUrl   the URL of browser-tests-sw.js on the page's own origin, which
@@ -79,8 +101,12 @@
 //           fractional size, 13.5 by default). f_emoji uses size * 3.
 //   tanh    the inputs of m_tanh
 //   tak     the inputs of m_takwork, seven [x, y, z] lists, x > y > z >= 0
+//   walk    the seed of m_tanhwalk, two integers 0 to 4294967295
+//   shapes  the glyphs f_segoeshape.2 rasterises, an array of one
+//           character strings
 // A parameterised test's inputs are the array its inputs function below
-// returns (metricsInputs, emojiInputs, tanhInputs, takInputs). When
+// returns (metricsInputs, emojiInputs, tanhInputs, takInputs, walkInputs,
+// shapeInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -105,7 +131,10 @@
         tanh: [0.0390625, 0.125, 0.1875, 0.4375, 0.7, 0.8125, 0.9375, 1.078125],
         // TakTiming.ChooseVariants(TakTiming.DefaultSeed) in the element
         // must match.
-        tak: [[27, 18, 10], [36, 24, 17], [21, 17, 8], [39, 37, 27], [28, 14, 8], [25, 24, 12], [21, 7, 0]]
+        tak: [[27, 18, 10], [36, 24, 17], [21, 17, 8], [39, 37, 27], [28, 14, 8], [25, 24, 12], [21, 7, 0]],
+        // TanhWalk.DefaultSeed in the element must match.
+        walk: [2654435769, 2135587861],
+        shapes: ["g", "@", "&", "ß", "ą", "ж", "R", "3"]
     };
     // The inputs each parameterised test consumes, in tag order. Plain
     // functions rather than a table keyed by test id, so no test id is an
@@ -114,6 +143,8 @@
     function emojiInputs(p) { return [p.emoji, p.size]; }
     function tanhInputs(p) { return [p.tanh]; }
     function takInputs(p) { return [p.tak]; }
+    function walkInputs(p) { return [p.walk]; }
+    function shapeInputs(p) { return [p.shapes]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -191,6 +222,30 @@
     // Chrome from V8's own fdlibm port, so the last digit differs. Version
     // 1 had one separating input of eight.
     s("m_tanh.2", function () { return tag(tanhInputs, P) + vec(Math.tanh, P.tanh); });
+    // A chained walk through Math.tanh from the seed (a, b), 64 steps. Each
+    // step makes a 52 bit input in [-0.05, 0.05) from two 32 bit states,
+    // calls tanh once and folds all 64 bits of the answer back into the
+    // states, so one last-bit difference at any step changes every later
+    // input and the result. Everything but tanh is integer arithmetic or
+    // exactly rounded double arithmetic, identical in every engine, so the
+    // server can redo the walk (TanhWalk.cs). Answers 16 hex chars.
+    function tanhWalk(a, b, n) {
+        var dv = new DataView(new ArrayBuffer(8));
+        var s1 = a >>> 0, s2 = b >>> 0;
+        function hex(v) { return ("0000000" + (v >>> 0).toString(16)).slice(-8); }
+        for (var i = 0; i < n; i++) {
+            s1 = Math.imul(s1 ^ (s1 >>> 16), 0x85EBCA6B); s1 = (s1 ^ (s1 >>> 13)) >>> 0;
+            s2 = Math.imul(s2 ^ (s2 >>> 16), 0xC2B2AE35); s2 = (s2 ^ (s2 >>> 13)) >>> 0;
+            dv.setFloat64(0, Math.tanh(((s1 * 1048576 + (s2 >>> 12)) / 4503599627370496 - 0.5) * 0.1));
+            var hi = dv.getUint32(0), lo = dv.getUint32(4);
+            s1 = (s1 ^ lo) >>> 0;
+            s2 = (s2 ^ hi ^ Math.imul(lo, 0x27D4EB2F)) >>> 0;
+        }
+        s1 = Math.imul(s1 ^ (s1 >>> 16), 0x85EBCA6B) >>> 0;
+        s2 = Math.imul(s2 ^ (s2 >>> 16), 0xC2B2AE35) >>> 0;
+        return hex(s1) + hex(s2);
+    }
+    s("m_tanhwalk.1", function () { return tag(walkInputs, P) + tanhWalk(P.walk[0], P.walk[1], 64); });
     s("m_expm1.1", function () { return vec(Math.expm1, [1e-10, 0.3, 2.5, 7.7, 0.0123, 13.37]); });
     s("m_sinh.1", function () { return vec(Math.sinh, MATHS_IN); });
     s("m_cbrt.1", function () { return vec(Math.cbrt, [2, 3, 7.7, 1e-5, 123.456]); });
@@ -665,8 +720,11 @@
         var hex = ""; for (var i = 0; i < bits.length; i += 4) hex += parseInt(bits.substr(i, 4), 2).toString(16);
         return (x1 - x0 + 1) + "x" + (y1 - y0 + 1) + ":" + hex;
     }
-    var SHAPE_GLYPHS = ["g", "@", "&", "\u00DF", "\u0105", "\u0436", "R", "3"];
+    var SHAPE_GLYPHS = DEFAULTS.shapes;
     s("f_segoeshape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
+    // The same grid for glyphs the server chooses per window (params.shapes),
+    // so the answer for one window is no use for the next.
+    s("f_segoeshape.2", function () { return tag(shapeInputs, P) + P.shapes.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
     s("f_calibrishape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px Calibri", ch); }).join("|"); });
     // Exact small size raster of Segoe UI. DirectWrite and FreeType differ
     // even with the same file, but ClearType tuning may move it too.

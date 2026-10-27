@@ -4,7 +4,7 @@
     {
       "id": "a_aacencode.1",
       "family": "media",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: a real one second AAC encode. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, headless and drivers: 47/16397/2. CloakBrowser's Windows persona error:OperationError (claims the encoder, cannot use it), Linux and the other personas NotSupportedError, Firefox NotSupportedError. Risk: Windows N editions. Patch cost high (needs a real AAC encoder). Final hardening, 20 Oct 2026: a late encode gives no answer instead of timeout. Same 47/16397/2 in every genuine Chromium run, including a CPU cap that made the whole run 11 to 14 s."
@@ -52,6 +52,7 @@
     {
       "id": "a_shfonts.1",
       "family": "fonts",
+      "description": "font widths inside a shared worker, which a spoofing patch on the page does not reach",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
@@ -60,7 +61,7 @@
     {
       "id": "a_shreplay.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: the same against a shared worker. Every genuine browser all zeros. Linux claiming Windows through CDP 10000000000001 (real user agent and brands leak), every CloakBrowser 00000000000110. Patch cost medium. Final hardening, 20 Oct 2026: as a_wkreplay.1, a shared worker that fails gives no answer instead of na."
@@ -460,6 +461,7 @@
     {
       "id": "f_fallback.1",
       "family": "fonts",
+      "description": "which font is used for symbols and other scripts the main font lacks",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
@@ -468,6 +470,7 @@
     {
       "id": "f_genericmap.1",
       "family": "fonts",
+      "description": "which font sits behind each generic family (serif, sans-serif, monospace and the rest)",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
@@ -484,6 +487,7 @@
     {
       "id": "f_grid.2",
       "family": "text",
+      "description": "text widths fall on HarfBuzz's 1/65536 pixel grid, which the noise anti-detect browsers add breaks",
       "status": "active",
       "introduced": "2026-10-19",
       "retired": null,
@@ -556,7 +560,7 @@
     {
       "id": "f_metrics.1",
       "family": "text",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
       "note": "Canvas text widths in Arial, Times New Roman, monospace and sans-serif. Windows Chromium 148 to 156 and Edge identical, Firefox own value. Linux Chromium differs (FreeType), every CloakBrowser persona differs and varies by seed (noise). Risk: font versions of other Windows releases."
@@ -588,6 +592,7 @@
     {
       "id": "f_quotedalias.1",
       "family": "fonts",
+      "description": "the quoted names 'sans', 'serif' and 'monospace' match a font only on Linux",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
@@ -604,10 +609,20 @@
     {
       "id": "f_segoeshape.1",
       "family": "fonts",
+      "description": "the outline shape of eight Segoe UI glyphs, drawn by the Windows text rasteriser",
       "status": "active",
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: 16x16 ink grid of 8 Segoe UI glyphs at 160 px, on canvas so the display scale plays no part. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each. Every Linux and CloakBrowser capture differs (35 of 2048 bits with the genuine file in the candidate lab, 254 without it). Risk: a Segoe UI update in a Windows release changes it, expect a value per Windows build. Patch cost high (ship the rasteriser). Final hardening, 20 Oct 2026: the canvas asks for willReadFrequently, which keeps it in software, since a GPU canvas antialiases text differently and the lab VM has no GPU. Values unchanged in the lab."
+    },
+    {
+      "id": "f_segoeshape.2",
+      "family": "fonts",
+      "description": "the same outline shape for glyphs the server changes every few seconds, so a recorded answer is no use",
+      "status": "active",
+      "introduced": "2026-10-24",
+      "retired": null,
+      "note": "f_segoeshape.1 for glyphs the server chooses per window (params.shapes), checked against the text oracle (gatherer/lab/textoracle) rather than a baseline row. Prototype, 24 Oct 2026."
     },
     {
       "id": "f_segoevar.3",
@@ -780,7 +795,8 @@
     {
       "id": "m_takwork.1",
       "family": "maths",
-      "status": "collecting",
+      "description": "timed recursion on inputs the server changes every few seconds, with a hash over every call that proves the work was done",
+      "status": "active",
       "introduced": "2026-10-23",
       "retired": null,
       "note": "Timed tak(x, y, z) on 7 server chosen inputs (params.tak), 3 interleaved repeats each in a worker, every call folded into a 32 bit hash that only the whole traversal can produce. TakTiming.cs redoes the traversal once per input list (130 ms), knows every input's exact call count, and asserts each input's fastest time is within 35% plus 2 timer ticks of k x calls, k the median time per call in the run, one input allowed slow, k between 1 and 2000 ns. Lab 23 Oct 2026 (lab/tak): Windows Chrome 156, Beta 157, Edge 156, Chrome for Testing 148, headless Chrome, Firefox 158 and the full gatherer in Chrome and Firefox pass 310 of 310 runs, about 5.3 ns a call in Chrome and 7.4 in Firefox. Firefox resistFingerprinting (16.7 ms timer) is Unresolved, never failed. Forged answers for new inputs (instant, constant, replayed, size modelled, resent, counts without the traversal) fail 2,785 of 2,790, the 5 passes replays of other genuine runs. Catches made up or replayed timings and skipped work only: a real engine passes however it is driven, a forger who does the traversal and counts the calls passes, and one genuine run per window replayed through the window passes. Not measured on Safari or phones. No baseline rows: the element needs the per window inputs before it can use it."
@@ -796,10 +812,19 @@
     {
       "id": "m_tanh.2",
       "family": "maths",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-19",
       "retired": null,
       "note": "Math.tanh at 8 inputs, each of which separates on its own (lab/maths-probe.js, 249 of 6,609 inputs separate, all below |x| 1.9). Windows Chrome 148, 150, 155, 156 and Edge 155 identical on all 6,609 inputs. Linux Chromium 141, every CloakBrowser persona and Firefox give V8 fdlibm's answer. Not touched by the Chrome 150 libm change. Patch cost medium: ship the Windows C runtime tanh or a lookup."
+    },
+    {
+      "id": "m_tanhwalk.1",
+      "family": "maths",
+      "description": "a 64 step walk through Math.tanh from a seed the server changes every few seconds, which only the Windows maths library answers correctly",
+      "status": "active",
+      "introduced": "2026-10-23",
+      "retired": null,
+      "note": "Chained 64 step walk through Math.tanh from a seed (params.walk), checked on the server by TanhWalk.cs for any seed, no baseline row needed. Chromium 148 and later calls std::tanh (V8 c1486295): Windows UCRT is within 0.0012 ulp of correctly rounded for |x| < 0.05, fdlibm (Chromium 147 and earlier on every OS, Firefox) misrounds 30% of steps and glibc (Linux Chromium 148+) likewise. Lab, 23 Oct 2026, 300 seeds each: Windows Chrome for Testing 148 and 150, Chrome 155, Beta 156, Edge 155 pass the Windows model 300 of 300; Linux Chromium 141, CloakBrowser 146 (Windows and Linux personas) and Firefox are fdlibm exactly 300 of 300 and pass 0; glibc tanh passes 0. 20,000 UCRT walks: 0 rejected, 230 needed the tie tolerance. Catches nothing below a Chrome 148 claim. Patch cost high once seeds rotate: a bit exact near correctly rounded tanh in the engine. Unknown: macOS, Android, Windows on Arm, CPUs without FMA."
     },
     {
       "id": "p_apis.1",
@@ -828,7 +853,7 @@
     {
       "id": "p_navhop.2",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: document served by route fulfil. 0 in every capture here, 1 only for Playwright route.fulfill in the candidate lab. Active from 20 Oct 2026 (stealth study): 1 for Patchright with any addInitScript (it delivers init scripts by fulfilling the document through a route), 2 of 2 stealth runs and 1 of 1 final run. 0 in every genuine run: 90 final Windows runs, 12 stealth genuine runs (app and tab windows, real mouse input), every v4 capture. A page a service worker controls, one delivered by prefetch or from a cache (deliveryType set) and a prerendered one give no answer, since they can lack the protocol for innocent reasons. Only fires when the operator uses init scripts. Needs a Chromium change to fix."
@@ -852,7 +877,7 @@
     {
       "id": "p_rtdebug.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: an Error whose prototype carries a stack getter, logged with console.debug, is read only by an inspector with Runtime enabled. Genuine Chrome 148 to 156, Edge, Firefox, headless without a driver and CloakBrowser: 0. Every Puppeteer and Playwright run on Windows and Linux: 1. Timing study (C:/bc-data/research/pow-timing.md): 17 of 17 Runtime runs, 0 of 17 clean runs, Chromium 141 to 156. Risk: open DevTools also gives 1. Patch cost medium (avoid Runtime.enable, as rebrowser patches do)."
@@ -868,7 +893,7 @@
     {
       "id": "p_webdriver.1",
       "family": "identity",
-      "status": "active",
+      "status": "collecting",
       "introduced": "2026-10-13",
       "retired": null,
       "note": "navigator.webdriver and driver globals. false|0|0 for every genuine run and every CloakBrowser persona, true for every Puppeteer and Playwright run with default options (headless, headed, shell). Version independent. Catches plain automation only. Patch cost trivial."

@@ -1,0 +1,7 @@
+results/
+jobs.json
+ab.json
+vectors.jsonl
+__pycache__/
+check/bin/
+check/obj/

@@ -1,0 +1,29 @@
+<!doctype html><meta charset=utf-8><title>ab</title><pre id=o>running</pre>
+<!-- A/B candidates for the per window text test. Each variant in ab.json
+     names a font set and gives per window text and size. Widths are
+     measured the way f_metrics.1 measures them (a 2D canvas, measureText,
+     17 significant digits), so the gatherer could adopt any variant as
+     is. -->
+<script>
+(async function () {
+  var label = new URLSearchParams(location.search).get('label') || 'x';
+  var ab = await (await fetch('/ab.json')).json();
+  var c = document.createElement('canvas').getContext('2d');
+  function round(x) { return Number(x).toPrecision(17); }
+  var FONTS = {
+    generic4: function (s) { return [s + "px Arial", s + "px 'Times New Roman'", s + "px monospace", (s * 27 / 32) + "px sans-serif"]; },
+    named6: function (s) { return [s + "px Arial", s + "px 'Times New Roman'", s + "px 'Courier New'", s + "px 'Segoe UI'", s + "px Calibri", s + "px Verdana"]; },
+    named3: function (s) { return [s + "px Arial", s + "px 'Times New Roman'", s + "px 'Segoe UI'"]; },
+    sysui: function (s) { return [s + "px system-ui", s + "px 'Segoe UI'", s + "px 'Segoe UI Variable'"]; }
+  };
+  var out = { label: label, ua: navigator.userAgent, env: { dpr: devicePixelRatio, w: innerWidth, h: innerHeight, lang: navigator.language }, runs: [] };
+  ab.forEach(function (v) {
+    v.windows.forEach(function (w) {
+      var vals = FONTS[v.fonts](w.size).map(function (f) { c.font = f; return round(c.measureText(w.text).width); });
+      out.runs.push({ variant: v.id, window: w.window, value: vals.join(',') });
+    });
+  });
+  await fetch('/result?label=' + encodeURIComponent(label), { method: 'POST', body: JSON.stringify(out) });
+  document.getElementById('o').textContent = 'done'; document.title = 'done';
+})().catch(function (e) { document.getElementById('o').textContent = 'failed ' + e; document.title = 'failed'; });
+</script>

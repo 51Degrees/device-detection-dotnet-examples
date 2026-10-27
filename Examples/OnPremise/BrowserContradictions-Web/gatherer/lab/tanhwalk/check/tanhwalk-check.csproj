@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Checks TanhWalk.cs against the Python reference vectors and the lab's
+    browser captures. Run from this folder after walk.py and vec.py, with
+    the lab folder (..) as the program's argument.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\..\TanhWalk.cs" Link="TanhWalk.cs" />
+  </ItemGroup>
+</Project>

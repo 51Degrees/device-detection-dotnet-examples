@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Checks WindowParams.cs against derive.py. Run from this folder with the
+    lab folder (..) as the program's argument.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\..\..\WindowParams.cs" Link="WindowParams.cs" />
+  </ItemGroup>
+</Project>
