@@ -60,13 +60,28 @@ public static class WindowParams
         return new Params(glyphs.ToString(), size, shapes, [w1, w2]);
     }
 
+    /// <summary>
+    /// The tests that measure the window's glyphs, which all carry the
+    /// glyphs' tag.
+    /// </summary>
+    public static readonly string[] GlyphTests =
+        ["f_segoeshape.2", "a_shfonts.2", "f_genericmap.2", "f_quotedalias.2", "f_fallback.2"];
+
     /// <summary>The tag each parameterised test puts on its value.</summary>
-    public static Dictionary<string, string> Tags(Params p) => new()
+    public static Dictionary<string, string> Tags(Params p)
     {
-        ["f_metrics.1"] = Tag(Json([p.Glyphs, p.Size]), Json([Defaults.Glyphs, Defaults.Size])),
-        ["f_segoeshape.2"] = Tag(Json([p.Shapes]), Json([Defaults.Shapes])),
-        ["m_tanhwalk.1"] = Tag(Json([p.Walk]), Json([Defaults.Walk])),
-    };
+        var tags = new Dictionary<string, string>
+        {
+            ["f_metrics.1"] = Tag(Json([p.Glyphs, p.Size]), Json([Defaults.Glyphs, Defaults.Size])),
+            ["m_tanhwalk.1"] = Tag(Json([p.Walk]), Json([Defaults.Walk])),
+        };
+        var shapes = Tag(Json([p.Shapes]), Json([Defaults.Shapes]));
+        foreach (var id in GlyphTests)
+        {
+            tags[id] = shapes;
+        }
+        return tags;
+    }
 
     /// <summary>
     /// The value without its tag when the tag is the one for these params,

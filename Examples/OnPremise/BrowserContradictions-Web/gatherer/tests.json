@@ -59,6 +59,15 @@
       "note": "Wave 3 lab, 20 Oct 2026: generic family widths in a shared worker, which has no document font settings. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: every generic but system-ui falls to Arial (283.34). Linux and CloakBrowser keep serif, sans-serif and monospace apart. Firefox inherits page settings (its own claim). Blob URL, so it needs no file on the site. About 350 ms, off the main thread. Patch cost medium. Final hardening, 20 Oct 2026: as a_wkreplay.1, a shared worker that fails gives no answer instead of na."
     },
     {
+      "id": "a_shfonts.2",
+      "family": "fonts",
+      "description": "generic family widths of glyphs the server changes every few seconds, inside a shared worker",
+      "status": "active",
+      "introduced": "2026-11-02",
+      "retired": null,
+      "note": "a_shfonts.1 for the window's glyphs (params.shapes): each glyph's width at 40px in seven generic families, in a shared worker, one row per glyph. A bot needs every glyph of the pool measured on the platform it claims, where a_shfonts.1 needs one recorded answer."
+    },
+    {
       "id": "a_shreplay.1",
       "family": "identity",
       "status": "collecting",
@@ -468,6 +477,15 @@
       "note": "Wave 3 lab, 20 Oct 2026: fallback face for nine symbols and scripts the primary font lacks. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver identical. Linux and CloakBrowser fall to Segoe UI Emoji, Arial or DejaVu Sans. Risk: optional fonts and language packs, expect a few genuine values per claim. Patch cost medium."
     },
     {
+      "id": "f_fallback.2",
+      "family": "fonts",
+      "description": "widths of glyphs the server changes every few seconds in the platforms' fallback fonts",
+      "status": "active",
+      "introduced": "2026-11-02",
+      "retired": null,
+      "note": "f_fallback.1 for the window's glyphs (params.shapes): each glyph's width at 40px in eight fallback faces, the default font's where a face is missing, one row per glyph. Widths rather than face names, which are easy to guess."
+    },
+    {
       "id": "f_genericmap.1",
       "family": "fonts",
       "description": "which font sits behind each generic family (serif, sans-serif, monospace and the rest)",
@@ -475,6 +493,15 @@
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: named face behind each CSS generic family. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and every driver: Times New Roman;Arial;Consolas;Comic Sans MS;Impact;Segoe UI;Cambria Math;Noto Color Emoji. Linux and Linux claiming Windows: DejaVu Sans Mono, DejaVu Sans, STIX Two Math. CloakBrowser's monospace resolves to no listed face. Kept beside f_systemui.1 because it names faces instead of measuring widths, so it still fails a forger without text noise. Risk: users who change Chrome's default fonts. Patch cost low (fake the fontconfig defaults)."
+    },
+    {
+      "id": "f_genericmap.2",
+      "family": "fonts",
+      "description": "widths of glyphs the server changes every few seconds in each generic family",
+      "status": "active",
+      "introduced": "2026-11-02",
+      "retired": null,
+      "note": "f_genericmap.1 for the window's glyphs (params.shapes): each glyph's width at 40px in eight generic families, one row per glyph. Widths rather than face names, which are easy to guess."
     },
     {
       "id": "f_grid.1",
@@ -597,6 +624,15 @@
       "introduced": "2026-10-20",
       "retired": null,
       "note": "Wave 3 lab, 20 Oct 2026: quoted sans, serif and monospace are family names only fontconfig resolves. Windows Chrome 155 and 156, Edge 155, Chrome for Testing 148 and 150 identical in 3 of 3 headed runs each, and Firefox 158: 000000. Linux Chromium 141 (with Windows fonts installed), Linux claiming Windows and every CloakBrowser persona and seed: 111100. Code path: Skia's fontconfig font manager alias rules against DirectWrite family lookup. Patch cost medium (font manager patch)."
+    },
+    {
+      "id": "f_quotedalias.2",
+      "family": "fonts",
+      "description": "widths of glyphs the server changes every few seconds in the quoted names only Linux resolves",
+      "status": "active",
+      "introduced": "2026-11-02",
+      "retired": null,
+      "note": "f_quotedalias.1 for the window's glyphs (params.shapes): each glyph's width at 40px in five quoted names only fontconfig resolves, one row per glyph. Elsewhere every width is the default font's."
     },
     {
       "id": "f_segoeraster.1",

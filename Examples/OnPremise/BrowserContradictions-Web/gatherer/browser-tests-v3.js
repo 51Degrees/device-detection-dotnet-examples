@@ -102,8 +102,9 @@
 //   tanh    the inputs of m_tanh
 //   tak     the inputs of m_takwork, seven [x, y, z] lists, x > y > z >= 0
 //   walk    the seed of m_tanhwalk, two integers 0 to 4294967295
-//   shapes  the glyphs f_segoeshape.2 rasterises, an array of one
-//           character strings
+//   shapes  the glyphs f_segoeshape.2 rasterises and a_shfonts.2,
+//           f_genericmap.2, f_quotedalias.2 and f_fallback.2 measure, an
+//           array of one character strings
 // A parameterised test's inputs are the array its inputs function below
 // returns (metricsInputs, emojiInputs, tanhInputs, takInputs, walkInputs,
 // shapeInputs). When
@@ -725,6 +726,62 @@
     // The same grid for glyphs the server chooses per window (params.shapes),
     // so the answer for one window is no use for the next.
     s("f_segoeshape.2", function () { return tag(shapeInputs, P) + P.shapes.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
+
+    // ---- fonts: the window's glyphs ---------------------------------------
+    // The fixed font tests give the same answer every time, so a bot that
+    // recorded one real device's answers passes them. These measure the
+    // window's glyphs (params.shapes, eight of the server's pool of 100)
+    // instead, so an answer recorded in one window is no use in the next.
+    // A value is the tag, then one part per glyph joined by "|": the
+    // glyph's widths at 40px in each font, joined by ",". The element
+    // splits it into one row per glyph (f_genericmap.2#u0067), so a bot
+    // needs every glyph of the pool measured on the platform it claims.
+    // Widths, not the face names the version 1 tests answer, because a name
+    // is easy to guess and a width is not. Canvas, so neither page zoom nor
+    // the display scale moves them.
+    var GENERICS = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "math", "emoji"];
+    function glyphWidths(fonts) {
+        var c = canvas2d();
+        return tag(shapeInputs, P) + P.shapes.map(function (ch) {
+            return fonts.map(function (f) { c.font = "40px " + f; return r3(c.measureText(ch).width); }).join(",");
+        }).join("|");
+    }
+    function quoted(names) { return names.map(function (n) { return "'" + n + "', " + NOFONT; }); }
+    // f_genericmap.1 for the window's glyphs: the generic families.
+    s("f_genericmap.2", function () { return glyphWidths(GENERICS); });
+    // f_quotedalias.1 for the window's glyphs: only fontconfig resolves
+    // these names, so elsewhere every width is the default font's.
+    s("f_quotedalias.2", function () { return glyphWidths(quoted(["sans", "serif", "monospace", "Sans", "Mono"])); });
+    // f_fallback.1 for the window's glyphs: the platforms' fallback faces,
+    // each the default font's width where it is missing.
+    s("f_fallback.2", function () {
+        return glyphWidths(quoted(["Segoe UI Symbol", "Segoe UI Emoji", "MS Gothic", "Sylfaen", "Nirmala UI", "DejaVu Sans", "Noto Sans Symbols 2", "Apple Symbols"]));
+    });
+    // a_shfonts.1 for the window's glyphs: the generic families in a shared
+    // worker. glyphSig, like realmSig, uses nothing but its arguments: K is
+    // ["2d", "40px ", "noc", families, glyphs].
+    function glyphSig(g, K) {
+        var c = null;
+        try { c = new g.OffscreenCanvas(10, 10).getContext(K[0]); } catch (e) { c = null; }
+        if (!c) return K[2];
+        return K[4].map(function (ch) { return K[3].map(function (f) { c.font = K[1] + f; return c.measureText(ch).width; }); });
+    }
+    a("a_shfonts.2", function () {
+        var pre = tag(shapeInputs, P);
+        return new Promise(function (res) {
+            if (typeof SharedWorker === "undefined") return res(pre + "na");
+            try {
+                var url = blobUrl("onconnect=function(e){var p=e.ports[0];p.onmessage=function(m){p.postMessage((" + glyphSig.toString() + ")(self,m.data))}}");
+                var w = new SharedWorker(url);
+                w.port.onmessage = function (e) {
+                    var d = e.data; w.port.close(); URL.revokeObjectURL(url);
+                    res(pre + (d && d.map ? d.map(function (ws) { return ws.map(r3).join(","); }).join("|") : String(d)));
+                };
+                w.onerror = function () { res(null); };
+                w.port.postMessage(["2d", "40px ", "noc", GENERICS.slice(0, 7), P.shapes]);
+            } catch (e) { res(null); }
+        });
+    });
     s("f_calibrishape.1", function () { return SHAPE_GLYPHS.map(function (ch) { return glyphBits("160px Calibri", ch); }).join("|"); });
     // Exact small size raster of Segoe UI. DirectWrite and FreeType differ
     // even with the same file, but ClearType tuning may move it too.
