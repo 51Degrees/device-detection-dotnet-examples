@@ -19,7 +19,7 @@ public static class WindowParams
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,;:!?@&#%()-+=/";
 
     private static readonly string[] ShapePool =
-        "g Q @ & R 3 B a e $ k m s w y z % ? # ß ą ж é ø ç ł".Split(' ');
+        "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9 @ & $ % ? # ! * + = ~ ^ { } [ ] < > / ; ß ą é ø ç ł ñ ü ş ğ ж д ф я ю λ Ω π".Split(' ');
 
     private const int GlyphsLength = 24;
 
