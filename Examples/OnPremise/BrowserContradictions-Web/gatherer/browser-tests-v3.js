@@ -746,7 +746,8 @@
     // user's text contrast and gamma settings make (RasterCheck.cs).
     // A value is the tag, then one part per challenge joined by "|": the ink
     // box "x,y,w,h:" then its pixels row by row, an inked pixel as one hex
-    // digit (alpha >> 4) and a run of 1 to 20 empty pixels as g to z.
+    // digit (alpha >> 4) and a run of 1 to 20 empty pixels as g to z, or
+    // "noise" when that would be longer than RASTER_MAX.
     var RASTER_W = 112, RASTER_H = 64;
     function rasterPart(ch) {
         var c = canvas2d(RASTER_W, RASTER_H);
@@ -764,8 +765,12 @@
             flush(); out += (v >> 4).toString(16);
         }
         flush();
-        return out;
+        // A browser that randomises canvas read back (Firefox's
+        // resistFingerprinting) gives noise over the whole canvas, tens of
+        // thousands of characters. The longest real answer seen is 661.
+        return out.length > RASTER_MAX ? "noise" : out;
     }
+    var RASTER_MAX = 1000;
     s("f_raster.1", function () {
         if (!P.raster || !P.raster.length) return null;
         return tag(rasterInputs, P) + P.raster.map(rasterPart).join("|");
