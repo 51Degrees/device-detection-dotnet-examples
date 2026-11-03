@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repo has been merged into the monorepo https://github.com/51Degrees/51degrees-dotnet, under `examples/device-detection/`. Please refer to the new monorepository for issues and PRs.
+
 ## Examples
 
 The examples provided demonstrate how to use the 51Degrees device detection in
