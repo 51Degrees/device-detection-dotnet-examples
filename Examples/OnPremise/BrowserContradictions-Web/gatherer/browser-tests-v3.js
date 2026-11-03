@@ -105,9 +105,12 @@
 //   shapes  the glyphs f_segoeshape.2 rasterises and a_shfonts.2,
 //           f_genericmap.2, f_quotedalias.2 and f_fallback.2 measure, an
 //           array of one character strings
+//   raster  the challenges f_raster.1 draws, each { t, f, s, x, k }: the text,
+//           the CSS font family, the size in px, the x offset in px and
+//           the slant. Empty by default, and then f_raster.1 has no answer
 // A parameterised test's inputs are the array its inputs function below
 // returns (metricsInputs, emojiInputs, tanhInputs, takInputs, walkInputs,
-// shapeInputs). When
+// shapeInputs, rasterInputs). When
 // they equal the defaults the value is the bare result, exactly what version
 // 2 sent under the unversioned id, so version 2 results join the ".1" rows.
 // Otherwise the value is "p" + fnv1a32(JSON.stringify(inputs)) + ":" + result,
@@ -135,7 +138,9 @@
         tak: [[27, 18, 10], [36, 24, 17], [21, 17, 8], [39, 37, 27], [28, 14, 8], [25, 24, 12], [21, 7, 0]],
         // TanhWalk.DefaultSeed in the element must match.
         walk: [2654435769, 2135587861],
-        shapes: ["g", "@", "&", "ß", "ą", "ж", "R", "3"]
+        shapes: ["g", "@", "&", "ß", "ą", "ж", "R", "3"],
+        // No raster challenges unless the server issues them.
+        raster: []
     };
     // The inputs each parameterised test consumes, in tag order. Plain
     // functions rather than a table keyed by test id, so no test id is an
@@ -146,6 +151,7 @@
     function takInputs(p) { return [p.tak]; }
     function walkInputs(p) { return [p.walk]; }
     function shapeInputs(p) { return [p.shapes]; }
+    function rasterInputs(p) { return [p.raster]; }
     var P = DEFAULTS;
 
     function s(id, f) { SYNC[id] = f; }
@@ -726,6 +732,44 @@
     // The same grid for glyphs the server chooses per window (params.shapes),
     // so the answer for one window is no use for the next.
     s("f_segoeshape.2", function () { return tag(shapeInputs, P) + P.shapes.map(function (ch) { return glyphBits("160px 'Segoe UI'", ch); }).join("|"); });
+
+    // ---- fonts: fresh raster challenges -----------------------------------
+    // Every glyph test above draws from a pool, so one real device can
+    // measure the whole pool once and a bot answers any window from that
+    // table. These challenges come from a space too big to table: a short
+    // string in a core font at a fractional size, sub-pixel offset and
+    // slant (params.raster, each { t, f, s, x, k }). The server takes them
+    // from a bank its own reference devices rendered and never issues one
+    // twice, so only the claimed platform's own rasteriser answers them:
+    // Linux with the Windows font files matches none. The answer is each
+    // challenge's ink alpha, so the server can allow the monotone change a
+    // user's text contrast and gamma settings make (RasterCheck.cs).
+    // A value is the tag, then one part per challenge joined by "|": the ink
+    // box "x,y,w,h:" then its pixels row by row, an inked pixel as one hex
+    // digit (alpha >> 4) and a run of 1 to 20 empty pixels as g to z.
+    var RASTER_W = 112, RASTER_H = 64;
+    function rasterPart(ch) {
+        var c = canvas2d(RASTER_W, RASTER_H);
+        c.fillStyle = "#000"; c.textBaseline = "alphabetic"; c.font = ch.s + "px " + ch.f;
+        c.setTransform(1, 0, ch.k, 1, 0, 0);
+        c.fillText(ch.t, 8 + ch.x, 44);
+        var d = c.getImageData(0, 0, RASTER_W, RASTER_H).data, x0 = RASTER_W, y0 = RASTER_H, x1 = -1, y1 = -1, x, y;
+        for (y = 0; y < RASTER_H; y++) for (x = 0; x < RASTER_W; x++) if (d[(y * RASTER_W + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 < 0) return "empty";
+        var out = x0 + "," + y0 + "," + (x1 - x0 + 1) + "," + (y1 - y0 + 1) + ":", run = 0;
+        function flush() { while (run > 0) { var n = Math.min(run, 20); out += String.fromCharCode(102 + n); run -= n; } }
+        for (y = y0; y <= y1; y++) for (x = x0; x <= x1; x++) {
+            var v = d[(y * RASTER_W + x) * 4 + 3];
+            if (!v) { run++; continue; }
+            flush(); out += (v >> 4).toString(16);
+        }
+        flush();
+        return out;
+    }
+    s("f_raster.1", function () {
+        if (!P.raster || !P.raster.length) return null;
+        return tag(rasterInputs, P) + P.raster.map(rasterPart).join("|");
+    });
 
     // ---- fonts: the window's glyphs ---------------------------------------
     // The fixed font tests give the same answer every time, so a bot that

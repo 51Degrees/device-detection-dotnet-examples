@@ -635,6 +635,15 @@
       "note": "f_quotedalias.1 for the window's glyphs (params.shapes): each glyph's width at 40px in five quoted names only fontconfig resolves, one row per glyph. Elsewhere every width is the default font's."
     },
     {
+      "id": "f_raster.1",
+      "family": "fonts",
+      "description": "the pixels of short strings the server never repeats, drawn at sizes and offsets too many to record, compared with a reference device of the claimed platform",
+      "status": "active",
+      "introduced": "2026-11-03",
+      "retired": null,
+      "note": "Three challenges per run (params.raster) from a bank a reference device of each render class fills (Website RasterBank). The answer is each challenge's ink alpha in 17 levels. The element allows the monotone change text contrast and gamma settings make: no ink where the reference has none, at most 15% of its ink missing, at most 0.002 of pixel pairs in the opposite order. Lab, 3 Nov 2026: Windows Chrome at four contrast and gamma settings passed 1,200 of 1,200 challenges, Linux Chromium with the Windows font files 0 of 300."
+    },
+    {
       "id": "f_segoeraster.1",
       "family": "fonts",
       "status": "collecting",
